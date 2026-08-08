@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Palette } from './Palette'
 import { onToast } from '../lib/bus'
+import { useMe, initials } from '../lib/liveData'
 
 const ICONS: Record<string, string> = {
   Overview: '<rect x="2" y="2" width="5.5" height="5.5" rx="1.2"/><rect x="10.5" y="2" width="5.5" height="5.5" rx="1.2"/><rect x="2" y="10.5" width="5.5" height="5.5" rx="1.2"/><rect x="10.5" y="10.5" width="5.5" height="5.5" rx="1.2"/>',
@@ -25,6 +26,19 @@ const TABS: [string, string][] = [
 
 function Icon({ name }: { name: string }) {
   return <svg viewBox="0 0 18 18" dangerouslySetInnerHTML={{ __html: ICONS[name] }} />
+}
+
+function UserCard() {
+  const me = useMe()
+  return (
+    <div className="usercard">
+      <span className="av">{initials(me)}</span>
+      <span>
+        <span className="nm">{me ? me.name : 'Signing in'}</span><br />
+        <span className="ws">{me && me.workspace ? me.workspace : 'Growth Terminal'}</span>
+      </span>
+    </div>
+  )
 }
 
 export function Shell() {
@@ -98,10 +112,7 @@ export function Shell() {
             ))}
           </nav>
           <div className="sp" />
-          <div className="usercard">
-            <span className="av">KG</span>
-            <span><span className="nm">Kevin Gonzalez</span><br /><span className="ws">Growth Terminal</span></span>
-          </div>
+          <UserCard />
         </aside>
 
         <main><Outlet /></main>
