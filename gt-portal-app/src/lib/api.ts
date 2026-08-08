@@ -1,4 +1,4 @@
-import { DEMO, API_BASE, PORTAL_API } from '../config'
+import { DEMO, API_BASE, PORTAL_API, DEFAULT_WORKSPACE_ID } from '../config'
 import { getClerkToken } from './clerkBridge'
 import demo from '../data/demo.json'
 
@@ -26,7 +26,7 @@ export const data = demo as unknown as {
 /** Workspace scoping. The API requires X-Workspace-Id on every portal
  *  request; 400 missing_workspace_id means this was not set. */
 export function getWorkspaceId(): string | null {
-  return localStorage.getItem('gt_workspace')
+  return localStorage.getItem('gt_workspace') || DEFAULT_WORKSPACE_ID || null
 }
 export function setWorkspaceId(id: string) {
   localStorage.setItem('gt_workspace', id)
