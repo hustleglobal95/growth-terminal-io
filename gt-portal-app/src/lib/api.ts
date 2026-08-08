@@ -62,10 +62,51 @@ export async function login(_email: string, _password: string): Promise<void> {
   throw new Error('Live sign in is handled by Clerk. Set CLERK_PUBLISHABLE_KEY in src/config.ts.')
 }
 
+/** The raw analysis row as the API returns it, confirmed against the
+ *  backend: GET /api/v1/portal/analyses returns full database rows in a
+ *  { data: [...], meta: {...} } envelope. We project them into the compact
+ *  shape the screens render, client side, so the backend stays generic. */
+interface RawAnalysisRow {
+  businessName?: string | null
+  primaryConstraintTitle?: string | null
+  primaryConstraintCategory?: string | null
+  severityScore?: number | null
+  sourceType?: string | null
+  sourceClient?: string | null
+  status?: string | null
+  createdAt?: string | null
+}
+
+const STATUS_LABEL: Record<string, Status> = {
+  running: 'Running', complete: 'Complete', failed: 'Failed', queued: 'Queued'
+}
+
+const SOURCE_LABEL: Record<string, string> = {
+  sheets: 'Sheets add-on', 'sheets-addon': 'Sheets add-on',
+  api: 'API', upload: 'Upload', csv: 'Upload'
+}
+
+function toRow(r: RawAnalysisRow): AnalysisRow {
+  const rawSrc = r.sourceClient || r.sourceType || ''
+  const when = r.createdAt ? new Date(r.createdAt) : null
+  return {
+    b: r.businessName || 'Untitled business',
+    c: r.primaryConstraintTitle || 'Analysis in progress',
+    cat: r.primaryConstraintCategory || '',
+    sev: r.severityScore != null ? r.severityScore + '/10' : '',
+    src: SOURCE_LABEL[rawSrc.toLowerCase()] || rawSrc || 'API',
+    st: STATUS_LABEL[(r.status || '').toLowerCase()] || 'Queued',
+    d: when && !isNaN(when.getTime())
+      ? when.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+      : ''
+  }
+}
+
 export const api = {
   async listAnalyses(): Promise<AnalysisRow[]> {
     if (DEMO) return data.AN
-    return live<AnalysisRow[]>('/analyses')
+    const rows = await live<RawAnalysisRow[]>('/analyses')
+    return (Array.isArray(rows) ? rows : []).map(toRow)
   },
   async me(): Promise<{ name: string; workspace: string }> {
     if (DEMO) return { name: 'Kevin Gonzalez', workspace: 'Growth Terminal' }
