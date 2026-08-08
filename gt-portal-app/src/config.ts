@@ -17,7 +17,7 @@
  * the replit.app preview URL never will. The replit.app deployment is
  * therefore permanently demo mode by design.
  */
-export const DEMO = true
+export const DEMO = false
 
 export const API_BASE = 'https://growthterminal.io'
 export const PORTAL_API = '/api/v1/portal'
@@ -36,3 +36,10 @@ export const PORTAL_API = '/api/v1/portal'
 export const CLERK_PUBLISHABLE_KEY = 'pk_live_Y2xlcmsuZ3Jvd3RodGVybWluYWwuaW8k'
 
 export const PORTAL_LEGACY = 'https://growthterminal.io/portal'
+
+/** Default workspace for requests when the user has not picked one yet.
+ *  Every portal API call must carry X-Workspace-Id; this is the owner's
+ *  primary workspace UUID, taken from the live portal's own URL
+ *  (portal/w/<id>/...). A workspace switcher can override it later via
+ *  setWorkspaceId, which stores the choice in localStorage. */
+export const DEFAULT_WORKSPACE_ID = '9d7211d5-4be0-428f-a8bf-4b273b13955c'
