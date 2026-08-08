@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { DEMO } from '../config'
+import { DEMO, CLERK_PUBLISHABLE_KEY } from '../config'
 import { login } from '../lib/api'
+import { SignIn } from '@clerk/clerk-react'
 
 export function Login() {
   const nav = useNavigate()
@@ -21,6 +22,18 @@ export function Login() {
     } finally {
       setBusy(false)
     }
+  }
+
+  // Live mode: Clerk owns sign in. Our form is the demo path only.
+  if (!DEMO && CLERK_PUBLISHABLE_KEY) {
+    return (
+      <div className="loginwrap">
+        <SignIn afterSignInUrl="/" appearance={{ variables: {
+          colorPrimary: '#FC5802', colorBackground: '#16130F',
+          colorText: '#F5F1EA', colorInputBackground: '#1D1A15'
+        } }} />
+      </div>
+    )
   }
 
   return (
