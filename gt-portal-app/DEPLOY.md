@@ -19,24 +19,24 @@ React + Vite + TypeScript. Builds to static files. Installs on phones as a PWA.
 4. Open the site on a phone. The browser offers Add to Home Screen; installed,
    it launches full screen with the bottom tab bar as the app nav.
 
-## Wiring live data
+## Wiring live data, contract confirmed
 
-The app ships in demo mode and runs with no backend. Everything lives in
-`src/config.ts`. Before flipping `DEMO` to false, ask the Replit agent these
-two questions and act on the answers:
+CORS is enabled server side for app.growthterminal.io and localhost:5173 with
+credentials. Auth is Clerk: there is no login route, the frontend mounts
+Clerk's sign in with the portal's publishable key, Clerk sets the __session
+cookie, and every request to /api/v1/portal/* rides it with credentials
+include plus an X-Workspace-Id header. All of that is already wired.
 
-1. "No changes, just tell me what exists. How does a portal user authenticate
-   against /api/v1: a session cookie set by a login route, or a bearer token?
-   Give me the exact login route, request body, and what the client must send
-   on later requests."
-2. "Enable CORS on /api/v1 for the origin https://app.growthterminal.io,
-   including credentials if auth is cookie based. Tell me exactly what you
-   changed."
+To go live: paste the portal's Clerk publishable key into
+CLERK_PUBLISHABLE_KEY in src/config.ts, set DEMO to false, confirm the exact
+resource paths under /api/v1/portal (the client currently assumes /analyses
+and /me), and redeploy.
 
-Then set `DEMO = false` in `src/config.ts`, fill in the auth mechanics in
-`src/lib/api.ts` where marked, and redeploy. The endpoints already wired are
-the confirmed ones: /api/v1/me, /api/v1/data/ingest, the snapshot confirm
-route, and /api/v1/analyses.
+One hard rule: live auth only works when the app is served from
+app.growthterminal.io, because the Clerk cookie is same site with
+growthterminal.io and no foreign host will ever receive it. The replit.app
+deployment stays demo mode by design; the custom domain is what unlocks live
+data.
 
 ## Later, if wanted
 
