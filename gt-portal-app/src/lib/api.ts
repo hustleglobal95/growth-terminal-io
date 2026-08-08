@@ -1,4 +1,5 @@
-import { DEMO, API_BASE } from '../config'
+import { DEMO, API_BASE, PORTAL_API } from '../config'
+import { getClerkToken } from './clerkBridge'
 import demo from '../data/demo.json'
 
 export type Status = 'Complete' | 'Running' | 'Failed' | 'Queued'
@@ -22,46 +23,52 @@ export const data = demo as unknown as {
   STUBS: Record<string, [string, [string, string][]]>
 }
 
-/** The live adapter. Each call maps to a confirmed route; auth is the one
- *  open question, so every request funnels through here. */
+/** Workspace scoping. The API requires X-Workspace-Id on every portal
+ *  request; 400 missing_workspace_id means this was not set. */
+export function getWorkspaceId(): string | null {
+  return localStorage.getItem('gt_workspace')
+}
+export function setWorkspaceId(id: string) {
+  localStorage.setItem('gt_workspace', id)
+}
+
+/** The live adapter, confirmed contract: Clerk __session cookie rides on
+ *  credentials include, X-Workspace-Id scopes the request. 401 means the
+ *  Clerk session is missing or expired, send the user to sign in. */
 async function live<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(API_BASE + path, {
+  const ws = getWorkspaceId()
+  const token = await getClerkToken()
+  const res = await fetch(API_BASE + PORTAL_API + path, {
     ...init,
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...authHeaders(), ...(init?.headers || {}) }
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: 'Bearer ' + token } : {}),
+      ...(ws ? { 'X-Workspace-Id': ws } : {}),
+      ...(init?.headers || {})
+    }
   })
+  if (res.status === 401) { window.location.assign('/login'); throw new Error('Signed out.') }
   if (!res.ok) throw new Error('Request failed (' + res.status + ')')
   const body = await res.json()
   return (body && typeof body === 'object' && 'data' in body ? body.data : body) as T
 }
 
-/** Portal auth. AUTH_MODE in config picks the mechanism once the backend
- *  confirms it. Cookie mode relies on credentials: 'include' above; bearer
- *  mode stores the token and attaches it to every request. */
-let bearer: string | null = localStorage.getItem('gt_token')
-
-export function authHeaders(): Record<string, string> {
-  return bearer ? { Authorization: 'Bearer ' + bearer } : {}
-}
-
-export async function login(email: string, password: string): Promise<void> {
+/** Live auth is Clerk's, not ours: there is no login route on the API.
+ *  The demo login resolves immediately; the live path never calls this,
+ *  because the Login screen mounts Clerk's own sign in component. */
+export async function login(_email: string, _password: string): Promise<void> {
   if (DEMO) return
-  const out = await live<{ token?: string }>('/api/v1/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password })
-  })
-  if (out && out.token) { bearer = out.token; localStorage.setItem('gt_token', out.token) }
+  throw new Error('Live sign in is handled by Clerk. Set CLERK_PUBLISHABLE_KEY in src/config.ts.')
 }
-
-export function signOut() { bearer = null; localStorage.removeItem('gt_token') }
 
 export const api = {
   async listAnalyses(): Promise<AnalysisRow[]> {
     if (DEMO) return data.AN
-    return live<AnalysisRow[]>('/api/v1/analyses')
+    return live<AnalysisRow[]>('/analyses')
   },
   async me(): Promise<{ name: string; workspace: string }> {
     if (DEMO) return { name: 'Kevin Gonzalez', workspace: 'Growth Terminal' }
-    return live('/api/v1/me')
+    return live('/me')
   }
 }
