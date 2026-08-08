@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { Shell } from './components/Shell'
 import { Overview, Analyses, Businesses, Clients, ApiKeys, Teams, Stub } from './screens/simple'
+import { Content } from './screens/Content'
 import { Detail } from './screens/Detail'
 import { Login } from './screens/Login'
 import { ClerkProvider, useAuth } from '@clerk/clerk-react'
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
       { path: '/', element: <Overview /> },
       { path: '/analyses', element: <Analyses /> },
       { path: '/analyses/:id', element: <Detail /> },
+      { path: '/content', element: <Content /> },
       { path: '/businesses', element: <Businesses /> },
       { path: '/api-keys', element: <ApiKeys /> },
       { path: '/teams', element: <Teams /> },
