@@ -49,7 +49,15 @@ async function live<T>(path: string, init?: RequestInit): Promise<T> {
     }
   })
   if (res.status === 401) { window.location.assign('/login'); throw new Error('Signed out.') }
-  if (!res.ok) throw new Error('Request failed (' + res.status + ')')
+  if (!res.ok) {
+    let msg = 'Request failed (' + res.status + ')'
+    try {
+      const eb = await res.json()
+      const m = eb && eb.error && eb.error.message ? eb.error.message : eb && eb.message
+      if (typeof m === 'string' && m) msg = m
+    } catch { /* keep the status message */ }
+    throw new Error(msg)
+  }
   const body = await res.json()
   return (body && typeof body === 'object' && 'data' in body ? body.data : body) as T
 }
@@ -111,5 +119,15 @@ export const api = {
   async me(): Promise<{ name: string; workspace: string }> {
     if (DEMO) return { name: 'Kevin Gonzalez', workspace: 'Growth Terminal' }
     return live('/me')
+  },
+  /** Launch an analysis from the portal: business name plus raw CSV text.
+   *  The server runs the same ingest, confirm and create pipeline the
+   *  Sheets add-on uses, and answers 202 with the queued analysis id. */
+  async runAnalysis(businessName: string, csv: string): Promise<{ id: string; status: string }> {
+    if (DEMO) return { id: 'demo', status: 'queued' }
+    return live('/analyses', {
+      method: 'POST',
+      body: JSON.stringify({ businessName, source: 'portal', data: { format: 'csv', csv } })
+    })
   }
 }
