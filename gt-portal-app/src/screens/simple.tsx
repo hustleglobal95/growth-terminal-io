@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { data, AnalysisRow } from '../lib/api'
 import { useMe, useAnalyses, firstName } from '../lib/liveData'
 import { toast, noCredits } from '../lib/bus'
+import { NewAnalysis } from '../components/NewAnalysis'
 import { OvBars, Spark } from '../components/charts'
 
 export function Header({ title, children }: { title: string; children?: React.ReactNode }) {
@@ -29,12 +30,14 @@ export function Overview() {
   const nav = useNavigate()
   const me = useMe()
   const an = useAnalyses()
+  const [na, setNa] = useState(false)
   const recent = an.st === 'ready' ? an.rows.slice(0, 5) : []
   const fn = firstName(me)
   return (
     <div className="scr on">
+      {na && <NewAnalysis close={() => setNa(false)} />}
       <Header title="Overview">
-        <button className="btn p" onClick={noCredits}>New analysis</button>
+        <button className="btn p" onClick={() => setNa(true)}>New analysis</button>
       </Header>
       <Canvas>
         <div className="greet">
@@ -91,6 +94,7 @@ export function Analyses() {
   const nav = useNavigate()
   const [q, setQ] = useState('')
   const [f, setF] = useState('all')
+  const [na, setNa] = useState(false)
   const an = useAnalyses()
   const all = an.st === 'ready' ? an.rows : []
   const rows = useMemo(() => all.filter(a =>
@@ -105,8 +109,9 @@ export function Analyses() {
   }
   return (
     <div className="scr on">
+      {na && <NewAnalysis close={() => setNa(false)} />}
       <Header title="Analyses">
-        <button className="btn p" onClick={noCredits}>New analysis</button>
+        <button className="btn p" onClick={() => setNa(true)}>New analysis</button>
       </Header>
       <Canvas>
         <div className="toolrow">
