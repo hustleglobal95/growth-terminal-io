@@ -788,3 +788,44 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
   .loginart{display:none}
   .loginside{padding:28px 20px}
 }
+
+/* Polish pass: focus rings, skeletons, row actions, empty states, sign out.
+   Interaction quality borrowed from the Twenty, Dub and shadcn schools,
+   rendered entirely in GT tokens. */
+
+/* Keyboard focus. Visible only for keyboard users, amber, never boxy blue. */
+:focus-visible{outline:2px solid rgba(252,88,2,.55);outline-offset:2px;border-radius:6px}
+.trow:focus-visible,.minirows li:focus-visible{outline-offset:-2px;border-radius:9px}
+
+/* Skeleton shimmer, shaped like the content it stands in for. */
+@keyframes skshine{0%{background-position:-200px 0}100%{background-position:260px 0}}
+.skel{display:inline-block;height:11px;border-radius:5px;background:#1D1A15;
+  background-image:linear-gradient(90deg,#1D1A15 0,#26221C 40px,#1D1A15 80px);
+  background-size:260px 100%;animation:skshine 1.15s linear infinite}
+.skeltrow{cursor:default;pointer-events:none}
+.skelrow{display:flex;gap:14px;align-items:center;cursor:default;pointer-events:none}
+
+/* Row actions: hidden at rest, revealed on hover or keyboard focus. */
+.rowend{display:inline-flex;align-items:center;justify-content:flex-end;gap:8px}
+.rowacts{display:none;gap:6px}
+.trow:hover .rowacts,.trow:focus-within .rowacts{display:inline-flex}
+.trow:hover .dt,.trow:focus-within .dt{display:none}
+.ract{font:inherit;font-size:11.5px;color:var(--text);background:var(--s2);
+  border:1px solid var(--line2);border-radius:7px;padding:4px 9px;cursor:pointer;
+  transition:border-color .15s ease}
+.ract:hover{border-color:rgba(252,88,2,.35)}
+
+/* Empty states that teach the next step. */
+.emptyblock{padding:34px 24px;display:flex;flex-direction:column;gap:7px;align-items:center;text-align:center}
+.emptyblock b{font-size:13.5px;font-weight:600}
+.emptyblock span{font-size:12.5px;color:var(--muted);max-width:46ch;line-height:1.55}
+.emptycell{display:flex;flex-direction:column;gap:5px;cursor:default}
+.emptycell b{font-size:12.5px;font-weight:600}
+.emptycell span{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* Sign out, quiet until needed. */
+.usercard{position:relative}
+.ucmeta{min-width:0}
+.signout{margin-left:auto;background:none;border:0;color:var(--faint);cursor:pointer;
+  padding:6px;border-radius:7px;display:inline-flex;transition:color .15s ease,background .15s ease}
+.signout:hover{color:var(--text);background:var(--s2)}
