@@ -23,6 +23,7 @@ export function Palette({ close, go }: { close: () => void; go: (path: string) =
   const ITEMS: Item[] = [
     { t: 'Go to Overview', h: 'Navigate', go: '/' },
     { t: 'Go to Analyses', h: 'Navigate', go: '/analyses' },
+    { t: 'Go to Content', h: 'Navigate', go: '/content' },
     ...LIVE,
     { t: 'Go to Businesses', h: 'Navigate', go: '/businesses' },
     { t: 'Go to API Keys', h: 'Navigate', go: '/api-keys' },
