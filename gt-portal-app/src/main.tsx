@@ -13,7 +13,7 @@ function ClerkTokenBridge() {
   React.useEffect(() => { setClerkTokenGetter(() => getToken()) }, [getToken])
   return null
 }
-import { DEMO, CLERK_PUBLISHABLE_KEY } from './config'
+import { DEMO, CLERK_PUBLISHABLE_KEY, CLERK_PROXY_URL } from './config'
 import './styles/portal.css'
 
 const router = createBrowserRouter([
@@ -40,7 +40,7 @@ const app = <RouterProvider router={router} />
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     {!DEMO && CLERK_PUBLISHABLE_KEY
-      ? <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}><ClerkTokenBridge />{app}</ClerkProvider>
+      ? <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} proxyUrl={CLERK_PROXY_URL}><ClerkTokenBridge />{app}</ClerkProvider>
       : app}
   </React.StrictMode>
 )

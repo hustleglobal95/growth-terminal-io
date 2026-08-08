@@ -37,6 +37,13 @@ export const CLERK_PUBLISHABLE_KEY = 'pk_live_Y2xlcmsuZ3Jvd3RodGVybWluYWwuaW8k'
 
 export const PORTAL_LEGACY = 'https://growthterminal.io/portal'
 
+/** Clerk rides through the backend's proxy, exactly as the live portal
+ *  does: every Clerk request (the clerk-js script itself and all session
+ *  calls) goes to growthterminal.io/api/__clerk. The clerk.growthterminal.io
+ *  frontend API domain exists in DNS but times out for script loads, so it
+ *  must not be used directly; the proxy is the working path. */
+export const CLERK_PROXY_URL = 'https://growthterminal.io/api/__clerk'
+
 /** Default workspace for requests when the user has not picked one yet.
  *  Every portal API call must carry X-Workspace-Id; this is the owner's
  *  primary workspace UUID, taken from the live portal's own URL
