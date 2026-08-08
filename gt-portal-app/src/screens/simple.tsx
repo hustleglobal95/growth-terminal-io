@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { data, AnalysisRow } from '../lib/api'
+import { useMe, useAnalyses, firstName } from '../lib/liveData'
 import { toast, noCredits } from '../lib/bus'
 import { OvBars, Spark } from '../components/charts'
 
@@ -19,8 +20,17 @@ const Canvas = ({ children }: { children: React.ReactNode }) => (
   </div>
 )
 
+const daypart = () => {
+  const h = new Date().getHours()
+  return h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening'
+}
+
 export function Overview() {
   const nav = useNavigate()
+  const me = useMe()
+  const an = useAnalyses()
+  const recent = an.st === 'ready' ? an.rows.slice(0, 5) : []
+  const fn = firstName(me)
   return (
     <div className="scr on">
       <Header title="Overview">
@@ -28,7 +38,7 @@ export function Overview() {
       </Header>
       <Canvas>
         <div className="greet">
-          <h1>Good evening, Kevin.</h1>
+          <h1>{'Good ' + daypart() + (fn ? ', ' + fn : '') + '.'}</h1>
           <p>One analysis completed today. One workbook is waiting on credits.</p>
         </div>
         <div className="warnrow"><b>0 credits left.</b> New analyses will not run until you top up.
@@ -48,11 +58,14 @@ export function Overview() {
           <div className="card">
             <div style={{ padding: '14px 15px 4px' }}><span className="lbl">Recent analyses</span></div>
             <ul className="minirows">
-              {data.AN.slice(0, 5).map((a, i) => (
+              {recent.map((a, i) => (
                 <li key={i} onClick={() => nav('/analyses')}>
                   <span className="b">{a.b}</span><span className="c">{a.st}</span><span className="d">{a.d}</span>
                 </li>
               ))}
+              {an.st === 'loading' && <li><span className="c">Loading analyses.</span></li>}
+              {an.st === 'error' && <li><span className="c">Could not load analyses. Reload to retry.</span></li>}
+              {an.st === 'ready' && recent.length === 0 && <li><span className="c">No analyses yet. Run one from the Sheets add-on.</span></li>}
             </ul>
           </div>
         </div>
@@ -67,10 +80,12 @@ export function Analyses() {
   const nav = useNavigate()
   const [q, setQ] = useState('')
   const [f, setF] = useState('all')
-  const rows = useMemo(() => data.AN.filter(a =>
+  const an = useAnalyses()
+  const all = an.st === 'ready' ? an.rows : []
+  const rows = useMemo(() => all.filter(a =>
     (f === 'all' || a.st === f) &&
     (!q || (a.b + ' ' + a.c + ' ' + a.cat).toLowerCase().includes(q.toLowerCase()))
-  ), [q, f])
+  ), [all, q, f])
   const openRow = (a: AnalysisRow) => {
     if (a.open) nav('/analyses/northlane')
     else if (a.st === 'Running') toast('Still running. Usually under five minutes.')
@@ -106,6 +121,9 @@ export function Analyses() {
               <span className="mut num hidem">{a.d}</span>
             </div>
           ))}
+          {an.st === 'loading' && <div className="trow"><span className="mut">Loading analyses.</span></div>}
+          {an.st === 'error' && <div className="trow"><span className="mut">Could not load analyses. Reload to retry.</span></div>}
+          {an.st === 'ready' && rows.length === 0 && <div className="trow"><span className="mut">No analyses match.</span></div>}
         </div>
       </Canvas>
     </div>
@@ -162,19 +180,22 @@ export function ApiKeys() {
   )
 }
 
-export const Teams = () => (
-  <div className="scr on">
-    <Header title="Teams"><button className="btn p" onClick={() => toast('Invites are sent by email from Teams.')}>Invite</button></Header>
-    <Canvas>
-      <div className="tbl" style={{ marginTop: 16 }}>
-        <div className="member"><span className="av">KG</span><span><span className="nm">Kevin Gonzalez</span><br />
-          <span className="rl">hustleglobal95@gmail.com</span></span><span className="sp" /><span className="rl">Owner</span></div>
-        <div className="member"><span className="av">MR</span><span><span className="nm">Markus Reid</span><br />
-          <span className="rl">Content engine</span></span><span className="sp" /><span className="rl">Editor</span></div>
-      </div>
-    </Canvas>
-  </div>
-)
+export const Teams = () => {
+  const me = useMe()
+  const nm = me ? me.name : 'Workspace owner'
+  const av = nm.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+  return (
+    <div className="scr on">
+      <Header title="Teams"><button className="btn p" onClick={() => toast('Invites are sent by email from Teams.')}>Invite</button></Header>
+      <Canvas>
+        <div className="tbl" style={{ marginTop: 16 }}>
+          <div className="member"><span className="av">{av}</span><span><span className="nm">{nm}</span><br />
+            <span className="rl">hustleglobal95@gmail.com</span></span><span className="sp" /><span className="rl">Owner</span></div>
+        </div>
+      </Canvas>
+    </div>
+  )
+}
 
 export function Stub() {
   const { id } = useParams()
