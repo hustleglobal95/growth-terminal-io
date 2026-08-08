@@ -4,6 +4,18 @@ import { DEMO, CLERK_PUBLISHABLE_KEY } from '../config'
 import { login } from '../lib/api'
 import { SignIn } from '@clerk/clerk-react'
 
+/** Split sign in: brand key art fills the left half, the form the right.
+ *  The art panel reads /login-bg.jpg from public and disappears under
+ *  900px so phones get a clean full-width form. */
+function Split({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="loginsplit">
+      <div className="loginart" aria-hidden="true" />
+      <div className="loginside">{children}</div>
+    </div>
+  )
+}
+
 export function Login() {
   const nav = useNavigate()
   const [email, setEmail] = useState('')
@@ -27,17 +39,23 @@ export function Login() {
   // Live mode: Clerk owns sign in. Our form is the demo path only.
   if (!DEMO && CLERK_PUBLISHABLE_KEY) {
     return (
-      <div className="loginwrap">
-        <SignIn afterSignInUrl="/" appearance={{ variables: {
-          colorPrimary: '#FC5802', colorBackground: '#16130F',
-          colorText: '#F5F1EA', colorInputBackground: '#1D1A15'
-        } }} />
-      </div>
+      <Split>
+        <SignIn afterSignInUrl="/" appearance={{
+          variables: {
+            colorPrimary: '#FC5802', colorBackground: '#16130F',
+            colorText: '#F5F1EA', colorInputBackground: '#1D1A15'
+          },
+          elements: {
+            rootBox: { width: '100%', maxWidth: '480px' },
+            cardBox: { width: '100%' }
+          }
+        }} />
+      </Split>
     )
   }
 
   return (
-    <div className="loginwrap">
+    <Split>
       <form className="logincard" onSubmit={submit}>
         <img className="logo" src="/logo.svg" alt="Growth Terminal" />
         <h1>Sign in to your workspace.</h1>
@@ -56,6 +74,6 @@ export function Login() {
         <button className="btn p" disabled={busy} type="submit">{busy ? 'Signing in' : 'Sign in'}</button>
         <span className="fine">No account yet? Access comes with GT Professional and GT Agency.</span>
       </form>
-    </div>
+    </Split>
   )
 }
