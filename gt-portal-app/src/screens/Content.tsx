@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from '../lib/bus'
 import { Header } from './simple'
 import { Spark } from '../components/charts'
@@ -53,10 +54,12 @@ const FORMATS = [
 ]
 
 export function Content() {
+  const nav = useNavigate()
   const [paused, setPaused] = useState(false)
   return (
     <div className="scr on">
       <Header title="Content">
+        <button className="btn g" onClick={() => nav('/content/setup')}>Set up a machine</button>
         <button className="btn g" onClick={() => {
           setPaused(p => !p)
           toast(paused ? 'Engine resumed. Tonight’s post is back on.' : 'Engine paused. Nothing publishes until you resume.')
