@@ -778,7 +778,7 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
    uses the brand key art at /login-bg.jpg and folds away on small
    screens, where the form takes the full width. */
 .loginsplit{min-height:100vh;display:grid;grid-template-columns:1fr 1fr}
-.loginart{background:#0F0D0B url('/login-bg.jpg') center/cover no-repeat;border-right:1px solid var(--line)}
+.loginart{background:#0F0D0B url('/login-bg.jpg') left center/cover no-repeat;border-right:1px solid var(--line)}
 .loginside{display:flex;align-items:center;justify-content:center;padding:40px 32px;background:var(--bg)}
 .loginside .logincard{width:min(480px,100%);padding:34px 32px}
 .loginside .cl-rootBox{width:100%;max-width:480px}
