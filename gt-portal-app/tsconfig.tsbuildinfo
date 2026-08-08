@@ -1,0 +1,1 @@
+{"root":["./src/config.ts","./src/main.tsx","./src/components/Palette.tsx","./src/components/Shell.tsx","./src/components/charts.tsx","./src/lib/api.ts","./src/lib/bus.ts","./src/screens/Detail.tsx","./src/screens/Login.tsx","./src/screens/simple.tsx"],"version":"5.9.3"}
