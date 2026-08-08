@@ -30,13 +30,24 @@ function Icon({ name }: { name: string }) {
 
 function UserCard() {
   const me = useMe()
+  const signOut = () => {
+    const clerk = (window as unknown as { Clerk?: { signOut?: (o?: object) => Promise<void> } }).Clerk
+    if (clerk && clerk.signOut) clerk.signOut({ redirectUrl: '/login' })
+    else window.location.assign('/login')
+  }
   return (
     <div className="usercard">
       <span className="av">{initials(me)}</span>
-      <span>
+      <span className="ucmeta">
         <span className="nm">{me ? me.name : 'Signing in'}</span><br />
         <span className="ws">{me && me.workspace ? me.workspace : 'Growth Terminal'}</span>
       </span>
+      <button className="signout" title="Sign out" aria-label="Sign out" onClick={signOut}>
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M6 2H3.5A1.5 1.5 0 0 0 2 3.5v9A1.5 1.5 0 0 0 3.5 14H6" />
+          <path d="M10 5l3 3-3 3M13 8H6" />
+        </svg>
+      </button>
     </div>
   )
 }
