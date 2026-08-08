@@ -59,13 +59,24 @@ export function Overview() {
             <div style={{ padding: '14px 15px 4px' }}><span className="lbl">Recent analyses</span></div>
             <ul className="minirows">
               {recent.map((a, i) => (
-                <li key={i} onClick={() => nav('/analyses')}>
+                <li key={i} tabIndex={0} onClick={() => nav('/analyses')}
+                  onKeyDown={e => { if (e.key === 'Enter') nav('/analyses') }}>
                   <span className="b">{a.b}</span><span className="c">{a.st}</span><span className="d">{a.d}</span>
                 </li>
               ))}
-              {an.st === 'loading' && <li><span className="c">Loading analyses.</span></li>}
+              {an.st === 'loading' && [0, 1, 2, 3, 4].map(i => (
+                <li key={'sk' + i} className="skelrow" aria-hidden="true">
+                  <span className="skel" style={{ width: '42%' }} />
+                  <span className="skel" style={{ width: '18%' }} />
+                </li>
+              ))}
               {an.st === 'error' && <li><span className="c">Could not load analyses. Reload to retry.</span></li>}
-              {an.st === 'ready' && recent.length === 0 && <li><span className="c">No analyses yet. Run one from the Sheets add-on.</span></li>}
+              {an.st === 'ready' && recent.length === 0 && (
+                <li className="emptycell">
+                  <b>No analyses yet.</b>
+                  <span>Open the Google Sheets{'™'} add-on in a workbook with your numbers and press Analyze. The verdict lands here.</span>
+                </li>
+              )}
             </ul>
           </div>
         </div>
@@ -112,18 +123,48 @@ export function Analyses() {
         <div className="tbl">
           <div className="trow h"><span>Business</span><span>Constraint</span><span className="hidem">Severity</span><span className="hidem">Source</span><span>Status</span><span className="hidem">Date</span></div>
           {rows.map((a, i) => (
-            <div key={i} className="trow" onClick={() => openRow(a)}>
+            <div key={i} className="trow" role="button" tabIndex={0}
+              aria-label={'Open analysis for ' + a.b}
+              onClick={() => openRow(a)}
+              onKeyDown={e => { if (e.key === 'Enter') openRow(a) }}>
               <span className="b">{a.b}</span>
               <span className="mut">{a.c}</span>
               <span className="num hidem">{a.sev || '·'}</span>
               <span className="mut hidem">{a.src}</span>
               <span className={statCls(a.st)}><i />{a.st}</span>
-              <span className="mut num hidem">{a.d}</span>
+              <span className="mut num hidem rowend">
+                <span className="dt">{a.d}</span>
+                <span className="rowacts">
+                  <button className="ract" onClick={e => { e.stopPropagation(); openRow(a) }}>Open</button>
+                  <button className="ract" onClick={e => {
+                    e.stopPropagation()
+                    navigator.clipboard?.writeText(window.location.origin + '/analyses')
+                      .then(() => toast('Link copied.'), () => toast('Could not copy.'))
+                  }}>Copy link</button>
+                </span>
+              </span>
             </div>
           ))}
-          {an.st === 'loading' && <div className="trow"><span className="mut">Loading analyses.</span></div>}
+          {an.st === 'loading' && [0, 1, 2, 3, 4, 5].map(i => (
+            <div key={'sk' + i} className="trow skeltrow" aria-hidden="true">
+              <span className="skel" style={{ width: '70%' }} />
+              <span className="skel" style={{ width: '85%' }} />
+              <span className="skel hidem" style={{ width: '40%' }} />
+              <span className="skel hidem" style={{ width: '60%' }} />
+              <span className="skel" style={{ width: '55%' }} />
+              <span className="skel hidem" style={{ width: '50%' }} />
+            </div>
+          ))}
           {an.st === 'error' && <div className="trow"><span className="mut">Could not load analyses. Reload to retry.</span></div>}
-          {an.st === 'ready' && rows.length === 0 && <div className="trow"><span className="mut">No analyses match.</span></div>}
+          {an.st === 'ready' && rows.length === 0 && all.length > 0 && (
+            <div className="trow"><span className="mut">Nothing matches that search.</span></div>
+          )}
+          {an.st === 'ready' && all.length === 0 && (
+            <div className="emptyblock">
+              <b>No analyses in this workspace yet.</b>
+              <span>Open the Google Sheets{'™'} add-on in a workbook with your business numbers and press Analyze Workbook. Results appear here within minutes.</span>
+            </div>
+          )}
         </div>
       </Canvas>
     </div>
