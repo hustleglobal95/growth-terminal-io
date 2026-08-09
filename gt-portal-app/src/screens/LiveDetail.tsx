@@ -12,8 +12,9 @@ export function AnalysisRoute() {
   return <LiveDetail id={id} />
 }
 
-/* Adaptive extraction, the same dialect the Sheets add-on speaks: the
- * engine's plan payload varies in field names, so we pick, never assume. */
+/* Adaptive extraction. The v4 engine's artifact is rich and structured;
+ * these helpers read it faithfully and never invent. Everything rendered
+ * below is the stored output of the intelligence layers, verbatim. */
 type Loose = Record<string, unknown>
 const pick = (o: unknown, keys: string[]): unknown => {
   if (!o || typeof o !== 'object') return undefined
@@ -28,16 +29,10 @@ const textOf = (v: unknown): string => {
   if (v === null || v === undefined) return ''
   if (typeof v === 'string') return v
   if (typeof v === 'number') return String(v)
-  const t = pick(v, ['text', 'title', 'action', 'description', 'summary', 'label'])
+  const t = pick(v, ['text', 'title', 'name', 'summary', 'description', 'statement', 'label', 'metric'])
   return typeof t === 'string' ? t : ''
 }
-
-function extractPhases(plan: unknown): unknown[] {
-  if (!plan) return []
-  if (Array.isArray(plan)) return plan
-  const inner = pick(plan, ['phases', 'steps', 'actions', 'weeks', 'items'])
-  return asArray(inner)
-}
+const listOf = (v: unknown): string[] => asArray(v).map(textOf).filter(Boolean)
 
 function fmtDate(s?: string | null): string {
   if (!s) return ''
@@ -50,8 +45,11 @@ function duration(a?: string | null, b?: string | null): string {
   if (!a || !b) return ''
   const ms = new Date(b).getTime() - new Date(a).getTime()
   if (!isFinite(ms) || ms <= 0) return ''
-  const m = Math.floor(ms / 60000), s = Math.round((ms % 60000) / 1000)
-  return m + 'm ' + s + 's'
+  return Math.floor(ms / 60000) + 'm ' + Math.round((ms % 60000) / 1000) + 's'
+}
+const money = (v: unknown): string => {
+  const n = typeof v === 'number' ? v : parseFloat(String(v))
+  return isFinite(n) && n > 0 ? '+$' + Math.round(n).toLocaleString() + ' a month' : ''
 }
 
 function Sev({ n }: { n: number }) {
@@ -62,10 +60,54 @@ function Sev({ n }: { n: number }) {
   )
 }
 
+/** One v4 phase, rendered in the demo's own card anatomy. */
+function LivePhase({ p, n, open, toggle }: { p: Loose; n: number; open: boolean; toggle: () => void }) {
+  const steps = listOf(p.steps)
+  const eff = textOf(p.effort)
+  return (
+    <div className={'ph' + (open ? ' open' : '')}>
+      <span className="wk">{textOf(p.weeks) || 'Phase ' + n}</span><span className="node" />
+      <div className="pcard">
+        <div className="phd" onClick={toggle}>
+          <span className="no">{n}</span>
+          <span className="tt">{textOf(p.title)}</span>
+          {eff && <span className={'eff' + (/high/i.test(eff) ? ' hi' : '')}>{eff} effort</span>}
+          <span className="chev" />
+        </div>
+        {textOf(p.doneWhen) && (
+          <div className="dw"><b style={{ color: 'var(--text)', fontWeight: 600 }}>Done when</b> {textOf(p.doneWhen)}</div>
+        )}
+        <div className="pbody">
+          {textOf(p.hypothesis) && <p className="hyp">{textOf(p.hypothesis)}</p>}
+          <div className="grid2">
+            {textOf(p.objective) && <div className="f"><span className="lbl">Objective</span><span className="v">{textOf(p.objective)}</span></div>}
+            {textOf(p.whyNow) && <div className="f"><span className="lbl">Why now</span><span className="v">{textOf(p.whyNow)}</span></div>}
+          </div>
+          {steps.length > 0 && (
+            <div style={{ marginTop: 22 }}><span className="lbl">Steps</span>
+              <ol className="steps">{steps.map(s => <li key={s}>{s}</li>)}</ol></div>
+          )}
+          <div className="grid2" style={{ marginTop: 22 }}>
+            {textOf(p.deliverable) && <div className="f"><span className="lbl">Deliverable</span><span className="v">{textOf(p.deliverable)}</span></div>}
+            {textOf(p.owner) && <div className="f"><span className="lbl">Owner</span><span className="v">{textOf(p.owner)}</span></div>}
+            {textOf(p.leadingIndicator) && <div className="f"><span className="lbl">Leading indicator</span><span className="v">{textOf(p.leadingIndicator)}</span></div>}
+            {textOf(p.expectedImpact) && <div className="f"><span className="lbl">Expected impact</span><span className="v">{textOf(p.expectedImpact)}</span></div>}
+            {textOf(p.dependency) && <div className="f"><span className="lbl">Depends on</span><span className="v">{textOf(p.dependency)}</span></div>}
+          </div>
+          {textOf(p.watchOut) && (
+            <div className="watch"><span className="lbl">Watch out</span><span className="v">{textOf(p.watchOut)}</span></div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function LiveDetail({ id }: { id: string }) {
   const nav = useNavigate()
   const [d, setD] = useState<AnalysisDetail | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  const [openPhase, setOpenPhase] = useState(0)
 
   useEffect(() => {
     let live = true
@@ -87,33 +129,41 @@ export function LiveDetail({ id }: { id: string }) {
   const complete = st === 'complete' || st === 'completed'
   const failed = st === 'failed' || st === 'error'
 
-  const c = d?.constraint as Loose | null | undefined
-  const headline = textOf(pick(c, ['headline', 'title', 'constraint'])) || textOf(pick(d?.raw, ['primaryConstraintTitle', 'title']))
-  const category = textOf(pick(c, ['category', 'constraintCategory'])) || textOf(pick(d?.raw, ['primaryConstraintCategory']))
-  const sevRaw = pick(c, ['severity']) ?? pick(d?.raw, ['severityScore'])
+  const raw = d?.raw
+  const c = (pick(raw, ['constraintResult']) || d?.constraint) as Loose | undefined
+  const headline = textOf(pick(c, ['title', 'headline'])) || textOf(pick(raw, ['primaryConstraintTitle']))
+  const category = textOf(pick(c, ['category'])) || textOf(pick(raw, ['primaryConstraintCategory']))
+  const sevRaw = pick(c, ['severityScore', 'severity']) ?? pick(raw, ['severityScore'])
   const sev = typeof sevRaw === 'number' ? sevRaw : parseInt(String(sevRaw || ''), 10)
-  const confidence = textOf(pick(c, ['confidence', 'confidenceLabel']))
+  const confidence = textOf(pick(c, ['confidenceLevel', 'confidence']))
+  const finding = textOf(pick(c, ['description', 'summary']))
+  const causes = listOf(pick(c, ['rootCauses']) || pick(raw, ['rootCauses']))
 
-  const plan = d ? extractPhases(d.executionPlan) : []
-  const planObj = (d && d.executionPlan && typeof d.executionPlan === 'object' && !Array.isArray(d.executionPlan))
-    ? d.executionPlan as Loose : null
-  const planTitle = textOf(pick(planObj, ['title']))
-  const planWhy = textOf(pick(planObj, ['rationale', 'reasoning', 'why']))
-  const planWeeks = pick(planObj, ['timelineWeeks', 'timeline_weeks', 'weeks'])
-  const planRisks = asArray(pick(planObj, ['risks']))
-  const memo = textOf(pick(d?.raw, ['decisionMemo', 'decision_memo']))
-  const upside = pick(d?.raw, ['estimatedMonthlyUpside', 'estimated_monthly_upside'])
-  const evidence = asArray(pick(d?.raw, ['evidence']))
-  const assumptions = asArray(pick(d?.raw, ['assumptions']))
-  const limitations = asArray(pick(d?.raw, ['limitations']))
-  const description = textOf(pick(d?.raw, ['description', 'summary', 'finding'])) ||
-    textOf(pick(d?.executionPlan, ['description', 'summary', 'finding']))
-  const causes = asArray(pick(d?.raw, ['rootCauses', 'root_causes', 'causes']))
-  const actGainRaw = textOf(pick(d?.raw, ['actGain', 'ifYouAct']))
-  const actGain = actGainRaw || (typeof upside === 'number' && upside > 0
-    ? '+$' + Math.round(upside).toLocaleString() + ' a month, estimated' : '')
-  const waitLose = textOf(pick(d?.raw, ['waitLose', 'ifYouWait']))
-  const criteria = asArray(pick(d?.raw, ['successCriteria', 'success_criteria', 'milestones']))
+  /* The v4 timeline: the play-bank engine's artifact. */
+  const et = pick(raw, ['executionTimeline']) as Loose | undefined
+  const phases = asArray(pick(et, ['phases'])) as Loose[]
+  const gates = asArray(pick(et, ['decisionGates', 'gates'])) as Loose[]
+  const indicators = asArray(pick(et, ['indicators']))
+  const sequencing = textOf(pick(et, ['sequencingLogic']))
+  const planHeadline = textOf(pick(et, ['headline']))
+  const horizon = pick(et, ['horizonWeeks'])
+  const subDiagnosis = textOf(pick(et, ['subDiagnosis']))
+
+  /* Evidence, narrative, feasibility: the honest layers. */
+  const ep = pick(raw, ['evidencePackage']) as Loose | undefined
+  const supporting = listOf(pick(ep, ['supporting', 'supportingEvidence']))
+  const contradicting = listOf(pick(ep, ['contradicting', 'contradictingEvidence']))
+  const epLimitations = listOf(pick(ep, ['limitations', 'dataLimitations']) || pick(c, ['dataLimitations']))
+  const narrative = pick(raw, ['claudeNarrative'])
+  const narrativeText = typeof narrative === 'string' ? narrative
+    : textOf(pick(narrative, ['narrative', 'summary', 'text', 'body', 'headline']))
+  const feas = pick(raw, ['interventionFeasibility']) as Loose | undefined
+  const upside = money(pick(feas, ['adjustedOpportunity', 'adjustedMonthlyOpportunity']) ?? pick(raw, ['estimatedMonthlyUpside']))
+  const brainStatus = textOf(pick(raw, ['brainAnalysisStatus']))
+  const engineVersion = textOf(pick(raw, ['engineVersion']))
+
+  const fallbackPlan = pick(raw, ['executionPlan']) as Loose | undefined
+  const fallbackWhy = textOf(pick(fallbackPlan, ['rationale']))
 
   return (
     <div className="scr on">
@@ -158,7 +208,7 @@ export function LiveDetail({ id }: { id: string }) {
           {d && failed && (
             <div className="lvpanel lvcenter">
               <b>This analysis failed.</b>
-              <span className="lvmut">The workbook may not have had enough numeric data to score. Run it again from the Google Sheets{'™'} add-on; failed runs do not use a credit twice on the same data.</span>
+              <span className="lvmut">The workbook may not have had enough numeric data to score. Run it again from the Google Sheets{'™'} add-on.</span>
             </div>
           )}
 
@@ -173,99 +223,98 @@ export function LiveDetail({ id }: { id: string }) {
                 </div>
               )}
 
+              {(upside || subDiagnosis) && (
+                <div className="lvcall">
+                  {upside && <div className="lvpanel amber"><span className="lbl">If you act</span>
+                    <p className="lvbody"><b className="lvfig">{upside}</b> Engine-computed: raw impact adjusted by execution and causal success probability.</p></div>}
+                  {subDiagnosis && <div className="lvpanel"><span className="lbl">Sub-diagnosis</span>
+                    <p className="lvbody">{subDiagnosis}</p></div>}
+                </div>
+              )}
+
               <div className="lvmeta">
                 <div><span>Started</span><b>{fmtDate(d.createdAt) || 'Unknown'}</b></div>
-                <div><span>Completed</span><b>{fmtDate(d.completedAt) || 'Just now'}</b></div>
+                <div><span>Completed</span><b>{fmtDate(d.completedAt) || ''}</b></div>
                 {duration(d.createdAt, d.completedAt) && <div><span>Duration</span><b>{duration(d.createdAt, d.completedAt)}</b></div>}
-                <div><span>Analysis</span><b>{id.slice(0, 8)}</b></div>
+                {brainStatus && <div><span>Constraint selection</span><b>{brainStatus.replace(/_/g, ' ')}</b></div>}
+                {engineVersion && <div><span>Engine</span><b>{engineVersion}</b></div>}
               </div>
 
-              {description && (
+              {finding && (
                 <div className="lvpanel"><span className="lbl">What the engine found</span>
-                  <p className="lvbody">{description}</p></div>
+                  <p className="lvbody">{finding}</p></div>
+              )}
+
+              {narrativeText && (
+                <div className="lvpanel"><span className="lbl">The verdict, in full</span>
+                  <p className="lvbody lvpre">{narrativeText}</p></div>
               )}
 
               {causes.length > 0 && (
                 <div className="lvpanel"><span className="lbl">Root causes</span>
-                  <ul className="lvlist">{causes.map((x, i) => <li key={i}>{textOf(x)}</li>)}</ul></div>
+                  <ul className="lvlist">{causes.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
               )}
 
-              {(actGain || waitLose) && (
+              {(supporting.length > 0 || contradicting.length > 0) && (
                 <div className="lvcall">
-                  {actGain && <div className="lvpanel amber"><span className="lbl">If you act</span>
-                    <p className="lvbody">{actGain}</p></div>}
-                  {waitLose && <div className="lvpanel"><span className="lbl">If you wait</span>
-                    <p className="lvbody">{waitLose}</p></div>}
+                  {supporting.length > 0 && <div className="lvpanel"><span className="lbl">Evidence for this call</span>
+                    <ul className="lvlist">{supporting.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
+                  {contradicting.length > 0 && <div className="lvpanel"><span className="lbl">Evidence against it</span>
+                    <ul className="lvlist">{contradicting.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
                 </div>
               )}
 
-              {(plan.length > 0 || planObj) && (
-                <div className="lvpanel">
-                  <span className="lbl">The plan, as the engine wrote it</span>
-                  {planTitle && <b className="lvplant">{planTitle}{typeof planWeeks === 'number' ? ', ' + planWeeks + ' weeks' : ''}</b>}
-                  {planWhy && <p className="lvbody">{planWhy}</p>}
-                  {plan.length === 0 && (
-                    <p className="lvmut" style={{maxWidth: '62ch'}}>The engine wrote no steps for this run. When it cannot observe enough to plan honestly, it says so instead of inventing one.</p>
-                  )}
-                  <div className="lvphases">
-                    {plan.map((p, i) => {
-                      const label = textOf(pick(p, ['week', 'weeks', 'timeframe', 'phase', 'label'])) || 'Phase ' + (i + 1)
-                      const action = textOf(pick(p, ['action', 'title', 'task', 'step', 'description'])) || textOf(p)
-                      const done = textOf(pick(p, ['criteria', 'successCriteria', 'doneWhen', 'completion']))
-                      const owner = textOf(pick(p, ['owner', 'role', 'responsible']))
-                      return (
-                        <div key={i} className="lvphase">
-                          <span className="lvweek">{label}</span>
-                          <div className="lvphasebody">
-                            <b>{action}</b>
-                            {done && <span className="lvdone">Done when: {done}</span>}
-                            {owner && <span className="lvowner">{owner}</span>}
-                          </div>
-                        </div>
-                      )
-                    })}
+              {phases.length > 0 && (
+                <div className="lvtimeline">
+                  <div className="lvplanhead">
+                    <span className="lbl">The plan, as the engine wrote it</span>
+                    {planHeadline && <b className="lvplant">{planHeadline}</b>}
+                    {typeof horizon === 'number' && <span className="lvmut">{horizon} weeks, {phases.length} phases, {gates.length} decision gates</span>}
+                    {sequencing && <p className="lvbody">{sequencing}</p>}
+                  </div>
+                  <div className="plan">
+                    {phases.map((p, i) => (
+                      <LivePhase key={i} p={p} n={i + 1} open={openPhase === i}
+                        toggle={() => setOpenPhase(openPhase === i ? -1 : i)} />
+                    ))}
                   </div>
                 </div>
               )}
 
-              {memo && (
-                <div className="lvpanel"><span className="lbl">Decision memo</span>
-                  <p className="lvbody">{memo}</p></div>
+              {gates.length > 0 && (
+                <div className="lvpanel"><span className="lbl">Decision gates</span>
+                  {gates.map((g, i) => (
+                    <div key={i} className="gate" style={{ margin: '6px 0 0' }}>
+                      <span className="lbl">Gate {i + 1}{textOf(g.timing) ? ', ' + textOf(g.timing) : ''}</span>
+                      <div className="q">{textOf(pick(g, ['condition', 'question', 'criteria', 'checkpoint', 'description']))}</div>
+                      <div className="two">
+                        {textOf(g.ifPass) && <div><span className="lbl">If pass</span><span className="v">{textOf(g.ifPass)}</span></div>}
+                        {textOf(g.ifMiss) && <div><span className="lbl">If miss</span><span className="v">{textOf(g.ifMiss)}</span></div>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
 
-              {planRisks.length > 0 && (
-                <div className="lvpanel"><span className="lbl">Risks the engine flagged</span>
-                  <ul className="lvlist">{planRisks.map((x, i) => <li key={i}>{textOf(x)}</li>)}</ul></div>
-              )}
-
-              {evidence.length > 0 && (
-                <div className="lvpanel"><span className="lbl">Evidence</span>
-                  <ul className="lvlist">{evidence.map((x, i) => <li key={i}>{textOf(x)}</li>)}</ul></div>
-              )}
-
-              {assumptions.length > 0 && (
-                <div className="lvpanel"><span className="lbl">Assumptions</span>
-                  <ul className="lvlist">{assumptions.map((x, i) => <li key={i}>{textOf(x)}</li>)}</ul></div>
-              )}
-
-              {limitations.length > 0 && (
-                <div className="lvpanel"><span className="lbl">What would prove this wrong</span>
-                  <ul className="lvlist">{limitations.map((x, i) => <li key={i}>{textOf(x)}</li>)}</ul></div>
-              )}
-
-              {criteria.length > 0 && (
-                <div className="lvpanel"><span className="lbl">Success criteria</span>
-                  <ul className="lvlist">{criteria.map((x, i) => {
-                    const when = textOf(pick(x, ['when', 'timeframe', 'by', 'milestone']))
-                    const target = textOf(pick(x, ['target', 'criterion', 'text', 'description'])) || textOf(x)
-                    return <li key={i}>{when ? when + ': ' + target : target}</li>
+              {indicators.length > 0 && (
+                <div className="lvpanel"><span className="lbl">Indicators the engine is watching</span>
+                  <ul className="lvlist">{indicators.map((x, i) => {
+                    const nm = textOf(x)
+                    const tgt = textOf(pick(x, ['target', 'threshold', 'goal']))
+                    return <li key={i}>{nm}{tgt && nm !== tgt ? ', target ' + tgt : ''}</li>
                   })}</ul></div>
               )}
 
-              {!planObj && plan.length === 0 && !description && !memo && (
-                <div className="lvpanel lvcenter">
-                  <b>The verdict is in; the written plan is still forming.</b>
-                  <span className="lvmut">The engine finished scoring but returned no plan detail yet. The classic portal may show more while this view catches up.</span>
+              {epLimitations.length > 0 && (
+                <div className="lvpanel"><span className="lbl">What would prove this wrong</span>
+                  <ul className="lvlist">{epLimitations.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
+              )}
+
+              {phases.length === 0 && (
+                <div className="lvpanel">
+                  <span className="lbl">The plan, as the engine wrote it</span>
+                  {fallbackWhy && <p className="lvbody">{fallbackWhy}</p>}
+                  <p className="lvmut" style={{ maxWidth: '62ch' }}>The engine wrote no phased timeline for this run. When it cannot observe enough to plan honestly, it says so instead of inventing one.</p>
                 </div>
               )}
             </>
