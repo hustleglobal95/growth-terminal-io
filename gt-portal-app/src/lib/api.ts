@@ -1,5 +1,6 @@
 import { DEMO, API_BASE, PORTAL_API, DEFAULT_WORKSPACE_ID } from '../config'
 import { getClerkToken } from './clerkBridge'
+import { stripDashes } from './sanitize'
 import demo from '../data/demo.json'
 
 export type Status = 'Complete' | 'Running' | 'Failed' | 'Queued'
@@ -79,7 +80,10 @@ async function live<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(msg)
   }
   const body = await res.json()
-  return (body && typeof body === 'object' && 'data' in body ? body.data : body) as T
+  const payload = body && typeof body === 'object' && 'data' in body ? body.data : body
+  /* Single enforcement point: every engine string the portal renders passes
+     through here. No screen can bypass it. See lib/sanitize.ts and RULES.md. */
+  return stripDashes(payload) as T
 }
 
 /** Live auth is Clerk's, not ours: there is no login route on the API.
