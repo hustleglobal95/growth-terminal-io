@@ -992,3 +992,10 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 @media (max-width:760px){.lvcall{grid-template-columns:1fr}}
 
 .lvplant{font-size:14px;font-weight:650;letter-spacing:-.01em}
+
+/* v4 live timeline framing. */
+.lvtimeline{display:flex;flex-direction:column;gap:14px}
+.lvplanhead{display:flex;flex-direction:column;gap:6px}
+.lvfig{color:#FC5802;font-weight:650;margin-right:6px}
+.lvpre{white-space:pre-line}
+.lvwrap .plan{margin-top:4px}
