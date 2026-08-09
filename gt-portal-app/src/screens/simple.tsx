@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { DEMO } from '../config'
 import { data, AnalysisRow } from '../lib/api'
-import { useMe, useAnalyses, firstName } from '../lib/liveData'
+import { useMe, useAnalyses, useOverview, firstName } from '../lib/liveData'
 import { toast, noCredits } from '../lib/bus'
 import { NewAnalysis } from '../components/NewAnalysis'
 import { OvBars, Spark } from '../components/charts'
@@ -30,9 +31,16 @@ export function Overview() {
   const nav = useNavigate()
   const me = useMe()
   const an = useAnalyses()
+  const ov = useOverview()
   const [na, setNa] = useState(false)
   const recent = an.st === 'ready' ? an.rows.slice(0, 5) : []
   const fn = firstName(me)
+  const s = ov ? ov.stats : null
+  const subline = DEMO
+    ? 'One analysis completed today. One workbook is waiting on credits.'
+    : s
+      ? s.totalAnalyses + ' analyses run in this workspace.' + (s.runningAnalyses > 0 ? ' ' + s.runningAnalyses + ' running now.' : '')
+      : ''
   return (
     <div className="scr on">
       {na && <NewAnalysis close={() => setNa(false)} />}
@@ -42,21 +50,54 @@ export function Overview() {
       <Canvas>
         <div className="greet">
           <h1>{'Good ' + daypart() + (fn ? ', ' + fn : '') + '.'}</h1>
-          <p>One analysis completed today. One workbook is waiting on credits.</p>
+          {subline && <p>{subline}</p>}
         </div>
-        <div className="warnrow"><b>0 credits left.</b> New analyses will not run until you top up.
-          <button className="btn p" onClick={() => toast('Opening billing.')}>Top up</button></div>
+        {DEMO && (
+          <div className="warnrow"><b>0 credits left.</b> New analyses will not run until you top up.
+            <button className="btn p" onClick={() => toast('Opening billing.')}>Top up</button></div>
+        )}
         <div className="tilegrid">
-          <div className="tile"><span className="lbl">Analyses run</span><span className="fig">24</span><span className="cap">6 this month</span></div>
-          <div className="tile"><span className="lbl">Businesses</span><span className="fig">9</span><span className="cap">4 active this month</span></div>
-          <div className="tile"><span className="lbl">Forecasts logged</span><span className="fig">3</span><span className="cap">0 resolved yet</span></div>
-          <div className="tile"><span className="lbl">Calibration</span><span className="fig">Drifting</span><span className="cap">Resolve forecasts to score it</span></div>
+          {DEMO ? (
+            <>
+              <div className="tile"><span className="lbl">Analyses run</span><span className="fig">24</span><span className="cap">6 this month</span></div>
+              <div className="tile"><span className="lbl">Businesses</span><span className="fig">9</span><span className="cap">4 active this month</span></div>
+              <div className="tile"><span className="lbl">Forecasts logged</span><span className="fig">3</span><span className="cap">0 resolved yet</span></div>
+              <div className="tile"><span className="lbl">Calibration</span><span className="fig">Drifting</span><span className="cap">Resolve forecasts to score it</span></div>
+            </>
+          ) : (
+            <>
+              <div className="tile"><span className="lbl">Analyses run</span><span className="fig">{s ? s.totalAnalyses : '·'}</span><span className="cap">across this workspace</span></div>
+              <div className="tile"><span className="lbl">Running now</span><span className="fig">{s ? s.runningAnalyses : '·'}</span><span className="cap">live in the engine</span></div>
+              <div className="tile"><span className="lbl">Businesses</span><span className="fig">{s ? s.activeBusinesses : '·'}</span><span className="cap">active in this workspace</span></div>
+              <div className="tile"><span className="lbl">Data snapshots</span><span className="fig">{s ? s.committedSnapshots : '·'}</span><span className="cap">committed and analyzable</span></div>
+            </>
+          )}
         </div>
         <div className="ovgrid">
           <div className="chartcard">
-            <div className="ct">Analyses per month</div>
-            <div className="cs">Runs across the workspace, all sources.</div>
-            <OvBars />
+            {DEMO ? (
+              <>
+                <div className="ct">Analyses per month</div>
+                <div className="cs">Runs across the workspace, all sources.</div>
+                <OvBars />
+              </>
+            ) : (
+              <>
+                <div className="ct">Latest activity</div>
+                <div className="cs">Analyses and data snapshots, newest first, straight from the workspace.</div>
+                <ul className="actfeed">
+                  {(ov ? ov.recentActivity.slice(0, 6) : []).map(a => (
+                    <li key={a.id}>
+                      <span className="pfchip">{a.type === 'snapshot' ? 'Snapshot' : 'Analysis'}</span>
+                      <span className="actt">{a.type === 'snapshot' ? 'Workbook data received' : a.title}</span>
+                      <span className={'stat' + ((a.status || '').toLowerCase() === 'complete' || (a.status || '').toLowerCase() === 'confirmed' ? ' ok' : '')}>
+                        <i />{a.status}</span>
+                    </li>
+                  ))}
+                  {!ov && <li><span className="skel" style={{ width: '60%' }} /></li>}
+                </ul>
+              </>
+            )}
           </div>
           <div className="card">
             <div style={{ padding: '14px 15px 4px' }}><span className="lbl">Recent analyses</span></div>
