@@ -18,6 +18,13 @@ export interface AnalysisDetail {
   raw: Record<string, unknown>
 }
 export interface Business { n: string; i: string; f: string; d: string }
+
+/** Workspace overview: live stats and the activity feed, as the API
+ *  returns them. Nothing here is synthesized client side. */
+export interface OverviewData {
+  stats: { totalAnalyses: number; runningAnalyses: number; committedSnapshots: number; activeBusinesses: number }
+  recentActivity: { type: string; id: string; title: string; subtitle: string; status: string; createdAt: string }[]
+}
 export interface Phase { n: number; wk: string; eff: string; t: string; dw: string; hyp: string; obj: string; why: string; steps: string[]; del: string; own: string; li: string; watch: string }
 export interface Step { t: string; d: number; own: string; how: string[]; need: string; done: string; out: string; care: string }
 export interface Gate { t: string; q: string; pass: string; miss: string }
@@ -134,6 +141,13 @@ export const api = {
   async me(): Promise<{ name: string; workspace: string }> {
     if (DEMO) return { name: 'Kevin Gonzalez', workspace: 'Growth Terminal' }
     return live('/me')
+  },
+  async overview(): Promise<OverviewData> {
+    if (DEMO) return {
+      stats: { totalAnalyses: 24, runningAnalyses: 1, committedSnapshots: 9, activeBusinesses: 9 },
+      recentActivity: []
+    }
+    return live<OverviewData>('/overview')
   },
   /** One analysis with its verdict and plan. The response shape flexes, so
    *  normalization keeps the raw object for adaptive field picking. */

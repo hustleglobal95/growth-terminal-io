@@ -6,7 +6,7 @@
  *  rows for a signed-in user. Show an honest empty state instead. */
 import { useEffect, useState } from 'react'
 import { DEMO } from '../config'
-import { api, data, AnalysisRow } from './api'
+import { api, data, AnalysisRow, OverviewData } from './api'
 
 export interface Me { name: string; workspace: string }
 
@@ -63,4 +63,22 @@ export function firstName(me: Me | null): string | null {
 export function initials(me: Me | null): string {
   if (!me || !me.name) return '·'
   return me.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+}
+
+
+let ovCache: OverviewData | null = null
+let ovPromise: Promise<OverviewData> | null = null
+
+export function useOverview(): OverviewData | null {
+  const [ov, setOv] = useState<OverviewData | null>(ovCache)
+  useEffect(() => {
+    if (ovCache) return
+    let live = true
+    ovPromise = ovPromise || api.overview()
+    ovPromise
+      .then(o => { ovCache = o; if (live) setOv(o) })
+      .catch(() => { ovPromise = null })
+    return () => { live = false }
+  }, [])
+  return ov
 }
