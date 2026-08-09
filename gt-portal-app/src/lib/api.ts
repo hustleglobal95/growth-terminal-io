@@ -119,15 +119,5 @@ export const api = {
   async me(): Promise<{ name: string; workspace: string }> {
     if (DEMO) return { name: 'Kevin Gonzalez', workspace: 'Growth Terminal' }
     return live('/me')
-  },
-  /** Launch an analysis from the portal: business name plus raw CSV text.
-   *  The server runs the same ingest, confirm and create pipeline the
-   *  Sheets add-on uses, and answers 202 with the queued analysis id. */
-  async runAnalysis(businessName: string, csv: string): Promise<{ id: string; status: string }> {
-    if (DEMO) return { id: 'demo', status: 'queued' }
-    return live('/analyses', {
-      method: 'POST',
-      body: JSON.stringify({ businessName, source: 'portal', data: { format: 'csv', csv } })
-    })
   }
 }
