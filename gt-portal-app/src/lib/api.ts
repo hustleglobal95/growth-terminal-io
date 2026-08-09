@@ -144,9 +144,10 @@ export const api = {
       id: String(g('id') || id),
       businessName: String(g('businessName') || 'Untitled business'),
       status: String(g('status') || 'queued'),
-      constraint: (g('constraint') as Record<string, unknown>) || null,
-      createdAt: (g('createdAt') as string) || null,
-      completedAt: (g('completedAt') as string) || null,
+      constraint: (g('constraint') as Record<string, unknown>) ||
+        (g('constraintResult') as Record<string, unknown>) || null,
+      createdAt: (g('createdAt') as string) || (g('startedAt') as string) || null,
+      completedAt: (g('completedAt') as string) || (g('computedAt') as string) || (g('gradedAt') as string) || null,
       executionPlan: g('executionPlan') ?? g('execution_plan') ?? g('plan') ?? null,
       raw: r
     }
