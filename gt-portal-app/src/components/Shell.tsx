@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Palette } from './Palette'
 import { onToast } from '../lib/bus'
-import { useMe, initials } from '../lib/liveData'
+import { DEMO } from '../config'
+import { useMe, useOverview, initials } from '../lib/liveData'
 
 const ICONS: Record<string, string> = {
   Overview: '<rect x="2" y="2" width="5.5" height="5.5" rx="1.2"/><rect x="10.5" y="2" width="5.5" height="5.5" rx="1.2"/><rect x="2" y="10.5" width="5.5" height="5.5" rx="1.2"/><rect x="10.5" y="10.5" width="5.5" height="5.5" rx="1.2"/>',
@@ -27,6 +28,25 @@ const TABS: [string, string][] = [
 
 function Icon({ name }: { name: string }) {
   return <svg viewBox="0 0 18 18" dangerouslySetInnerHTML={{ __html: ICONS[name] }} />
+}
+
+/** Sidebar status chips. Demo keeps its scripted pair; live shows real
+ *  workspace counts from the overview API and nothing it cannot prove. */
+function SideChips() {
+  const ov = useOverview()
+  if (DEMO) return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+      <div className="chip"><i />Calibration: drifting (0%)</div>
+      <div className="chip"><i />Credits: 0 left</div>
+    </div>
+  )
+  if (!ov) return null
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+      <div className="chip"><i />Analyses: {ov.stats.totalAnalyses}</div>
+      <div className="chip"><i />Running: {ov.stats.runningAnalyses}</div>
+    </div>
+  )
 }
 
 function UserCard() {
@@ -107,10 +127,7 @@ export function Shell() {
       <div className="shell">
         <aside className={'side' + (drawer ? ' on' : '')}>
           <img className="logo" src="/logo.svg" alt="Growth Terminal" />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-            <div className="chip"><i />Calibration: drifting (0%)</div>
-            <div className="chip"><i />Credits: 0 left</div>
-          </div>
+          <SideChips />
           <div className="searchpill" onClick={() => setPal(true)}>
             <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>
             Search<span className="k">Ctrl K</span>
