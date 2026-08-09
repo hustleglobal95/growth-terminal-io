@@ -947,3 +947,9 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 .namodal .note{padding:10px 12px;border-radius:9px;background:var(--s2);border:1px solid var(--line);
   font-size:12px;line-height:1.5;color:var(--muted)}
 .namodal .note.bad{border-color:rgba(252,88,2,.3);color:var(--text)}
+
+/* New analysis guide rows. */
+.howrow{display:flex;gap:12px;align-items:flex-start;padding:9px 0;font-size:13px;line-height:1.5}
+.hownum{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;flex:none;
+  border-radius:50%;border:1px solid rgba(252,88,2,.35);color:#FC5802;font-size:11.5px;font-weight:600}
+.namodal a.btn{text-decoration:none}
