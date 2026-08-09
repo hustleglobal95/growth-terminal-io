@@ -103,9 +103,10 @@ export function Analyses() {
   ), [all, q, f])
   const openRow = (a: AnalysisRow) => {
     if (a.open) nav('/analyses/northlane')
+    else if (a.id) nav('/analyses/' + a.id)
     else if (a.st === 'Running') toast('Still running. Usually under five minutes.')
     else if (a.st === 'Queued') noCredits()
-    else toast('Failed: no analyzable sheet. The workbook had no numeric columns.')
+    else toast('This sample row has no detail view.')
   }
   return (
     <div className="scr on">
