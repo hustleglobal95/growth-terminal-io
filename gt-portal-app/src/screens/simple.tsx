@@ -150,7 +150,7 @@ export function Analyses() {
     else toast('This sample row has no detail view.')
   }
   return (
-    <div className="scr on">
+    <div className="scr on anjet">
       {na && <NewAnalysis close={() => setNa(false)} />}
       <Header title="Analyses">
         <button className="btn p" onClick={() => setNa(true)}>New analysis</button>

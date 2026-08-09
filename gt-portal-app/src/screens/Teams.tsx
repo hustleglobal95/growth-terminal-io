@@ -444,7 +444,7 @@ function TicketDrawer({ t, stt, onClose, onStage, onPatch, onApproval, onDelete,
         {t.checklist.map(c => (
           <label key={c.id} className="tmcheck">
             <input type="checkbox" checked={c.done}
-              onChange={() => onPatch(x => { const i = x.checklist.find(y => y.id === c.id); if (i) i.done = !i.done; return (c.done ? 'unticked' : 'ticked') + ' "' + c.t + '"' })} />
+              onChange={() => onPatch(x => { const i = x.checklist.find(y => y.id === c.id); if (!i) return 'updated the checklist'; i.done = !i.done; return (i.done ? 'ticked' : 'unticked') + ' "' + c.t + '"' })} />
             <span className={c.done ? 'donetext' : ''}>{c.t}</span>
           </label>
         ))}
