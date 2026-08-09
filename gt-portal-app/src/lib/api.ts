@@ -3,7 +3,20 @@ import { getClerkToken } from './clerkBridge'
 import demo from '../data/demo.json'
 
 export type Status = 'Complete' | 'Running' | 'Failed' | 'Queued'
-export interface AnalysisRow { b: string; c: string; cat: string; sev: string; src: string; st: Status; d: string; open?: boolean }
+export interface AnalysisRow { id?: string; b: string; c: string; cat: string; sev: string; src: string; st: Status; d: string; open?: boolean }
+
+/** Live analysis detail, normalized loosely: the raw row rides along so the
+ *  detail screen can adaptively pick whatever fields the engine provided. */
+export interface AnalysisDetail {
+  id: string
+  businessName: string
+  status: string
+  constraint: Record<string, unknown> | null
+  createdAt: string | null
+  completedAt: string | null
+  executionPlan: unknown
+  raw: Record<string, unknown>
+}
 export interface Business { n: string; i: string; f: string; d: string }
 export interface Phase { n: number; wk: string; eff: string; t: string; dw: string; hyp: string; obj: string; why: string; steps: string[]; del: string; own: string; li: string; watch: string }
 export interface Step { t: string; d: number; own: string; how: string[]; need: string; done: string; out: string; care: string }
@@ -75,6 +88,7 @@ export async function login(_email: string, _password: string): Promise<void> {
  *  { data: [...], meta: {...} } envelope. We project them into the compact
  *  shape the screens render, client side, so the backend stays generic. */
 interface RawAnalysisRow {
+  id?: string | null
   businessName?: string | null
   primaryConstraintTitle?: string | null
   primaryConstraintCategory?: string | null
@@ -98,6 +112,7 @@ function toRow(r: RawAnalysisRow): AnalysisRow {
   const rawSrc = r.sourceClient || r.sourceType || ''
   const when = r.createdAt ? new Date(r.createdAt) : null
   return {
+    id: r.id || undefined,
     b: r.businessName || 'Untitled business',
     c: r.primaryConstraintTitle || 'Analysis in progress',
     cat: r.primaryConstraintCategory || '',
@@ -119,5 +134,21 @@ export const api = {
   async me(): Promise<{ name: string; workspace: string }> {
     if (DEMO) return { name: 'Kevin Gonzalez', workspace: 'Growth Terminal' }
     return live('/me')
+  },
+  /** One analysis with its verdict and plan. The response shape flexes, so
+   *  normalization keeps the raw object for adaptive field picking. */
+  async getAnalysis(id: string): Promise<AnalysisDetail> {
+    const r = await live<Record<string, unknown>>('/analyses/' + encodeURIComponent(id))
+    const g = (k: string) => r[k]
+    return {
+      id: String(g('id') || id),
+      businessName: String(g('businessName') || 'Untitled business'),
+      status: String(g('status') || 'queued'),
+      constraint: (g('constraint') as Record<string, unknown>) || null,
+      createdAt: (g('createdAt') as string) || null,
+      completedAt: (g('completedAt') as string) || null,
+      executionPlan: g('executionPlan') ?? g('execution_plan') ?? g('plan') ?? null,
+      raw: r
+    }
   }
 }
