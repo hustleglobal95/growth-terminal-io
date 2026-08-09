@@ -999,3 +999,10 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 .lvfig{color:#FC5802;font-weight:650;margin-right:6px}
 .lvpre{white-space:pre-line}
 .lvwrap .plan{margin-top:4px}
+
+/* Overview live activity feed */
+.actfeed{list-style:none;margin:12px 0 2px;padding:0;display:flex;flex-direction:column}
+.actfeed li{display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px solid rgba(255,255,255,.06)}
+.actfeed li:first-child{border-top:0}
+.actfeed .stat{margin-left:auto;flex:none}
+.actt{flex:1;min-width:0;font-size:13.5px;color:#EDE8E0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
