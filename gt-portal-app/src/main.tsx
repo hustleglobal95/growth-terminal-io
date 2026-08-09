@@ -5,7 +5,7 @@ import { Shell } from './components/Shell'
 import { Overview, Analyses, Businesses, Clients, ApiKeys, Teams, Stub } from './screens/simple'
 import { Content } from './screens/Content'
 import { ContentSetup } from './screens/ContentSetup'
-import { Detail } from './screens/Detail'
+import { AnalysisRoute } from './screens/LiveDetail'
 import { Login } from './screens/Login'
 import { ClerkProvider, useAuth } from '@clerk/clerk-react'
 import { setClerkTokenGetter } from './lib/clerkBridge'
@@ -25,7 +25,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <Overview /> },
       { path: '/analyses', element: <Analyses /> },
-      { path: '/analyses/:id', element: <Detail /> },
+      { path: '/analyses/:id', element: <AnalysisRoute /> },
       { path: '/content', element: <Content /> },
       { path: '/content/setup', element: <ContentSetup /> },
       { path: '/businesses', element: <Businesses /> },
