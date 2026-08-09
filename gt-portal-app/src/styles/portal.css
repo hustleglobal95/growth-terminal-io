@@ -990,3 +990,5 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 @keyframes lvpulse{0%,100%{opacity:.35;transform:scale(.9)}50%{opacity:1;transform:scale(1)}}
 .lvpulse{width:14px;height:14px;border-radius:50%;background:#FC5802;animation:lvpulse 1.6s ease-in-out infinite}
 @media (max-width:760px){.lvcall{grid-template-columns:1fr}}
+
+.lvplant{font-size:14px;font-weight:650;letter-spacing:-.01em}
