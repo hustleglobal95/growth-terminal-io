@@ -1089,3 +1089,11 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 .tmthread{cursor:pointer;border:1px solid rgba(255,255,255,.06);border-radius:9px;padding:11px 13px;margin-bottom:8px;background:#16130F}
 .tmthread:hover{border-color:rgba(252,88,2,.4)}
 .tmlink{display:inline-block;margin-top:12px;text-decoration:none}
+
+/* Analyses screen: jet black boxes */
+.anjet .tbl{background:#000}
+.anjet .trow.h{background:#000}
+.anjet .searchin{background:#000}
+.anjet .fchip{background:#000}
+.anjet .fchip.on{background:#000}
+.anjet .emptyblock{background:#000}
