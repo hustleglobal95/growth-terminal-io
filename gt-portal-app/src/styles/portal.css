@@ -1090,10 +1090,10 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 .tmthread:hover{border-color:rgba(252,88,2,.4)}
 .tmlink{display:inline-block;margin-top:12px;text-decoration:none}
 
-/* Analyses screen: jet black boxes */
-.anjet .tbl{background:#000}
-.anjet .trow.h{background:#000}
-.anjet .searchin{background:#000}
-.anjet .fchip{background:#000}
-.anjet .fchip.on{background:#000}
-.anjet .emptyblock{background:#000}
+/* Analysis detail: jet black panels. The amber callout keeps its color. */
+.lvwrap .lvpanel{background:#000}
+.lvwrap .lvpanel.amber{background:rgba(252,88,2,.05)}
+.lvwrap .pcard{background:#000}
+.lvwrap .gate{background:#000}
+.lvwrap .lvcat{background:#000}
+.lvwrap .lvmeta > div{background:#000}
