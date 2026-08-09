@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DEMO } from '../config'
 import { api, AnalysisDetail } from '../lib/api'
+import { analysisAccess } from '../lib/teamData'
 import { Detail } from './Detail'
 
 /** Route switch: the bundled Northlane sample keeps the full demo
@@ -159,6 +160,10 @@ export function LiveDetail({ id }: { id: string }) {
     : textOf(pick(narrative, ['narrative', 'summary', 'text', 'body', 'headline']))
   const feas = pick(raw, ['interventionFeasibility']) as Loose | undefined
   const upside = money(pick(feas, ['adjustedOpportunity', 'adjustedMonthlyOpportunity']) ?? pick(raw, ['estimatedMonthlyUpside']))
+
+  /* Role gate from the Teams permission matrix. Owner sees everything, so
+   * the default workspace renders exactly as before. */
+  const acc = analysisAccess()
   const brainStatus = textOf(pick(raw, ['brainAnalysisStatus']))
   const engineVersion = textOf(pick(raw, ['engineVersion']))
 
@@ -214,6 +219,12 @@ export function LiveDetail({ id }: { id: string }) {
 
           {d && complete && (
             <>
+              {acc.previewing && (!acc.evidence || !acc.financials || !acc.plan) && (
+                <div className="lvpanel"><span className="lbl">Role preview</span>
+                  <p className="lvbody">Viewing as {acc.role}. Sections this role cannot access are hidden: {[
+                    !acc.evidence && 'evidence', !acc.financials && 'financials', !acc.plan && 'the plan'
+                  ].filter(Boolean).join(', ')}.</p></div>
+              )}
               {category && <div className="lvcat">Constraint category<b>{category}</b></div>}
               <h1 className="lvhead">{headline || 'Constraint identified.'}</h1>
               {isFinite(sev) && sev > 0 && (
@@ -223,9 +234,9 @@ export function LiveDetail({ id }: { id: string }) {
                 </div>
               )}
 
-              {(upside || subDiagnosis) && (
+              {((acc.financials && upside) || subDiagnosis) && (
                 <div className="lvcall">
-                  {upside && <div className="lvpanel amber"><span className="lbl">If you act</span>
+                  {acc.financials && upside && <div className="lvpanel amber"><span className="lbl">If you act</span>
                     <p className="lvbody"><b className="lvfig">{upside}</b> Engine-computed: raw impact adjusted by execution and causal success probability.</p></div>}
                   {subDiagnosis && <div className="lvpanel"><span className="lbl">Sub-diagnosis</span>
                     <p className="lvbody">{subDiagnosis}</p></div>}
@@ -255,7 +266,7 @@ export function LiveDetail({ id }: { id: string }) {
                   <ul className="lvlist">{causes.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
               )}
 
-              {(supporting.length > 0 || contradicting.length > 0) && (
+              {acc.evidence && (supporting.length > 0 || contradicting.length > 0) && (
                 <div className="lvcall">
                   {supporting.length > 0 && <div className="lvpanel"><span className="lbl">Evidence for this call</span>
                     <ul className="lvlist">{supporting.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
@@ -264,7 +275,7 @@ export function LiveDetail({ id }: { id: string }) {
                 </div>
               )}
 
-              {phases.length > 0 && (
+              {acc.plan && phases.length > 0 && (
                 <div className="lvtimeline">
                   <div className="lvplanhead">
                     <span className="lbl">The plan, as the engine wrote it</span>
@@ -281,7 +292,7 @@ export function LiveDetail({ id }: { id: string }) {
                 </div>
               )}
 
-              {gates.length > 0 && (
+              {acc.plan && gates.length > 0 && (
                 <div className="lvpanel"><span className="lbl">Decision gates</span>
                   {gates.map((g, i) => (
                     <div key={i} className="gate" style={{ margin: '6px 0 0' }}>
@@ -296,7 +307,7 @@ export function LiveDetail({ id }: { id: string }) {
                 </div>
               )}
 
-              {indicators.length > 0 && (
+              {acc.plan && indicators.length > 0 && (
                 <div className="lvpanel"><span className="lbl">Indicators the engine is watching</span>
                   <ul className="lvlist">{indicators.map((x, i) => {
                     const nm = textOf(x)
@@ -305,12 +316,12 @@ export function LiveDetail({ id }: { id: string }) {
                   })}</ul></div>
               )}
 
-              {epLimitations.length > 0 && (
+              {acc.evidence && epLimitations.length > 0 && (
                 <div className="lvpanel"><span className="lbl">What would prove this wrong</span>
                   <ul className="lvlist">{epLimitations.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
               )}
 
-              {phases.length === 0 && (
+              {acc.plan && phases.length === 0 && (
                 <div className="lvpanel">
                   <span className="lbl">The plan, as the engine wrote it</span>
                   {fallbackWhy && <p className="lvbody">{fallbackWhy}</p>}
