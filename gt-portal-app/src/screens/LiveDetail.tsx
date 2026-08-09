@@ -88,17 +88,30 @@ export function LiveDetail({ id }: { id: string }) {
   const failed = st === 'failed' || st === 'error'
 
   const c = d?.constraint as Loose | null | undefined
-  const headline = textOf(pick(c, ['headline', 'title'])) || textOf(pick(d?.raw, ['primaryConstraintTitle', 'title']))
-  const category = textOf(pick(c, ['category'])) || textOf(pick(d?.raw, ['primaryConstraintCategory']))
+  const headline = textOf(pick(c, ['headline', 'title', 'constraint'])) || textOf(pick(d?.raw, ['primaryConstraintTitle', 'title']))
+  const category = textOf(pick(c, ['category', 'constraintCategory'])) || textOf(pick(d?.raw, ['primaryConstraintCategory']))
   const sevRaw = pick(c, ['severity']) ?? pick(d?.raw, ['severityScore'])
   const sev = typeof sevRaw === 'number' ? sevRaw : parseInt(String(sevRaw || ''), 10)
   const confidence = textOf(pick(c, ['confidence', 'confidenceLabel']))
 
   const plan = d ? extractPhases(d.executionPlan) : []
+  const planObj = (d && d.executionPlan && typeof d.executionPlan === 'object' && !Array.isArray(d.executionPlan))
+    ? d.executionPlan as Loose : null
+  const planTitle = textOf(pick(planObj, ['title']))
+  const planWhy = textOf(pick(planObj, ['rationale', 'reasoning', 'why']))
+  const planWeeks = pick(planObj, ['timelineWeeks', 'timeline_weeks', 'weeks'])
+  const planRisks = asArray(pick(planObj, ['risks']))
+  const memo = textOf(pick(d?.raw, ['decisionMemo', 'decision_memo']))
+  const upside = pick(d?.raw, ['estimatedMonthlyUpside', 'estimated_monthly_upside'])
+  const evidence = asArray(pick(d?.raw, ['evidence']))
+  const assumptions = asArray(pick(d?.raw, ['assumptions']))
+  const limitations = asArray(pick(d?.raw, ['limitations']))
   const description = textOf(pick(d?.raw, ['description', 'summary', 'finding'])) ||
     textOf(pick(d?.executionPlan, ['description', 'summary', 'finding']))
   const causes = asArray(pick(d?.raw, ['rootCauses', 'root_causes', 'causes']))
-  const actGain = textOf(pick(d?.raw, ['actGain', 'ifYouAct']))
+  const actGainRaw = textOf(pick(d?.raw, ['actGain', 'ifYouAct']))
+  const actGain = actGainRaw || (typeof upside === 'number' && upside > 0
+    ? '+$' + Math.round(upside).toLocaleString() + ' a month, estimated' : '')
   const waitLose = textOf(pick(d?.raw, ['waitLose', 'ifYouWait']))
   const criteria = asArray(pick(d?.raw, ['successCriteria', 'success_criteria', 'milestones']))
 
@@ -186,9 +199,14 @@ export function LiveDetail({ id }: { id: string }) {
                 </div>
               )}
 
-              {plan.length > 0 && (
+              {(plan.length > 0 || planObj) && (
                 <div className="lvpanel">
-                  <span className="lbl">The 90 day plan</span>
+                  <span className="lbl">The plan, as the engine wrote it</span>
+                  {planTitle && <b className="lvplant">{planTitle}{typeof planWeeks === 'number' ? ', ' + planWeeks + ' weeks' : ''}</b>}
+                  {planWhy && <p className="lvbody">{planWhy}</p>}
+                  {plan.length === 0 && (
+                    <p className="lvmut" style={{maxWidth: '62ch'}}>The engine wrote no steps for this run. When it cannot observe enough to plan honestly, it says so instead of inventing one.</p>
+                  )}
                   <div className="lvphases">
                     {plan.map((p, i) => {
                       const label = textOf(pick(p, ['week', 'weeks', 'timeframe', 'phase', 'label'])) || 'Phase ' + (i + 1)
@@ -210,6 +228,31 @@ export function LiveDetail({ id }: { id: string }) {
                 </div>
               )}
 
+              {memo && (
+                <div className="lvpanel"><span className="lbl">Decision memo</span>
+                  <p className="lvbody">{memo}</p></div>
+              )}
+
+              {planRisks.length > 0 && (
+                <div className="lvpanel"><span className="lbl">Risks the engine flagged</span>
+                  <ul className="lvlist">{planRisks.map((x, i) => <li key={i}>{textOf(x)}</li>)}</ul></div>
+              )}
+
+              {evidence.length > 0 && (
+                <div className="lvpanel"><span className="lbl">Evidence</span>
+                  <ul className="lvlist">{evidence.map((x, i) => <li key={i}>{textOf(x)}</li>)}</ul></div>
+              )}
+
+              {assumptions.length > 0 && (
+                <div className="lvpanel"><span className="lbl">Assumptions</span>
+                  <ul className="lvlist">{assumptions.map((x, i) => <li key={i}>{textOf(x)}</li>)}</ul></div>
+              )}
+
+              {limitations.length > 0 && (
+                <div className="lvpanel"><span className="lbl">What would prove this wrong</span>
+                  <ul className="lvlist">{limitations.map((x, i) => <li key={i}>{textOf(x)}</li>)}</ul></div>
+              )}
+
               {criteria.length > 0 && (
                 <div className="lvpanel"><span className="lbl">Success criteria</span>
                   <ul className="lvlist">{criteria.map((x, i) => {
@@ -219,7 +262,7 @@ export function LiveDetail({ id }: { id: string }) {
                   })}</ul></div>
               )}
 
-              {plan.length === 0 && !description && (
+              {!planObj && plan.length === 0 && !description && !memo && (
                 <div className="lvpanel lvcenter">
                   <b>The verdict is in; the written plan is still forming.</b>
                   <span className="lvmut">The engine finished scoring but returned no plan detail yet. The classic portal may show more while this view catches up.</span>
