@@ -47,6 +47,9 @@ export interface Ticket {
   analysisId: string; assignee: string; reporter: string; priority: Priority
   stage: Stage; due: string; tags: string[]; checklist: CheckItem[]
   comments: Comment[]; watchers: string[]; createdAt: number; updatedAt: number
+  /** Set the moment the ticket reaches Done, cleared if it is reopened.
+   *  These two fields are what History is built from. */
+  completedAt: number | null; completedBy: string
 }
 export interface Approval {
   id: string; subject: string; ticketId: string; requestedBy: string
@@ -87,7 +90,8 @@ function seed(ownerName: string, ownerEmail: string): TeamState {
       { id: uid(), t: 'Assign a business to someone', done: false },
       { id: uid(), t: 'Move this ticket through a stage', done: false }
     ],
-    comments: [], watchers: [ME], createdAt: now, updatedAt: now
+    comments: [], watchers: [ME], createdAt: now, updatedAt: now,
+    completedAt: null, completedBy: ''
   }
   return {
     members: [{ id: ME, name: ownerName, email: ownerEmail, role: 'Owner', title: 'Founder', status: 'Active', addedAt: now }],
@@ -103,11 +107,27 @@ export function loadTeam(ownerName: string, ownerEmail: string): TeamState {
     const raw = localStorage.getItem(KEY(ws))
     if (raw) {
       const st = JSON.parse(raw) as TeamState
+      let dirty = false
       // Owner identity follows the live session once it resolves.
       const own = st.members.find(m => m.id === ME)
       if (own && ownerName && own.name !== ownerName && ownerName !== 'Workspace owner') {
-        own.name = ownerName; saveTeam(st)
+        own.name = ownerName; dirty = true
       }
+      /* Tickets saved before completion tracking existed have no stamp. A
+         ticket already sitting in Done was completed at some point, and the
+         last time it was touched is the closest honest answer we have, so it
+         still appears in History instead of vanishing from both views. */
+      st.tickets.forEach(t => {
+        if (t.completedAt === undefined) {
+          t.completedAt = t.stage === 'Done' ? (t.updatedAt || t.createdAt || Date.now()) : null
+          dirty = true
+        }
+        if (t.completedBy === undefined) {
+          t.completedBy = t.stage === 'Done' ? ME : ''
+          dirty = true
+        }
+      })
+      if (dirty) saveTeam(st)
       return st
     }
   } catch { /* fall through to seed */ }
@@ -145,6 +165,37 @@ export function progressOf(t: Ticket): number {
     return Math.round((done / t.checklist.length) * 90)
   }
   return [0, 35, 65, 85, 100][STAGES.indexOf(t.stage)] || 0
+}
+
+/** How long a finished ticket keeps its place on the board. The team can
+ *  still see what landed today; anything older has moved into History, so
+ *  the Done column never grows without end. */
+export const DONE_ON_BOARD_MS = 24 * 60 * 60 * 1000
+
+/** Whether a ticket still belongs on the stage board. Everything that is not
+ *  Done always does; a Done ticket does until its grace window passes. A Done
+ *  ticket with no stamp is kept on the board rather than hidden, so nothing
+ *  can disappear because of missing data. */
+export function isOnBoard(t: Ticket, now: number): boolean {
+  if (t.stage !== 'Done') return true
+  if (!t.completedAt) return true
+  return now - t.completedAt < DONE_ON_BOARD_MS
+}
+
+/** Every completed ticket, most recently finished first. This is History. */
+export function completedTickets(st: TeamState): Ticket[] {
+  return st.tickets
+    .filter(t => t.stage === 'Done')
+    .sort((a, b) => (b.completedAt || b.updatedAt) - (a.completedAt || a.updatedAt))
+}
+
+/** Stamp a ticket as finished, or clear the stamp when it is reopened.
+ *  Kept here so the board, the drawer and the approval flow all agree. */
+export function markDone(t: Ticket, byId: string) {
+  t.completedAt = Date.now(); t.completedBy = byId
+}
+export function clearDone(t: Ticket) {
+  t.completedAt = null; t.completedBy = ''
 }
 
 /** The role whose permissions currently apply: the preview role when the
