@@ -1104,6 +1104,26 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 .tmthread:hover{border-color:rgba(0,0,0,.4)}
 .tmlink{display:inline-block;margin-top:12px;text-decoration:none}
 
+/* The More section. A real screen, the way a native app does an overflow tab:
+   full width rows you can hit with a thumb, grouped and labelled, rather than
+   a drawer sliding over the page you were reading. */
+.morewrap{display:flex;flex-direction:column;gap:10px;padding-top:16px;max-width:560px}
+.morewrap .chiprow{display:flex;gap:8px;flex-wrap:wrap}
+.morewrap .searchpill{width:100%}
+.moresec{font-size:11px;font-weight:500;color:var(--faint);margin:8px 0 -2px 2px}
+.morelist{display:flex;flex-direction:column;border:2px solid var(--boxline);border-radius:12px;
+  overflow:hidden;background:var(--s1);box-shadow:var(--shadow-sm)}
+.morerow{display:flex;align-items:center;gap:12px;min-height:52px;padding:13px 15px;
+  border-bottom:1px solid var(--line);color:var(--text);text-decoration:none;font-size:14px}
+.morerow:last-child{border-bottom:0}
+.morerow:hover{background:var(--s2)}
+.morerow svg{width:17px;height:17px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:1.5;
+  stroke-linecap:round;stroke-linejoin:round}
+.morerow .t{flex:1;min-width:0}
+.morerow .chev{width:7px;height:7px;flex:0 0 auto;border-right:1.6px solid var(--faint);
+  border-bottom:1.6px solid var(--faint);transform:rotate(-45deg)}
+.morewrap .usercard{padding:12px 14px}
+
 /* Analysis detail: jet black panels. The amber callout keeps its color. */
 .lvwrap .lvpanel{background:#000}
 .lvwrap .lvpanel.amber{background:rgba(0,0,0,.05)}
