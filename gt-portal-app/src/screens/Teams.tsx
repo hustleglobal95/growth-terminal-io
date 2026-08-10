@@ -492,6 +492,9 @@ function TicketDrawer({ t, stt, onClose, onStage, onPatch, onApproval, onDelete,
 }) {
   const [check, setCheck] = useState('')
   const idx = STAGES.indexOf(t.stage)
+  /** The next stage along. One button commits the ticket to it, so work moves
+   *  a step at a time without hunting for the right chip. */
+  const next = idx >= 0 && idx < STAGES.length - 1 ? STAGES[idx + 1] : null
   const related = stt.activity.filter(a => a.text.includes(t.code)).slice(0, 12)
   return (
     <div className="tmoverlay" onClick={onClose}>
@@ -514,6 +517,16 @@ function TicketDrawer({ t, stt, onClose, onStage, onPatch, onApproval, onDelete,
         </div>
         <div className="tmprog" style={{ margin: '8px 0 2px' }}><i style={{ width: progressOf(t) + '%' }} /></div>
         <div className="rl">{progressOf(t)}% complete</div>
+
+        {next
+          ? <button className="btn p tmcommit" onClick={() => onStage(next)}>
+              {next === 'Done' ? 'Complete this ticket' : 'Commit this step'}
+              <span>moves to {next}</span>
+            </button>
+          : <button className="btn g tmcommit" onClick={() => onStage('In progress')}>
+              Reopen<span>back to In progress</span>
+            </button>}
+
         {t.stage === 'Done' && t.completedAt && (
           <div className="tmdonestamp">Completed by {memberName(stt, t.completedBy || t.assignee)} on {fmtTs(t.completedAt)}</div>
         )}

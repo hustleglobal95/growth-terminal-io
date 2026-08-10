@@ -1104,14 +1104,22 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 .tmthread:hover{border-color:rgba(0,0,0,.4)}
 .tmlink{display:inline-block;margin-top:12px;text-decoration:none}
 
-/* A finished ticket recedes. Light gray fill and quieter type, so attention
-   stays on work still in flight while it sits out its day on the board. */
-.tmcard.done{background:var(--s2);border-color:rgba(0,0,0,.4);box-shadow:none}
-.tmcard.done:hover{border-color:rgba(0,0,0,.6)}
-.tmcard.done .tmtitle{color:var(--muted)}
+/* One button that commits the ticket to its next stage, so work advances a
+   step at a time. The stage chips above it stay, for jumping out of order. */
+.tmcommit{width:100%;justify-content:center;margin-top:12px;gap:9px;flex-wrap:wrap}
+.tmcommit span{font-size:11.5px;font-weight:500;opacity:.62}
+
+/* A finished ticket reads as spent. Everything on it goes light gray, the
+   way a disabled control does: the card is still legible if you look at it,
+   but it stops competing with work that is still live. */
+.tmcard.done{background:var(--s2);border-color:rgba(0,0,0,.16);box-shadow:none}
+.tmcard.done:hover{border-color:rgba(0,0,0,.32);background:#F1F0ED}
+.tmcard.done .tmtitle{color:rgba(0,0,0,.4);font-weight:500}
+.tmcard.done .tmcode,.tmcard.done .tmbiz,.tmcard.done .rl{color:rgba(0,0,0,.3)}
 .tmcard.done .tmprog{background:rgba(0,0,0,.05)}
-.tmcard.done .tmprog i{background:rgba(0,0,0,.3)}
-.tmcard.done .tmcode,.tmcard.done .tmbiz,.tmcard.done .rl{color:var(--faint)}
+.tmcard.done .tmprog i{background:rgba(0,0,0,.16)}
+.tmcard.done .tmav{opacity:.4}
+.tmcard.done .tmprio{opacity:.35}
 
 /* Ticket History. The record of finished work, grouped by the day it landed.
    Rows are quiet by design: this is something you scan, not work in. */
