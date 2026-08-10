@@ -213,7 +213,7 @@ export function Teams() {
   )
 
   const TicketCard = ({ t }: { t: Ticket }) => (
-    <div className="tmcard" role="button" tabIndex={0} onClick={() => setOpenId(t.id)}
+    <div className={'tmcard' + (t.stage === 'Done' ? ' done' : '')} role="button" tabIndex={0} onClick={() => setOpenId(t.id)}
       onKeyDown={e => { if (e.key === 'Enter') setOpenId(t.id) }}>
       <div className="tmcardtop"><span className="tmcode">{t.code}</span>
         <span className={'tmprio ' + prioCls[t.priority]} title={t.priority} /><span className="sp" />
