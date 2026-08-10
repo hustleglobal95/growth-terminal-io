@@ -16,20 +16,20 @@ const ICONS: Record<string, string> = {
   Admin: '<path d="M9 1.5l6 2.5v5c0 4-2.6 6.4-6 7.5-3.4-1.1-6-3.5-6-7.5v-5z"/>',
   'Agent OS': '<rect x="4" y="4" width="10" height="10" rx="2.2"/><path d="M7 1.5v2.5M11 1.5v2.5M7 14v2.5M11 14v2.5M1.5 7H4M1.5 11H4M14 7h2.5M14 11h2.5"/>'
 }
-const NAV: [string, string][] = [
+export const NAV: [string, string][] = [
   ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'], ['Businesses', '/businesses'],
   ['API Keys', '/api-keys'], ['Teams', '/teams'], ['Clients', '/clients'],
   ['Editor', '/editor'], ['Admin', '/admin'], ['Agent OS', '/agent-os']
 ]
-const TABS: [string, string][] = [
+export const TABS: [string, string][] = [
   ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'], ['Businesses', '/businesses']
 ]
 
-function Icon({ name }: { name: string }) {
+export function Icon({ name }: { name: string }) {
   return <svg viewBox="0 0 18 18" dangerouslySetInnerHTML={{ __html: ICONS[name] }} />
 }
 
-function UserCard() {
+export function UserCard() {
   const me = useMe()
   const signOut = () => {
     const clerk = (window as unknown as { Clerk?: { signOut?: (o?: object) => Promise<void> } }).Clerk
@@ -54,7 +54,6 @@ function UserCard() {
 }
 
 export function Shell() {
-  const [drawer, setDrawer] = useState(false)
   const [pal, setPal] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
   const loc = useLocation()
@@ -66,7 +65,7 @@ export function Shell() {
     return () => clearTimeout(h)
   }), [])
 
-  useEffect(() => { setDrawer(false); window.scrollTo(0, 0) }, [loc.pathname])
+  useEffect(() => { window.scrollTo(0, 0) }, [loc.pathname])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -82,9 +81,9 @@ export function Shell() {
   return (
     <>
       <header className="mbar">
-        <button className="mbtn" aria-label="Open menu" onClick={() => setDrawer(true)}>
+        <NavLink className="mbtn" to="/more" aria-label="More">
           <span /><span /><span />
-        </button>
+        </NavLink>
         <span className="lockup" aria-hidden="true">
           <img className="marklogo" src="/logo-mark.png" alt="" />Growth Terminal
         </span>
@@ -92,7 +91,6 @@ export function Shell() {
           <svg viewBox="0 0 20 20"><path d="M10 13V3M10 3L6.5 6.5M10 3l3.5 3.5" /><path d="M4 12v3.5A1.5 1.5 0 005.5 17h9a1.5 1.5 0 001.5-1.5V12" /></svg>
         </button>
       </header>
-      <div className={'scrim' + (drawer ? ' on' : '')} onClick={() => setDrawer(false)} />
 
       <nav className="tabbar">
         {TABS.map(([label, to]) => (
@@ -101,13 +99,13 @@ export function Shell() {
             <Icon name={label} />{label}
           </NavLink>
         ))}
-        <a href="#" onClick={e => { e.preventDefault(); setDrawer(true) }}>
+        <NavLink to="/more" className={({ isActive }) => isActive ? 'on' : ''}>
           <svg viewBox="0 0 18 18"><circle cx="3" cy="9" r="1.4" /><circle cx="9" cy="9" r="1.4" /><circle cx="15" cy="9" r="1.4" /></svg>More
-        </a>
+        </NavLink>
       </nav>
 
       <div className="shell">
-        <aside className={'side' + (drawer ? ' on' : '')}>
+        <aside className="side">
           <span className="mark">
             <img className="marklogo" src="/logo-mark.png" alt="" />Growth Terminal
           </span>
@@ -131,7 +129,7 @@ export function Shell() {
           <UserCard />
         </aside>
 
-        <main><Outlet /></main>
+        <main><Outlet context={{ openPalette: () => setPal(true) }} /></main>
       </div>
 
       {pal && <Palette close={() => setPal(false)} go={p => { setPal(false); nav(p) }} />}
