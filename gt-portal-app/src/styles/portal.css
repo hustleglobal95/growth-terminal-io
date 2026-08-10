@@ -1104,6 +1104,15 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 .tmthread:hover{border-color:rgba(0,0,0,.4)}
 .tmlink{display:inline-block;margin-top:12px;text-decoration:none}
 
+/* A finished ticket recedes. Light gray fill and quieter type, so attention
+   stays on work still in flight while it sits out its day on the board. */
+.tmcard.done{background:var(--s2);border-color:rgba(0,0,0,.4);box-shadow:none}
+.tmcard.done:hover{border-color:rgba(0,0,0,.6)}
+.tmcard.done .tmtitle{color:var(--muted)}
+.tmcard.done .tmprog{background:rgba(0,0,0,.05)}
+.tmcard.done .tmprog i{background:rgba(0,0,0,.3)}
+.tmcard.done .tmcode,.tmcard.done .tmbiz,.tmcard.done .rl{color:var(--faint)}
+
 /* Ticket History. The record of finished work, grouped by the day it landed.
    Rows are quiet by design: this is something you scan, not work in. */
 .tmarchived{display:block;width:100%;margin-top:4px;padding:9px 8px;border-radius:8px;
