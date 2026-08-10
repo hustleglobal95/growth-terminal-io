@@ -7,6 +7,7 @@ import { Teams } from './screens/Teams'
 import { Content } from './screens/Content'
 import { ContentSetup } from './screens/ContentSetup'
 import { AnalysisRoute } from './screens/LiveDetail'
+import { More } from './screens/More'
 import { Login } from './screens/Login'
 import { ClerkProvider, useAuth } from '@clerk/clerk-react'
 import { setClerkTokenGetter } from './lib/clerkBridge'
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
       { path: '/api-keys', element: <ApiKeys /> },
       { path: '/teams', element: <Teams /> },
       { path: '/clients', element: <Clients /> },
+      { path: '/more', element: <More /> },
       { path: '/:id', element: <Stub /> }
     ]
   }
