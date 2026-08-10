@@ -11,14 +11,27 @@ import { toast } from '../lib/bus'
 import {
   TeamState, Ticket, Role, Stage, Priority, Member,
   ROLES, STAGES, PRIORITIES, PERMS, ME,
-  loadTeam, saveTeam, act, uid, memberName, initialsOf, progressOf, effectiveRole
+  loadTeam, saveTeam, act, uid, memberName, initialsOf, progressOf, effectiveRole,
+  isOnBoard, completedTickets, markDone, clearDone
 } from '../lib/teamData'
 
-const TABS = ['Team', 'Tickets', 'Business Assignment', 'Activity', 'Collaboration', 'Approvals'] as const
+const TABS = ['Team', 'Tickets', 'History', 'Business Assignment', 'Activity', 'Collaboration', 'Approvals'] as const
 type Tab = typeof TABS[number]
 
 const fmtTs = (ts: number) => new Date(ts).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+const fmtTime = (ts: number) => new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 const prioCls: Record<Priority, string> = { Low: 'lo', Medium: 'md', High: 'hi', Urgent: 'ur' }
+
+/** Day headings for History: the two most recent days read as words, which
+ *  is how people talk about work that just landed. */
+const dayKey = (ts: number) => new Date(ts).toDateString()
+const dayLabel = (ts: number) => {
+  const k = dayKey(ts)
+  const now = Date.now()
+  if (k === dayKey(now)) return 'Today'
+  if (k === dayKey(now - 86400000)) return 'Yesterday'
+  return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+}
 
 export function Teams() {
   const me = useMe()
@@ -68,7 +81,8 @@ export function Teams() {
       id: uid(), code: 'GT-' + st.nextCode, title: f.title, desc: f.desc,
       business: f.business, analysisId: f.analysisId, assignee: f.assignee, reporter: ME,
       priority: f.priority, stage: 'Backlog', due: f.due, tags: [], checklist: [],
-      comments: [], watchers: [ME], createdAt: Date.now(), updatedAt: Date.now()
+      comments: [], watchers: [ME], createdAt: Date.now(), updatedAt: Date.now(),
+      completedAt: null, completedBy: ''
     }
     st.nextCode += 1
     st.tickets.unshift(t)
@@ -79,7 +93,21 @@ export function Teams() {
     const line = fn(t); t.updatedAt = Date.now()
     act(st, ME, 'ticket', line + ' on ' + t.code); commit(st)
   }
-  const moveStage = (t: Ticket, s: Stage) => patchTicket(t, x => { x.stage = s; return 'moved to ' + s })
+  /** Stage changes are where History is written. Reaching Done stamps who
+   *  finished it and when; moving back out clears the stamp so a reopened
+   *  ticket is live work again, not a completed one. */
+  const moveStage = (t: Ticket, s: Stage) => patchTicket(t, x => {
+    const was = x.stage
+    x.stage = s
+    if (s === 'Done' && was !== 'Done') { markDone(x, ME); return 'completed' }
+    if (was === 'Done' && s !== 'Done') { clearDone(x); return 'reopened into ' + s }
+    return 'moved to ' + s
+  })
+  const reopen = (t: Ticket) => {
+    t.stage = 'In progress'; clearDone(t); t.updatedAt = Date.now()
+    act(st, ME, 'ticket', 'reopened ' + t.code + ' from History')
+    commit(st); toast(t.code + ' is back on the board.')
+  }
   const requestApproval = (t: Ticket) => {
     st.approvals.unshift({
       id: uid(), subject: t.code + ' ' + t.title, ticketId: t.id, requestedBy: ME,
@@ -94,7 +122,11 @@ export function Teams() {
     a.status = ok ? 'Approved' : 'Changes requested'
     a.approver = ME; a.note = note; a.decidedAt = Date.now()
     const t = st.tickets.find(x => x.id === a.ticketId)
-    if (t) { t.stage = ok ? 'Done' : 'In progress'; t.updatedAt = Date.now() }
+    if (t) {
+      t.stage = ok ? 'Done' : 'In progress'
+      if (ok) markDone(t, ME); else clearDone(t)
+      t.updatedAt = Date.now()
+    }
     act(st, ME, 'approval', (ok ? 'approved ' : 'requested changes on ') + a.subject)
     commit(st)
   }
@@ -191,7 +223,9 @@ export function Teams() {
       <div className="tmprog"><i style={{ width: progressOf(t) + '%' }} /></div>
       <div className="tmcardbot"><span className="rl">{progressOf(t)}%</span><span className="sp" />
         {t.comments.length > 0 && <span className="rl">{t.comments.length} comments</span>}
-        {t.due && <span className="rl">due {t.due}</span>}</div>
+        {t.stage === 'Done' && t.completedAt
+          ? <span className="rl">done {fmtTime(t.completedAt)}</span>
+          : t.due && <span className="rl">due {t.due}</span>}</div>
     </div>
   )
 
@@ -203,16 +237,72 @@ export function Teams() {
       </div>
       <div className="tmboard">
         {STAGES.map(s => {
-          const col = st.tickets.filter(t => t.stage === s)
+          const now = Date.now()
+          const col = st.tickets.filter(t => t.stage === s && isOnBoard(t, now))
+          const archived = s === 'Done' ? st.tickets.filter(t => t.stage === 'Done' && !isOnBoard(t, now)).length : 0
           return <div key={s} className="tmcol">
             <div className="tmcolh"><span>{s}</span><span className="tmcount">{col.length}</span></div>
             {col.map(t => <TicketCard key={t.id} t={t} />)}
-            {col.length === 0 && <div className="tmempty">Nothing here</div>}
+            {col.length === 0 && <div className="tmempty">{s === 'Done' ? 'Nothing finished today' : 'Nothing here'}</div>}
+            {archived > 0 && (
+              <button className="tmarchived" onClick={() => setTab('History')}>
+                {archived} more in History
+              </button>
+            )}
           </div>
         })}
       </div>
     </>
   )
+
+  /** History: every completed ticket, newest first, grouped by the day it
+   *  landed. The board shows what finished today; this is the full record. */
+  const HistoryTab = () => {
+    const done = completedTickets(st)
+    if (done.length === 0) {
+      return <div className="emptyblock">
+        <b>No tickets completed yet.</b>
+        <span>Move a ticket to Done and it lands here with who finished it and when. The board keeps it for a day, then it lives here for good.</span>
+      </div>
+    }
+    const groups: { label: string; items: Ticket[] }[] = []
+    done.forEach(t => {
+      const ts = t.completedAt || t.updatedAt
+      const label = dayLabel(ts)
+      const last = groups[groups.length - 1]
+      if (last && last.label === label) last.items.push(t)
+      else groups.push({ label, items: [t] })
+    })
+    return <>
+      <div className="tmhead" style={{ marginBottom: 10 }}>
+        <span className="cs">{done.length} ticket{done.length === 1 ? '' : 's'} completed. Reopen one and it goes back on the board.</span>
+      </div>
+      {groups.map(g => (
+        <div key={g.label} className="tmhistgroup">
+          <div className="tmhistday">{g.label}</div>
+          <div className="tmhistlist">
+            {g.items.map(t => {
+              const ts = t.completedAt || t.updatedAt
+              return (
+                <div key={t.id} className="tmhistrow">
+                  <span className="tmcode">{t.code}</span>
+                  <span className="tmhistmeta" role="button" tabIndex={0} onClick={() => setOpenId(t.id)}
+                    onKeyDown={e => { if (e.key === 'Enter') setOpenId(t.id) }}>
+                    <span className="nm">{t.title}</span>
+                    <span className="rl">{t.business ? t.business + ' · ' : ''}completed by {memberName(st, t.completedBy || t.assignee)} at {fmtTime(ts)}</span>
+                  </span>
+                  <span className="sp" />
+                  {t.assignee && <Avatar id={t.assignee} />}
+                  <button className="ract" onClick={() => setOpenId(t.id)}>Open</button>
+                  <button className="ract" onClick={() => reopen(t)}>Reopen</button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+    </>
+  }
 
   const AssignTab = () => (
     <>
@@ -324,6 +414,7 @@ export function Teams() {
           </div>
           {tab === 'Team' && <TeamTab />}
           {tab === 'Tickets' && <TicketsTab />}
+          {tab === 'History' && <HistoryTab />}
           {tab === 'Business Assignment' && <AssignTab />}
           {tab === 'Activity' && <ActivityTab />}
           {tab === 'Collaboration' && <CollabTab />}
@@ -423,6 +514,9 @@ function TicketDrawer({ t, stt, onClose, onStage, onPatch, onApproval, onDelete,
         </div>
         <div className="tmprog" style={{ margin: '8px 0 2px' }}><i style={{ width: progressOf(t) + '%' }} /></div>
         <div className="rl">{progressOf(t)}% complete</div>
+        {t.stage === 'Done' && t.completedAt && (
+          <div className="tmdonestamp">Completed by {memberName(stt, t.completedBy || t.assignee)} on {fmtTs(t.completedAt)}</div>
+        )}
 
         <div className="tmgrid">
           <label className="rl">Assignee<MemberSelect value={t.assignee} onPick={id => onPatch(x => { x.assignee = id; return 'assigned ' + (memberName(stt, id)) })} /></label>
