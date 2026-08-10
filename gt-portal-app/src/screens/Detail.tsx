@@ -103,7 +103,7 @@ function OverviewView({ open, setOpen }: { open: number; setOpen: (n: number) =>
     <>
       <div className="verdict">
         <div className="bigpill">
-          <div><span className="lbl" style={{ color: 'rgba(252,88,2,.75)' }}>Constraint category</span>
+          <div><span className="lbl" style={{ color: 'var(--amber)' }}>Constraint category</span>
             <span className="cat">Acquisition</span></div>
           <span className="of">Chosen from twelve. Scored highest on impact and controllability.</span>
         </div>
@@ -325,7 +325,7 @@ function DeepDive() {
                 ))}
               </div>
               <div className="deliver">
-                <span className="lbl" style={{ color: 'rgba(252,88,2,.8)', flex: '0 0 auto' }}>Phase deliverable</span>
+                <span className="lbl" style={{ color: 'var(--amber)', flex: '0 0 auto' }}>Phase deliverable</span>
                 <span className="v">{p.del}</span>
               </div>
             </div>

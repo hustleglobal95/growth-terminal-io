@@ -16,11 +16,33 @@ export function Header({ title, children }: { title: string; children?: React.Re
     </div>
   )
 }
-const Canvas = ({ children }: { children: React.ReactNode }) => (
-  <div className="canvas" style={{ gridTemplateColumns: 'minmax(0,1fr)' }}>
+const Canvas = ({ children, rail }: { children: React.ReactNode; rail?: React.ReactNode }) => (
+  <div className="canvas" style={rail ? undefined : { gridTemplateColumns: 'minmax(0,1fr)' }}>
     <div className="wrap">{children}</div>
+    {rail}
   </div>
 )
+
+/** Quick actions: the same shortcuts already reachable from the sidebar and
+ *  each screen's own header, surfaced as a rail so they are one click away
+ *  without opening the nav. Every entry calls the exact same handler the
+ *  primary UI already uses; nothing here is new functionality. */
+function QuickActions({ onNew }: { onNew: () => void }) {
+  const nav = useNavigate()
+  return (
+    <aside className="rail">
+      <div className="blk">
+        <div className="rt">Quick actions</div>
+        <nav className="jump">
+          <a href="#" onClick={e => { e.preventDefault(); onNew() }}><i />New analysis</a>
+          <a href="#" onClick={e => { e.preventDefault(); nav('/businesses') }}><i />Businesses</a>
+          <a href="#" onClick={e => { e.preventDefault(); nav('/teams') }}><i />Teams</a>
+          <a href="#" onClick={e => { e.preventDefault(); nav('/api-keys') }}><i />API Keys</a>
+        </nav>
+      </div>
+    </aside>
+  )
+}
 
 const daypart = () => {
   const h = new Date().getHours()
@@ -47,7 +69,7 @@ export function Overview() {
       <Header title="Overview">
         <button className="btn p" onClick={() => setNa(true)}>New analysis</button>
       </Header>
-      <Canvas>
+      <Canvas rail={<QuickActions onNew={() => setNa(true)} />}>
         <div className="greet">
           <h1>{'Good ' + daypart() + (fn ? ', ' + fn : '') + '.'}</h1>
           {subline && <p>{subline}</p>}
@@ -155,7 +177,7 @@ export function Analyses() {
       <Header title="Analyses">
         <button className="btn p" onClick={() => setNa(true)}>New analysis</button>
       </Header>
-      <Canvas>
+      <Canvas rail={<QuickActions onNew={() => setNa(true)} />}>
         <div className="toolrow">
           <div className="searchin">
             <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>

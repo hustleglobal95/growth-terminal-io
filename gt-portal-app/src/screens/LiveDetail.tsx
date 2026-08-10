@@ -61,6 +61,46 @@ function Sev({ n }: { n: number }) {
   )
 }
 
+/** Jump to / run details rail. Every entry mirrors a real, currently
+ *  rendered section below (or a real field from the analysis record) -
+ *  nothing here is invented, it is the same content relocated into the
+ *  inspector rail the rest of the portal already uses. */
+function LiveRail({ sev, confidence, jumps, meta }: {
+  sev: number; confidence: string
+  jumps: [string, string][]
+  meta: [string, string][]
+}) {
+  return (
+    <aside className="rail">
+      {isFinite(sev) && sev > 0 && (
+        <div className="blk">
+          <div className="rt">Severity</div>
+          <div className="sevbig"><b>{Math.min(10, Math.max(0, sev))}</b>
+            <span>of 10{confidence ? ', ' + confidence.toLowerCase() + ' confidence' : ''}</span></div>
+          <div className="railsegs">{Array.from({ length: 10 }, (_, i) =>
+            <i key={i} className={i < sev ? 'f' : ''} />)}</div>
+        </div>
+      )}
+      {jumps.length > 0 && (
+        <div className="blk">
+          <div className="rt">Jump to</div>
+          <nav className="jump">
+            {jumps.map(([id, label], i) => (
+              <a key={id} href={'#' + id} className={i === 0 ? 'on' : ''}><i />{label}</a>
+            ))}
+          </nav>
+        </div>
+      )}
+      {meta.length > 0 && (
+        <div className="blk">
+          <div className="rt">Run details</div>
+          <dl>{meta.map(([k, v]) => <div key={k} className="kv"><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+        </div>
+      )}
+    </aside>
+  )
+}
+
 /** One v4 phase, rendered in the demo's own card anatomy. */
 function LivePhase({ p, n, open, toggle }: { p: Loose; n: number; open: boolean; toggle: () => void }) {
   const steps = listOf(p.steps)
@@ -170,6 +210,25 @@ export function LiveDetail({ id }: { id: string }) {
   const fallbackPlan = pick(raw, ['executionPlan']) as Loose | undefined
   const fallbackWhy = textOf(pick(fallbackPlan, ['rationale']))
 
+  /* Jump to / run details: built only from sections that actually render
+   * below, using their real, already-shipped labels. */
+  const jumps: [string, string][] = []
+  if (finding) jumps.push(['verdict', 'What the engine found'])
+  if (narrativeText) jumps.push(['narrative', 'The verdict, in full'])
+  if (causes.length > 0) jumps.push(['causes', 'Root causes'])
+  if (acc.evidence && (supporting.length > 0 || contradicting.length > 0)) jumps.push(['evidence', 'What the data said'])
+  if (acc.plan && phases.length > 0) jumps.push(['plan', 'The 90 day plan'])
+  if (acc.plan && gates.length > 0) jumps.push(['gates', 'Decision gates'])
+  if (acc.plan && indicators.length > 0) jumps.push(['indicators', 'Indicators'])
+  if (acc.evidence && epLimitations.length > 0) jumps.push(['limits', 'What would prove this wrong'])
+
+  const metaRows: [string, string][] = []
+  if (fmtDate(d?.createdAt)) metaRows.push(['Started', fmtDate(d?.createdAt)])
+  if (fmtDate(d?.completedAt)) metaRows.push(['Completed', fmtDate(d?.completedAt)])
+  if (duration(d?.createdAt, d?.completedAt)) metaRows.push(['Duration', duration(d?.createdAt, d?.completedAt)])
+  if (brainStatus) metaRows.push(['Constraint selection', brainStatus.replace(/_/g, ' ')])
+  if (engineVersion) metaRows.push(['Engine', engineVersion])
+
   return (
     <div className="scr on">
       <div className="apphdr">
@@ -184,7 +243,7 @@ export function LiveDetail({ id }: { id: string }) {
         <a className="btn g" href={'https://growthterminal.io/portal/analyses/' + id}
           target="_blank" rel="noreferrer">Open in classic portal</a>
       </div>
-      <div className="canvas" style={{ gridTemplateColumns: 'minmax(0,1fr)' }}>
+      <div className="canvas" style={d && complete ? undefined : { gridTemplateColumns: 'minmax(0,1fr)' }}>
         <div className="wrap lvwrap">
 
           {!d && !err && (
@@ -243,31 +302,23 @@ export function LiveDetail({ id }: { id: string }) {
                 </div>
               )}
 
-              <div className="lvmeta">
-                <div><span>Started</span><b>{fmtDate(d.createdAt) || 'Unknown'}</b></div>
-                <div><span>Completed</span><b>{fmtDate(d.completedAt) || ''}</b></div>
-                {duration(d.createdAt, d.completedAt) && <div><span>Duration</span><b>{duration(d.createdAt, d.completedAt)}</b></div>}
-                {brainStatus && <div><span>Constraint selection</span><b>{brainStatus.replace(/_/g, ' ')}</b></div>}
-                {engineVersion && <div><span>Engine</span><b>{engineVersion}</b></div>}
-              </div>
-
               {finding && (
-                <div className="lvpanel"><span className="lbl">What the engine found</span>
+                <div className="lvpanel" id="verdict"><span className="lbl">What the engine found</span>
                   <p className="lvbody">{finding}</p></div>
               )}
 
               {narrativeText && (
-                <div className="lvpanel"><span className="lbl">The verdict, in full</span>
+                <div className="lvpanel" id="narrative"><span className="lbl">The verdict, in full</span>
                   <p className="lvbody lvpre">{narrativeText}</p></div>
               )}
 
               {causes.length > 0 && (
-                <div className="lvpanel"><span className="lbl">Root causes</span>
+                <div className="lvpanel" id="causes"><span className="lbl">Root causes</span>
                   <ul className="lvlist">{causes.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
               )}
 
               {acc.evidence && (supporting.length > 0 || contradicting.length > 0) && (
-                <div className="lvcall">
+                <div className="lvcall" id="evidence">
                   {supporting.length > 0 && <div className="lvpanel"><span className="lbl">Evidence for this call</span>
                     <ul className="lvlist">{supporting.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
                   {contradicting.length > 0 && <div className="lvpanel"><span className="lbl">Evidence against it</span>
@@ -276,7 +327,7 @@ export function LiveDetail({ id }: { id: string }) {
               )}
 
               {acc.plan && phases.length > 0 && (
-                <div className="lvtimeline">
+                <div className="lvtimeline" id="plan">
                   <div className="lvplanhead">
                     <span className="lbl">The plan, as the engine wrote it</span>
                     {planHeadline && <b className="lvplant">{planHeadline}</b>}
@@ -293,7 +344,7 @@ export function LiveDetail({ id }: { id: string }) {
               )}
 
               {acc.plan && gates.length > 0 && (
-                <div className="lvpanel"><span className="lbl">Decision gates</span>
+                <div className="lvpanel" id="gates"><span className="lbl">Decision gates</span>
                   {gates.map((g, i) => (
                     <div key={i} className="gate" style={{ margin: '6px 0 0' }}>
                       <span className="lbl">Gate {i + 1}{textOf(g.timing) ? ', ' + textOf(g.timing) : ''}</span>
@@ -308,7 +359,7 @@ export function LiveDetail({ id }: { id: string }) {
               )}
 
               {acc.plan && indicators.length > 0 && (
-                <div className="lvpanel"><span className="lbl">Indicators the engine is watching</span>
+                <div className="lvpanel" id="indicators"><span className="lbl">Indicators the engine is watching</span>
                   <ul className="lvlist">{indicators.map((x, i) => {
                     const nm = textOf(x)
                     const tgt = textOf(pick(x, ['target', 'threshold', 'goal']))
@@ -317,7 +368,7 @@ export function LiveDetail({ id }: { id: string }) {
               )}
 
               {acc.evidence && epLimitations.length > 0 && (
-                <div className="lvpanel"><span className="lbl">What would prove this wrong</span>
+                <div className="lvpanel" id="limits"><span className="lbl">What would prove this wrong</span>
                   <ul className="lvlist">{epLimitations.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
               )}
 
@@ -332,6 +383,7 @@ export function LiveDetail({ id }: { id: string }) {
           )}
 
         </div>
+        {d && complete && <LiveRail sev={sev} confidence={confidence} jumps={jumps} meta={metaRows} />}
       </div>
     </div>
   )

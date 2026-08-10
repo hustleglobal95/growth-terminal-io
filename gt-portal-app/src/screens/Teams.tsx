@@ -363,7 +363,7 @@ function CommentBlock({ comments, onAdd, canComment, stt }: {
       {comments.map(c => (
         <div key={c.id} className="tmcomment">
           <span className="av tmav">{initialsOf(memberName(stt, c.author))}</span>
-          <div><div className="rl"><b style={{ color: 'var(--ink, #EDE8E0)' }}>{memberName(stt, c.author)}</b> · {fmtTs(c.ts)}</div>
+          <div><div className="rl"><b style={{ color: 'var(--ink, #000000)' }}>{memberName(stt, c.author)}</b> · {fmtTs(c.ts)}</div>
             <div className="tmctext">{c.text}</div></div>
         </div>
       ))}
