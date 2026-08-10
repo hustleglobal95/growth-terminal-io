@@ -85,7 +85,9 @@ export function Shell() {
         <button className="mbtn" aria-label="Open menu" onClick={() => setDrawer(true)}>
           <span /><span /><span />
         </button>
-        <img className="logo" src="/logo.svg" alt="" aria-hidden="true" />
+        <span className="lockup" aria-hidden="true">
+          <img className="marklogo" src="/logo-mark.png" alt="" />Growth Terminal
+        </span>
         <button className="mbtn r" aria-label="Share">
           <svg viewBox="0 0 20 20"><path d="M10 13V3M10 3L6.5 6.5M10 3l3.5 3.5" /><path d="M4 12v3.5A1.5 1.5 0 005.5 17h9a1.5 1.5 0 001.5-1.5V12" /></svg>
         </button>
@@ -106,7 +108,9 @@ export function Shell() {
 
       <div className="shell">
         <aside className={'side' + (drawer ? ' on' : '')}>
-          <img className="logo" src="/logo.svg" alt="Growth Terminal" />
+          <span className="mark">
+            <img className="marklogo" src="/logo-mark.png" alt="" />Growth Terminal
+          </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             <div className="chip"><i />Calibration: drifting (0%)</div>
             <div className="chip"><i />Credits: 0 left</div>
