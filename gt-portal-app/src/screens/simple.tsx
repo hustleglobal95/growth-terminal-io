@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DEMO } from '../config'
 import { data, AnalysisRow } from '../lib/api'
-import { useMe, useAnalyses, useOverview, firstName } from '../lib/liveData'
+import { useMe, useAnalyses, useOverview, useBusinesses, firstName } from '../lib/liveData'
 import { toast, noCredits } from '../lib/bus'
 import { NewAnalysis } from '../components/NewAnalysis'
 import { OvBars, Spark } from '../components/charts'
@@ -274,12 +274,86 @@ function CardGrid({ items }: { items: typeof data.BIZ }) {
   )
 }
 
-export const Businesses = () => (
-  <div className="scr on">
-    <Header title="Businesses"><button className="btn g" onClick={() => toast('Businesses are created when their first analysis runs.')}>Add business</button></Header>
-    <Canvas><CardGrid items={data.BIZ} /></Canvas>
-  </div>
-)
+/** Businesses, from the businesses table.
+ *
+ *  That table holds an id, a slug, a name and timestamps. It has no category
+ *  and no metric, so none is shown. The only enrichment is the most recent
+ *  analysis for each business, matched by the name the snapshot carried, which
+ *  is real data the analyses endpoint already returns. Anything more numeric
+ *  has to come from a join the API does not expose yet. */
+export function Businesses() {
+  const nav = useNavigate()
+  const rows = useBusinesses()
+  const an = useAnalyses()
+
+  if (DEMO) return (
+    <div className="scr on">
+      <Header title="Businesses"><button className="btn g" onClick={() => toast('Businesses are created when their first analysis runs.')}>Add business</button></Header>
+      <Canvas><CardGrid items={data.BIZ} /></Canvas>
+    </div>
+  )
+
+  const latest = (name: string): AnalysisRow | undefined =>
+    an.st === 'ready' ? an.rows.find(r => r.b === name) : undefined
+  const day = (s: string | null) => {
+    if (!s) return ''
+    const d = new Date(s)
+    return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })
+  }
+  const synced = (s: string | null) => {
+    if (!s) return false
+    const d = new Date(s).getTime()
+    return isFinite(d) && Date.now() - d < 14 * 24 * 60 * 60 * 1000
+  }
+
+  return (
+    <div className="scr on">
+      <Header title="Businesses">
+        <button className="btn g" onClick={() => toast('Businesses are created when their first analysis runs.')}>Add business</button>
+      </Header>
+      <Canvas>
+        {rows === null && (
+          <div className="tbl">{[0, 1, 2].map(i => (
+            <div key={i} className="bizrowi skelrow" aria-hidden="true">
+              <span className="skel" style={{ width: '38%' }} />
+              <span className="skel" style={{ width: '20%' }} />
+              <span className="skel" style={{ width: '30%' }} />
+              <span className="skel" style={{ width: '18%' }} />
+            </div>
+          ))}</div>
+        )}
+        {rows !== null && rows.length === 0 && (
+          <div className="intempty" style={{ marginTop: 18 }}>
+            <b>No businesses yet.</b>
+            <span>A business is created the first time an analysis runs against it.
+              Run one from the Google Sheets{'\u2122'} add-on and it appears here.</span>
+          </div>
+        )}
+        {rows !== null && rows.length > 0 && (
+          <div className="tbl">
+            <div className="bizrowi h">
+              <span>Business</span><span>Added</span><span>Latest analysis</span><span>Data</span>
+            </div>
+            {rows.map(b => {
+              const a = latest(b.name)
+              return (
+                <div key={b.id} className="bizrowi" tabIndex={a && a.id ? 0 : -1}
+                  onClick={() => { if (a && a.id) nav('/analyses/' + a.id) }}
+                  onKeyDown={e => { if (e.key === 'Enter' && a && a.id) nav('/analyses/' + a.id) }}>
+                  <span className="bizn">{b.name}</span>
+                  <span className="mut">{day(b.createdAt)}</span>
+                  <span className="mut">{a ? a.c : 'None yet'}</span>
+                  <span className={'stat' + (synced(b.derivedInputsSyncedAt) ? ' ok' : '')}>
+                    <i />{synced(b.derivedInputsSyncedAt) ? 'Syncing' : 'No recent data'}</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </Canvas>
+    </div>
+  )
+}
 export const Clients = () => (
   <div className="scr on">
     <Header title="Clients"><button className="btn g" onClick={() => toast('Clients are available on GT Agency.')}>Add client</button></Header>
