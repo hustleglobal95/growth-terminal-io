@@ -86,6 +86,41 @@ async function live<T>(path: string, init?: RequestInit): Promise<T> {
   return stripDashes(payload) as T
 }
 
+/** The third API surface: /api/v1/workspace. Same Clerk session and same
+ *  X-Workspace-Id header as the portal surface, different prefix. API keys live
+ *  here and nowhere else, which is why they are not reachable under
+ *  PORTAL_API. */
+const WORKSPACE_API = '/api/v1/workspace'
+
+async function liveWs<T>(path: string, init?: RequestInit): Promise<T> {
+  const ws = getWorkspaceId()
+  const token = await getClerkToken()
+  const res = await fetch(API_BASE + WORKSPACE_API + path, {
+    ...init,
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: 'Bearer ' + token } : {}),
+      ...(ws ? { 'X-Workspace-Id': ws } : {}),
+      ...(init?.headers || {})
+    }
+  })
+  if (res.status === 401) { window.location.assign('/login'); throw new Error('Signed out.') }
+  if (!res.ok) {
+    let msg = 'Request failed (' + res.status + ')'
+    try {
+      const eb = await res.json()
+      const m = eb && eb.error && eb.error.message ? eb.error.message : eb && eb.message
+      if (typeof m === 'string' && m) msg = m
+    } catch { /* keep the status message */ }
+    throw new Error(msg)
+  }
+  if (res.status === 204) return null as unknown as T
+  const body = await res.json()
+  const payload = body && typeof body === 'object' && 'data' in body ? body.data : body
+  return stripDashes(payload) as T
+}
+
 /** The same adapter for routes that hang off /api directly rather than off
  *  /api/v1/portal. The engine has two API surfaces: the thin portal one this
  *  app was built against, and the older, much larger one at /api. Calibration
@@ -207,7 +242,70 @@ export interface BillingStatus {
   cancelAtPeriodEnd: boolean
 }
 
+/** A key as the workspace endpoint returns one. The secret itself is never in
+ *  here: only `keyPrefix` survives storage, because the engine keeps a hash.
+ *  The full value exists for exactly one response, the one that creates it. */
+export interface ApiKeyRow {
+  id: string
+  name: string
+  keyPrefix: string
+  scopes: string[]
+  mode: string
+  lastUsedAt: string | null
+  expiresAt: string | null
+  revokedAt: string | null
+  createdAt: string
+  createdByUserId: string
+}
+
+/** The create response. The plaintext key rides along once and is never
+ *  retrievable again, so the field name is worth reading defensively rather
+ *  than losing the key to a naming guess. */
+export interface NewApiKey extends ApiKeyRow {
+  key?: string
+  apiKey?: string
+  plaintext?: string
+  secret?: string
+}
+
+export function secretOf(k: NewApiKey): string {
+  return k.key || k.apiKey || k.plaintext || k.secret || ''
+}
+
+/** What the add-on needs. All three, which is why the create form ticks them
+ *  by default rather than making someone guess. */
+export const ADDON_SCOPES = ['data:ingest', 'analyses:write', 'analyses:read']
+
+export const SCOPE_HELP: Record<string, string> = {
+  'data:ingest': 'Upload sheet data to the engine',
+  'analyses:write': 'Start an analysis',
+  'analyses:read': 'Read results and status'
+}
+
+/** Credits, and what each action costs. Both come from the engine; the costs
+ *  are the reason the balance is worth showing at all, since a number with no
+ *  price list tells nobody whether it is enough. */
+export interface Credits {
+  balance: number
+  costs: Record<string, number>
+}
+
 export const api = {
+  async listKeys(): Promise<ApiKeyRow[]> {
+    if (DEMO) return []
+    const rows = await liveWs<ApiKeyRow[]>('/api-keys')
+    return Array.isArray(rows) ? rows : []
+  },
+  async createKey(name: string, scopes: string[]): Promise<NewApiKey> {
+    return liveWs<NewApiKey>('/api-keys', { method: 'POST', body: JSON.stringify({ name, scopes }) })
+  },
+  async revokeKey(id: string): Promise<void> {
+    await liveWs<unknown>('/api-keys/' + encodeURIComponent(id), { method: 'DELETE' })
+  },
+  async credits(): Promise<Credits> {
+    const ws = getWorkspaceId()
+    return liveRoot<Credits>('/credits/balance?accountId=' + encodeURIComponent(ws || ''))
+  },
   async listBusinesses(): Promise<BusinessRow[]> {
     if (DEMO) return []
     const rows = await live<BusinessRow[]>('/businesses')
