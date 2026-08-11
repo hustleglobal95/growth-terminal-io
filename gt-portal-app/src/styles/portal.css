@@ -1199,3 +1199,76 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 .railrow{display:flex;flex-direction:column;gap:3px}
 .railrow .t{font-size:12.5px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+
+/* ============ 90 day plan: the weekly commitment ledger ============ */
+/* The engine writes the plan; this is where the team writes back what
+   actually happened. Each week is committed on its own, so at the end of
+   the horizon the run is a record, not a memory. */
+/* Plan progress: ours, not the engine's, so it sits behind its own rule and
+   its own label. The bar fills with the weeks the team has committed; the
+   tick is today, so behind or ahead is legible without reading a number. */
+.planprog{margin-top:20px;padding-top:16px;border-top:1px solid var(--line);max-width:440px}
+.planbar{position:relative;height:8px;border-radius:4px;background:var(--s3);margin-top:11px}
+.planbar .fill{display:block;height:100%;background:var(--text);border-radius:4px;
+  transition:width .3s var(--ease)}
+/* Today, drawn as a gap in the bar rather than a mark on top of it, so it
+   stays readable whether it falls on the filled part or the empty part. */
+.planbar .now{position:absolute;top:-3px;bottom:-3px;width:2px;border-radius:1px;
+  background:var(--s1);box-shadow:0 0 0 1.5px var(--text)}
+/* A key, so neither the bar nor the tick has to be guessed at. */
+.planlegend{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:14px}
+.planlegend .pk{display:inline-flex;align-items:center;gap:8px;
+  font-size:12px;color:var(--muted);white-space:nowrap}
+.planlegend .sw{flex:0 0 auto;border-radius:2px}
+.planlegend .sw.done{width:14px;height:8px;background:var(--text)}
+.planlegend .sw.now{width:2px;height:14px;background:var(--s1);box-shadow:0 0 0 1.5px var(--text)}
+
+.wkcommit{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.wkrows{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.wkrow{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:9px;
+  background:var(--s2);border:1px solid var(--line)}
+.wkrow .wkn{font-size:12.5px;font-weight:600;letter-spacing:-.008em;
+  flex:0 0 auto;min-width:62px;font-variant-numeric:tabular-nums}
+.wkrow .wkst{flex:1;min-width:0;font-size:12px;color:var(--faint);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wkrow.due{border-color:var(--line2)}
+.wkrow.due .wkst{color:var(--muted)}
+/* A committed week reads as filed away, the same language the finished
+   tickets speak: still legible, plainly no longer asking for anything. */
+.wkrow.done{background:transparent;border-color:var(--line)}
+.wkrow.done .wkn{color:var(--faint);font-weight:500}
+.wkrow.done .wkst{color:var(--faint)}
+
+.wkbtn{flex:0 0 auto;padding:6px 13px;border-radius:8px;font-size:11.5px;font-weight:600;
+  background:var(--s1);color:var(--text);box-shadow:0 0 0 1px var(--line2) inset;
+  min-height:30px;transition:background .15s var(--ease)}
+.wkbtn:hover{background:var(--s3)}
+.wkbtn.undo{background:transparent;color:var(--faint);font-weight:500;
+  box-shadow:0 0 0 1px var(--line) inset}
+.wkbtn.undo:hover{color:var(--text);background:var(--s2)}
+
+/* Phase header count: progress visible without opening the phase. */
+.phd .wkcount{font-size:11.5px;color:var(--faint);flex:0 0 auto;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.phd .wkcount.all{color:var(--muted);font-weight:600}
+.ph.committed .node{background:var(--text)}
+
+@media (max-width:860px){
+  .phd .wkcount{order:4;flex-basis:100%;margin:2px 0 0}
+  .wkrow{flex-wrap:wrap;gap:8px}
+  .wkrow .wkst{flex-basis:100%;order:3;white-space:normal}
+  .wkbtn{margin-left:auto}
+}
+
+/* ============ API keys: hidden by default ============ */
+/* A key is a credential. It sits masked until someone asks for it, so a
+   shared screen or a screenshot does not hand it away. */
+.keyval{display:flex;align-items:center;gap:10px;min-width:0}
+.keyval .kv{font-family:var(--mono);font-size:12.5px;letter-spacing:.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.keyval .kv.hid{color:var(--faint);letter-spacing:.08em}
+.keyeye{flex:0 0 auto;width:28px;height:28px;border-radius:8px;display:inline-flex;
+  align-items:center;justify-content:center;color:var(--faint);background:var(--s2);
+  box-shadow:0 0 0 1px var(--line) inset;transition:color .15s var(--ease),background .15s var(--ease)}
+.keyeye:hover{color:var(--text);background:var(--s3)}
+.keyeye.on{color:var(--text)}
