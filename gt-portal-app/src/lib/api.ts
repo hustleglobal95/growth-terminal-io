@@ -127,6 +127,7 @@ interface RawAnalysisRow {
   severityScore?: number | null
   sourceType?: string | null
   sourceClient?: string | null
+  snapshotBusinessName?: string | null
   status?: string | null
   createdAt?: string | null
 }
@@ -145,7 +146,11 @@ function toRow(r: RawAnalysisRow): AnalysisRow {
   const when = r.createdAt ? new Date(r.createdAt) : null
   return {
     id: r.id || undefined,
-    b: r.businessName || 'Untitled business',
+    /* Every analysis in the live workspace comes back with no business name:
+       businessName is absent and snapshotBusinessName is null. Rather than
+       stamping "Untitled business" onto every row, this is left empty and the
+       screens fall back to the account name, which is real. */
+    b: r.businessName || r.snapshotBusinessName || '',
     c: r.primaryConstraintTitle || 'Analysis in progress',
     cat: r.primaryConstraintCategory || '',
     sev: r.severityScore != null ? r.severityScore + '/10' : '',
@@ -178,6 +183,18 @@ export interface CalibrationSummary {
 
 /** Billing state. Note there is no credit balance anywhere in this payload,
  *  which is why the sidebar reports the plan rather than a credit count. */
+/** An account as /api/portal/accounts returns it. This is where the only
+ *  human readable name for a workspace lives: the businesses table stores
+ *  auto-created businesses under the account identifier, not a chosen name. */
+export interface AccountRow {
+  id: string
+  name: string
+  role: string
+  member_count: number
+  seat_used: number | null
+  seat_limit: number | null
+}
+
 export interface BillingStatus {
   state: string
   bypassed: boolean
@@ -199,6 +216,10 @@ export const api = {
   },
   async billing(): Promise<BillingStatus> {
     return liveRoot<BillingStatus>('/portal/billing/status')
+  },
+  async accounts(): Promise<AccountRow[]> {
+    const r = await liveRoot<{ accounts?: AccountRow[] }>('/portal/accounts')
+    return Array.isArray(r.accounts) ? r.accounts : []
   },
   async listAnalyses(): Promise<AnalysisRow[]> {
     if (DEMO) return data.AN

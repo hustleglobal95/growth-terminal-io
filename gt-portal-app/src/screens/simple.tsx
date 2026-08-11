@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DEMO } from '../config'
 import { data, AnalysisRow } from '../lib/api'
-import { useMe, useAnalyses, useOverview, useBusinesses, firstName } from '../lib/liveData'
+import { useMe, useAnalyses, useOverview, useBusinesses, useAccounts, accountName, businessLabel, firstName } from '../lib/liveData'
 import { toast, noCredits } from '../lib/bus'
 import { NewAnalysis } from '../components/NewAnalysis'
 import { OvBars, Spark } from '../components/charts'
@@ -73,6 +73,8 @@ export function Overview() {
   const me = useMe()
   const an = useAnalyses()
   const ov = useOverview()
+  const accs = useAccounts()
+  const acct = accountName(accs)
   const [na, setNa] = useState(false)
   const recent = an.st === 'ready' ? an.rows.slice(0, 5) : []
   const fn = firstName(me)
@@ -146,7 +148,7 @@ export function Overview() {
               {recent.map((a, i) => (
                 <li key={i} tabIndex={0} onClick={() => nav('/analyses')}
                   onKeyDown={e => { if (e.key === 'Enter') nav('/analyses') }}>
-                  <span className="b">{a.b}</span><span className="c">{a.st}</span><span className="d">{a.d}</span>
+                  <span className="b">{a.c || a.b || acct}</span><span className="c">{a.st}</span><span className="d">{a.d}</span>
                 </li>
               ))}
               {an.st === 'loading' && [0, 1, 2, 3, 4].map(i => (
@@ -178,6 +180,8 @@ export function Analyses() {
   const [f, setF] = useState('all')
   const [na, setNa] = useState(false)
   const an = useAnalyses()
+  const accs = useAccounts()
+  const acct = accountName(accs)
   const all = an.st === 'ready' ? an.rows : []
   const rows = useMemo(() => all.filter(a =>
     (f === 'all' || a.st === f) &&
@@ -212,10 +216,10 @@ export function Analyses() {
           <div className="trow h"><span>Business</span><span>Constraint</span><span className="hidem">Severity</span><span className="hidem">Source</span><span>Status</span><span className="hidem">Date</span></div>
           {rows.map((a, i) => (
             <div key={i} className="trow" role="button" tabIndex={0}
-              aria-label={'Open analysis for ' + a.b}
+              aria-label={'Open analysis: ' + (a.c || 'analysis')}
               onClick={() => openRow(a)}
               onKeyDown={e => { if (e.key === 'Enter') openRow(a) }}>
-              <span className="b">{a.b}</span>
+              <span className="b">{a.b || acct || 'This workspace'}</span>
               <span className="mut">{a.c}</span>
               <span className="num hidem">{a.sev || '·'}</span>
               <span className="mut hidem">{a.src}</span>
@@ -285,6 +289,7 @@ export function Businesses() {
   const nav = useNavigate()
   const rows = useBusinesses()
   const an = useAnalyses()
+  const accs = useAccounts()
 
   if (DEMO) return (
     <div className="scr on">
@@ -293,8 +298,17 @@ export function Businesses() {
     </div>
   )
 
-  const latest = (name: string): AnalysisRow | undefined =>
-    an.st === 'ready' ? an.rows.find(r => r.b === name) : undefined
+  /* Analyses carry no business reference in this API, so a name match is the
+     only join available and it fails whenever the business was auto-created.
+     With a single business every analysis in the workspace is necessarily
+     that one; with several there is no honest way to attribute them, so
+     nothing is claimed. */
+  const single = rows !== null && rows.length === 1
+  const latest = (name: string): AnalysisRow | undefined => {
+    if (an.st !== 'ready') return undefined
+    if (single) return an.rows[0]
+    return an.rows.find(r => r.b && r.b === name)
+  }
   const day = (s: string | null) => {
     if (!s) return ''
     const d = new Date(s)
@@ -340,7 +354,7 @@ export function Businesses() {
                 <div key={b.id} className="bizrowi" tabIndex={a && a.id ? 0 : -1}
                   onClick={() => { if (a && a.id) nav('/analyses/' + a.id) }}
                   onKeyDown={e => { if (e.key === 'Enter' && a && a.id) nav('/analyses/' + a.id) }}>
-                  <span className="bizn">{b.name}</span>
+                  <span className="bizn">{businessLabel(b.name, accs)}</span>
                   <span className="mut">{day(b.createdAt)}</span>
                   <span className="mut">{a ? a.c : 'None yet'}</span>
                   <span className={'stat' + (synced(b.derivedInputsSyncedAt) ? ' ok' : '')}>
