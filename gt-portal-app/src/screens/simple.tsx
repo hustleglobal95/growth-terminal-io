@@ -27,10 +27,29 @@ const Canvas = ({ children, rail }: { children: React.ReactNode; rail?: React.Re
  *  each screen's own header, surfaced as a rail so they are one click away
  *  without opening the nav. Every entry calls the exact same handler the
  *  primary UI already uses; nothing here is new functionality. */
-function QuickActions({ onNew }: { onNew: () => void }) {
+function QuickActions({ onNew, live }: { onNew: () => void; live?: { running: number; rows: AnalysisRow[] } }) {
   const nav = useNavigate()
   return (
     <aside className="rail">
+      {live && (
+        <div className="blk">
+          <div className="rt">Running now</div>
+          <div className="sevbig"><b>{live.running}</b><span>in the engine</span></div>
+        </div>
+      )}
+      {live && live.rows.length > 0 && (
+        <div className="blk">
+          <div className="rt">Latest</div>
+          <div className="railrecent">
+            {live.rows.slice(0, 4).map((a, i) => (
+              <div key={i} className="railrow">
+                <span className="t">{a.c || a.b}</span>
+                <span className={statCls(a.st)}><i />{a.st}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="blk">
         <div className="rt">Quick actions</div>
         <nav className="jump">
@@ -69,7 +88,7 @@ export function Overview() {
       <Header title="Overview">
         <button className="btn p" onClick={() => setNa(true)}>New analysis</button>
       </Header>
-      <Canvas rail={<QuickActions onNew={() => setNa(true)} />}>
+      <Canvas rail={<QuickActions onNew={() => setNa(true)} live={{ running: s ? s.runningAnalyses : 0, rows: recent }} />}>
         <div className="greet">
           <h1>{'Good ' + daypart() + (fn ? ', ' + fn : '') + '.'}</h1>
           {subline && <p>{subline}</p>}
@@ -151,7 +170,7 @@ export function Overview() {
   )
 }
 
-const statCls = (st: string) => 'stat ' + (st === 'Complete' ? 'ok' : st === 'Running' ? 'run' : '')
+const statCls = (st: string) => 'stat ' + (st === 'Complete' ? 'ok' : st === 'Running' ? 'run' : st === 'Failed' ? 'fail' : '')
 
 export function Analyses() {
   const nav = useNavigate()
@@ -177,7 +196,7 @@ export function Analyses() {
       <Header title="Analyses">
         <button className="btn p" onClick={() => setNa(true)}>New analysis</button>
       </Header>
-      <Canvas rail={<QuickActions onNew={() => setNa(true)} />}>
+      <Canvas rail={<QuickActions onNew={() => setNa(true)} live={{ running: all.filter(a => a.st === 'Running').length, rows: rows.slice(0, 4) }} />}>
         <div className="toolrow">
           <div className="searchin">
             <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>
