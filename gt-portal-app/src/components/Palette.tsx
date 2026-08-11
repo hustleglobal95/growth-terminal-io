@@ -27,7 +27,7 @@ export function Palette({ close, go }: { close: () => void; go: (path: string) =
     { t: 'Set up a content machine', h: 'Action', go: '/content/setup' },
     ...LIVE,
     { t: 'Go to Businesses', h: 'Navigate', go: '/businesses' },
-    { t: 'Go to API Keys', h: 'Navigate', go: '/api-keys' },
+    { t: 'Go to API', h: 'Navigate', go: '/api-keys' },
     { t: 'Go to Teams', h: 'Navigate', go: '/teams' },
     { t: 'Go to Clients', h: 'Navigate', go: '/clients' },
     { t: 'New analysis', h: 'Action', act: noCredits },
