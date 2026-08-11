@@ -1044,6 +1044,10 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 .tminput:focus,.tmsel:focus{outline:none;border-color:rgba(0,0,0,.5)}
 .tmarea{min-height:64px;resize:vertical}
 .tmnote{color:#3B3B3B;font-size:12px;margin:8px 0 0;max-width:60ch}
+/* A limit of the current wiring, stated where it applies. Neutral grey with a
+   rule down the side: this is a caveat, not an alarm, and the alarm colour
+   stays reserved for runs that actually failed. */
+.tmwarn{border-left:2px solid rgba(0,0,0,.22);padding-left:9px;color:#6E6E6E}
 .tmpreview{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.35);
   color:#000000;font-size:12.5px;border-radius:9px;padding:9px 12px;margin-bottom:12px}
 .tmmatrix{margin-top:10px;font-size:12.5px}
