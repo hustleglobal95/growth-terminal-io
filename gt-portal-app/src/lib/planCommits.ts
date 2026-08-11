@@ -37,7 +37,30 @@ export interface PlanRecord {
   horizonWeeks: number
   phaseCount: number
   weeks: WeekCommit[]
+  /** Filled once every week is committed and the team checks the plan
+   *  against what the engine predicted. Null until then. */
+  verification: Verification | null
   updatedAt: number
+}
+
+/** One line of the closing check. The text is never written by us: it is the
+ *  engine's own claim, quoted back so the answer means something. */
+export type CheckAnswer = 'yes' | 'no' | 'unsure'
+export interface CheckItem {
+  id: string
+  group: string
+  text: string
+  answer: CheckAnswer | null
+}
+
+/** The closing check on a finished plan. `verifiedAt` of 0 means the team is
+ *  still filling it in; a real stamp means it is on the record. */
+export interface Verification {
+  items: CheckItem[]
+  note: string
+  verifiedAt: number
+  verifiedBy: string
+  verifiedByName: string
 }
 
 type PlanStore = Record<string, PlanRecord>
@@ -130,7 +153,7 @@ function ensure(store: PlanStore, analysisId: string, meta: PlanMeta): PlanRecor
   const rec: PlanRecord = {
     analysisId, businessName: meta.businessName, startedAt: meta.startedAt,
     horizonWeeks: meta.horizonWeeks, phaseCount: meta.phaseCount,
-    weeks: [], updatedAt: Date.now()
+    weeks: [], verification: null, updatedAt: Date.now()
   }
   store[analysisId] = rec
   return rec
@@ -177,6 +200,91 @@ export function currentWeek(startedAt: number): number {
 }
 
 /* ---------------------------------------------------------------------- */
+/* The closing check. Once every planned week is committed, the team answers */
+/* the engine's own predictions: did the thing it said would happen happen?  */
+/* Committing that answer set is what turns a plan into evidence.            */
+/* ---------------------------------------------------------------------- */
+
+/** The question set the page built from this analysis's own artifact. */
+export interface CheckSpec { id: string; group: string; text: string }
+
+export function verificationOf(analysisId: string): Verification | null {
+  const rec = getRecord(analysisId)
+  return rec ? (rec.verification || null) : null
+}
+
+/** Reconcile the saved answers against the question set the page just built.
+ *  Questions the engine no longer produces drop out, new ones arrive blank,
+ *  and answers already given survive. Answers are never invented. */
+export function checklistFor(analysisId: string, spec: CheckSpec[]): CheckItem[] {
+  const v = verificationOf(analysisId)
+  return spec.map(q => {
+    const prev = v ? v.items.find(i => i.id === q.id) : undefined
+    return { id: q.id, group: q.group, text: q.text, answer: prev ? prev.answer : null }
+  })
+}
+
+function ensureVerification(rec: PlanRecord): Verification {
+  if (!rec.verification) {
+    rec.verification = { items: [], note: '', verifiedAt: 0, verifiedBy: '', verifiedByName: '' }
+  }
+  return rec.verification
+}
+
+/** Record one answer. Saved as it is given, so a refresh mid-check loses
+ *  nothing, and a sealed check reopens rather than being overwritten. */
+export function setAnswer(
+  analysisId: string, meta: PlanMeta, q: CheckSpec, answer: CheckAnswer
+) {
+  const store = load()
+  const rec = ensure(store, analysisId, meta)
+  const v = ensureVerification(rec)
+  const cur = v.items.find(i => i.id === q.id)
+  if (cur) { cur.answer = answer; cur.text = q.text; cur.group = q.group }
+  else v.items.push({ id: q.id, group: q.group, text: q.text, answer })
+  rec.updatedAt = Date.now()
+  save(store)
+}
+
+export function setVerificationNote(analysisId: string, meta: PlanMeta, note: string) {
+  const store = load()
+  const rec = ensure(store, analysisId, meta)
+  ensureVerification(rec).note = note
+  rec.updatedAt = Date.now()
+  save(store)
+}
+
+/** Seal the check. The full question set is written down with it, so the
+ *  record still reads correctly even if the analysis artifact changes later. */
+export function commitVerification(
+  analysisId: string, meta: PlanMeta, spec: CheckSpec[], byName?: string
+): Verification {
+  const store = load()
+  const rec = ensure(store, analysisId, meta)
+  const v = ensureVerification(rec)
+  v.items = checklistFor(analysisId, spec)
+  v.verifiedAt = Date.now()
+  v.verifiedBy = ME
+  v.verifiedByName = byName || myName()
+  rec.updatedAt = Date.now()
+  save(store)
+  return v
+}
+
+/** Unseal it. The answers stay; only the stamp is lifted, because a check
+ *  filed in error is worse for scoring than one still open. */
+export function reopenVerification(analysisId: string) {
+  const store = load()
+  const rec = store[analysisId]
+  if (!rec || !rec.verification) return
+  rec.verification.verifiedAt = 0
+  rec.verification.verifiedBy = ''
+  rec.verification.verifiedByName = ''
+  rec.updatedAt = Date.now()
+  save(store)
+}
+
+/* ---------------------------------------------------------------------- */
 /* The scoreable payload. Internal use: this is what gets grabbed at the    */
 /* end of the horizon and scored. It is never rendered to the customer.     */
 /* ---------------------------------------------------------------------- */
@@ -209,7 +317,25 @@ export interface ScoredPlan {
   onTimeRate: number
   elapsedWeeks: number
   weeks: ScoredWeek[]
+  /** Null until the team has sealed the closing check. */
+  verification: ScoredVerification | null
   generatedAt: number
+}
+
+/** The closing check, reduced to what scoring needs. `held` is the headline:
+ *  of the engine's answerable predictions, the share that came true. Items
+ *  answered "unsure" are excluded from the denominator rather than counted
+ *  against the engine, because an unmeasured claim is not a failed one. */
+export interface ScoredVerification {
+  verifiedAt: number
+  verifiedBy: string
+  note: string
+  itemsTotal: number
+  confirmed: number
+  refuted: number
+  unmeasured: number
+  heldRate: number
+  items: CheckItem[]
 }
 
 /** Build the full record for one analysis. `plan` is the week to phase map
@@ -255,7 +381,25 @@ export function planRecord(
     onTimeRate: done ? Math.round((onTimeCount / done) * 100) : 0,
     elapsedWeeks: startedAt ? currentWeek(startedAt) : 0,
     weeks,
+    verification: scoreVerification(rec ? rec.verification : null),
     generatedAt: Date.now()
+  }
+}
+
+function scoreVerification(v: Verification | null): ScoredVerification | null {
+  if (!v || !v.verifiedAt) return null
+  const confirmed = v.items.filter(i => i.answer === 'yes').length
+  const refuted = v.items.filter(i => i.answer === 'no').length
+  const unmeasured = v.items.filter(i => i.answer !== 'yes' && i.answer !== 'no').length
+  const answered = confirmed + refuted
+  return {
+    verifiedAt: v.verifiedAt,
+    verifiedBy: v.verifiedByName,
+    note: v.note,
+    itemsTotal: v.items.length,
+    confirmed, refuted, unmeasured,
+    heldRate: answered ? Math.round((confirmed / answered) * 100) : 0,
+    items: v.items
   }
 }
 
