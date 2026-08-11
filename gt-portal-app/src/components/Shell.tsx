@@ -9,7 +9,7 @@ const ICONS: Record<string, string> = {
   Analyses: '<path d="M1.5 9.5h3l2-6 3 11 2.5-7h4"/>',
   Content: '<rect x="2" y="4.5" width="11" height="11" rx="1.6"/><path d="M5 2h11v11"/><path d="M2 12l3.4-3.4 2.6 2.6 2.4-2.4 2.6 2.7"/>',
   Businesses: '<path d="M2.5 15.5v-11l6-3v14"/><path d="M8.5 15.5v-8l6 2v6"/><path d="M1 15.5h16"/>',
-  'API Keys': '<circle cx="5.5" cy="6.5" r="3.5"/><path d="M8 9l6.5 6.5"/><path d="M12 12.5l2 2"/>',
+  API: '<circle cx="5.5" cy="6.5" r="3.5"/><path d="M8 9l6.5 6.5"/><path d="M12 12.5l2 2"/>',
   Teams: '<circle cx="6.5" cy="5.5" r="2.8"/><path d="M1.5 15.5c0-2.8 2.2-5 5-5s5 2.2 5 5"/><path d="M12 3.2a2.8 2.8 0 010 5.4"/><path d="M13.5 10.9c1.7.6 3 2.2 3 4.6"/>',
   Clients: '<circle cx="9" cy="5.5" r="3"/><path d="M3 15.5c0-3.3 2.7-6 6-6s6 2.7 6 6"/>',
   Editor: '<path d="M11.5 2.5l4 4L6 16H2v-4z"/><path d="M10 4l4 4"/>',
@@ -18,7 +18,7 @@ const ICONS: Record<string, string> = {
 }
 export const NAV: [string, string][] = [
   ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'], ['Businesses', '/businesses'],
-  ['API Keys', '/api-keys'], ['Teams', '/teams'], ['Clients', '/clients'],
+  ['API', '/api-keys'], ['Teams', '/teams'], ['Clients', '/clients'],
   ['Editor', '/editor'], ['Admin', '/admin'], ['Agent OS', '/agent-os']
 ]
 export const TABS: [string, string][] = [

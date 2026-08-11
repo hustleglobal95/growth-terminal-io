@@ -56,7 +56,7 @@ function QuickActions({ onNew, live }: { onNew: () => void; live?: { running: nu
           <a href="#" onClick={e => { e.preventDefault(); onNew() }}><i />New analysis</a>
           <a href="#" onClick={e => { e.preventDefault(); nav('/businesses') }}><i />Businesses</a>
           <a href="#" onClick={e => { e.preventDefault(); nav('/teams') }}><i />Teams</a>
-          <a href="#" onClick={e => { e.preventDefault(); nav('/api-keys') }}><i />API Keys</a>
+          <a href="#" onClick={e => { e.preventDefault(); nav('/api-keys') }}><i />API</a>
         </nav>
       </div>
     </aside>
@@ -287,20 +287,50 @@ export const Clients = () => (
   </div>
 )
 
+/** A key value, masked until asked for. The mask is the default state on
+ *  every load, so a shared screen, a screen recording or a screenshot never
+ *  carries the credential out of the room by accident. */
+const MASK = '•'.repeat(22)
+/** Locked and unlocked, drawn to the same 16 unit grid as the rest of the
+ *  portal's icons: same stroke, same round joins, no fill. */
+function Lock({ open }: { open: boolean }) {
+  return (
+    <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor"
+      strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="7" width="10" height="7.2" rx="1.8" />
+      {open
+        ? <path d="M5.6 7V4.9a2.5 2.5 0 014.8-.9" />
+        : <path d="M5.6 7V4.9a2.4 2.4 0 014.8 0V7" />}
+    </svg>
+  )
+}
+function KeyValue({ value }: { value: string }) {
+  const [shown, setShown] = useState(false)
+  const label = shown ? 'Hide this key' : 'Show this key'
+  return (
+    <span className="keyval">
+      <span className={'kv' + (shown ? '' : ' hid')}>{shown ? value : MASK}</span>
+      <button className={'keyeye' + (shown ? ' on' : '')} aria-pressed={shown}
+        aria-label={label} title={label}
+        onClick={() => setShown(!shown)}><Lock open={shown} /></button>
+    </span>
+  )
+}
+
 export function ApiKeys() {
   return (
     <div className="scr on">
-      <Header title="API Keys"><button className="btn p" onClick={() => toast('Key created. It is shown once, copy it now.')}>Create key</button></Header>
+      <Header title="API"><button className="btn p" onClick={() => toast('Key created. It is shown once, copy it now.')}>Create key</button></Header>
       <Canvas>
         <p style={{ margin: '16px 0 12px', color: 'var(--muted)', fontSize: 12.5, maxWidth: '70ch' }}>
           Keys connect the Google Sheets{'™'} add-on to this workspace. A key belongs to the person
-          who created it and can be revoked at any time.</p>
+          who created it and can be revoked at any time. Values stay hidden until you show them.</p>
         <div className="tbl">
-          <div className="keyrowi"><span className="kv">gt_ws_live_2f8c {'····'} 9d14</span>
+          <div className="keyrowi"><KeyValue value={'gt_ws_live_2f8c ···· 9d14'} />
             <span className="mut hidem">Created 12 Jul</span><span className="mut hidem">Used 2 min ago</span>
             <span className="stat ok"><i />Active</span>
             <button className="btn g" onClick={() => toast('Key revoked. The add-on it was used in is signed out.')}>Revoke</button></div>
-          <div className="keyrowi"><span className="kv">gt_ws_live_77aa {'····'} 03be</span>
+          <div className="keyrowi"><KeyValue value={'gt_ws_live_77aa ···· 03be'} />
             <span className="mut hidem">Created 2 Jun</span><span className="mut hidem">Used 30 Jul</span>
             <span className="stat"><i />Revoked</span><span /></div>
         </div>

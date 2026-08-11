@@ -18,7 +18,7 @@ export function NewAnalysis({ close }: { close: () => void }) {
         <div className="howrow"><span className="hownum">3</span>
           <span>The verdict lands here within minutes, with the constraint named and the 90 day plan attached.</span></div>
         <p className="sfine">Each run uses one credit. The add-on connects to this workspace with an
-          API key from the API Keys screen.</p>
+          API key from the API screen.</p>
         <div className="setupnav" style={{ marginTop: 4 }}>
           <span className="sp" />
           <button className="btn g" onClick={close}>Close</button>
