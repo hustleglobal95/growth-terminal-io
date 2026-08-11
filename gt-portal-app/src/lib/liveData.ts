@@ -6,7 +6,7 @@
  *  rows for a signed-in user. Show an honest empty state instead. */
 import { useEffect, useState } from 'react'
 import { DEMO } from '../config'
-import { api, data, AccountRow, AnalysisRow, BillingStatus, BusinessRow, CalibrationSummary, OverviewData } from './api'
+import { api, data, AccountRow, AnalysisRow, BillingStatus, BusinessRow, CalibrationSummary, Credits, OverviewData } from './api'
 
 export interface Me { name: string; workspace: string }
 
@@ -111,6 +111,7 @@ export const useBusinesses = onceHook<BusinessRow[]>(() => api.listBusinesses())
 export const useCalibration = onceHook<CalibrationSummary>(() => api.calibration())
 export const useBilling = onceHook<BillingStatus>(() => api.billing())
 export const useAccounts = onceHook<AccountRow[]>(() => api.accounts())
+export const useCredits = onceHook<Credits>(() => api.credits())
 
 /** The workspace's human name, or a neutral fallback while it loads. */
 export function accountName(accs: AccountRow[] | null): string {
@@ -148,6 +149,14 @@ export function calibrationLabel(c: CalibrationSummary | null): string {
     return 'Calibration: ' + Math.round(iv.coverage * 100) + '% in range'
   }
   return 'Calibration: ' + graded + ' of ' + predictions + ' graded'
+}
+
+/** The sidebar's credit line. A balance on its own says nothing about whether
+ *  it is enough, which is why the API screen prints what each action costs
+ *  next to it. Zero is a real answer and is shown as one. */
+export function creditsLabel(c: Credits | null): string {
+  if (!c || typeof c.balance !== 'number') return 'Credits: loading'
+  return 'Credits: ' + c.balance + ' left'
 }
 
 /** The sidebar's plan line. Billing carries no credit balance, so this
