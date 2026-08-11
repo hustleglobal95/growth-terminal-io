@@ -6,7 +6,7 @@
  *  rows for a signed-in user. Show an honest empty state instead. */
 import { useEffect, useState } from 'react'
 import { DEMO } from '../config'
-import { api, data, AnalysisRow, BillingStatus, BusinessRow, CalibrationSummary, OverviewData } from './api'
+import { api, data, AccountRow, AnalysisRow, BillingStatus, BusinessRow, CalibrationSummary, OverviewData } from './api'
 
 export interface Me { name: string; workspace: string }
 
@@ -110,6 +110,30 @@ function onceHook<T>(load: () => Promise<T>) {
 export const useBusinesses = onceHook<BusinessRow[]>(() => api.listBusinesses())
 export const useCalibration = onceHook<CalibrationSummary>(() => api.calibration())
 export const useBilling = onceHook<BillingStatus>(() => api.billing())
+export const useAccounts = onceHook<AccountRow[]>(() => api.accounts())
+
+/** The workspace's human name, or a neutral fallback while it loads. */
+export function accountName(accs: AccountRow[] | null): string {
+  return accs && accs.length && accs[0].name ? accs[0].name : ''
+}
+
+/** Whether a string is an internal identifier rather than something a person
+ *  named. Businesses auto-created from an account are stored under the
+ *  account id in both name and slug, so this is how the interface avoids
+ *  printing a UUID where a name belongs. */
+export function isIdentifier(v: string): boolean {
+  const t = (v || '').trim()
+  return /^acct[-_]/i.test(t) ||
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t)
+}
+
+/** What to print for a business. Its own name when someone chose one, the
+ *  account name when the row was auto-created, and an honest placeholder
+ *  when there is neither. */
+export function businessLabel(name: string, accs: AccountRow[] | null): string {
+  if (name && !isIdentifier(name)) return name
+  return accountName(accs) || 'Unnamed business'
+}
 
 /** The sidebar's calibration line, from the real grading engine.
  *  Reports how much has actually been graded, because with a handful of
