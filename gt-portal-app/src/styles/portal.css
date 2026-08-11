@@ -1165,13 +1165,17 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
   border-bottom:1.6px solid var(--faint);transform:rotate(-45deg)}
 .morewrap .usercard{padding:12px 14px}
 
-/* Analysis detail: jet black panels. The amber callout keeps its color. */
-.lvwrap .lvpanel{background:#000}
-.lvwrap .lvpanel.amber{background:rgba(0,0,0,.05)}
-.lvwrap .pcard{background:#000}
-.lvwrap .gate{background:#000}
-.lvwrap .lvcat{background:#000}
-.lvwrap .lvmeta > div{background:#000}
+/* Analysis detail matches the rest of the portal. This replaces a leftover
+   dark-theme override that painted these panels solid black on the white
+   theme, black text included. White cards, hairline borders, soft depth,
+   exactly like every other surface. */
+.lvwrap .lvpanel{background:var(--s1);border:1px solid rgba(0,0,0,.14);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.lvwrap .pcard{background:var(--s1)}
+.lvwrap .gate{background:var(--s2);border:1px solid rgba(0,0,0,.14);box-shadow:none}
+.lvwrap .lvcat{background:var(--s2);border:1px solid rgba(0,0,0,.14)}
+.lvwrap .lvmeta > div{background:var(--s1);border:1px solid rgba(0,0,0,.14);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.lvwrap .lvphase{border:1px solid rgba(0,0,0,.14)}
+.lvwrap .lvweek{background:var(--s2);border:1px solid rgba(0,0,0,.14)}
 
 
 /* ============ Quality pass ============ */
