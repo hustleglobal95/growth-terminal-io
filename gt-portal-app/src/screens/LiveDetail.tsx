@@ -2,7 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DEMO } from '../config'
 import { api, AnalysisDetail } from '../lib/api'
+import { useMe } from '../lib/liveData'
 import { analysisAccess } from '../lib/teamData'
+import {
+  PlanMeta, WeekCommit, commitWeek, committedWeeks, currentWeek, phaseWeeks, uncommitWeek
+} from '../lib/planCommits'
+import { toast } from '../lib/bus'
 import { Detail } from './Detail'
 
 /** Route switch: the bundled Northlane sample keeps the full demo
@@ -101,17 +106,67 @@ function LiveRail({ sev, confidence, jumps, meta }: {
   )
 }
 
+const stamp = (ms: number): string => new Date(ms).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+
+/** The week by week commitment ledger for one phase. Each planned week is
+ *  committed on its own, so the record at the end of the horizon says which
+ *  weeks were actually worked, when, and by whom. Nothing is scored here;
+ *  this only captures. */
+function WeekLedger({ weeks, now, commits, onCommit, onUndo }: {
+  weeks: number[]; now: number
+  commits: Record<number, WeekCommit>
+  onCommit: (w: number) => void
+  onUndo: (w: number) => void
+}) {
+  return (
+    <div className="wkcommit">
+      <span className="lbl">Commit each week</span>
+      <div className="wkrows">
+        {weeks.map(w => {
+          const c = commits[w]
+          const due = now > 0 && w < now && !c
+          return (
+            <div key={w} className={'wkrow' + (c ? ' done' : due ? ' due' : '')}>
+              <span className="wkn">Week {w}</span>
+              <span className="wkst">
+                {c
+                  ? 'Committed ' + stamp(c.committedAt) + ' by ' + c.committedByName
+                  : now > 0 && w > now ? 'Not started yet'
+                  : due ? 'Not committed' : 'Open now'}
+              </span>
+              {c
+                ? <button className="wkbtn undo" onClick={() => onUndo(w)}>Undo</button>
+                : <button className="wkbtn" onClick={() => onCommit(w)}>Commit</button>}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 /** One v4 phase, rendered in the demo's own card anatomy. */
-function LivePhase({ p, n, open, toggle }: { p: Loose; n: number; open: boolean; toggle: () => void }) {
+function LivePhase({ p, n, open, toggle, weeks, now, commits, onCommit, onUndo }: {
+  p: Loose; n: number; open: boolean; toggle: () => void
+  weeks: number[]; now: number
+  commits: Record<number, WeekCommit>
+  onCommit: (w: number) => void
+  onUndo: (w: number) => void
+}) {
   const steps = listOf(p.steps)
   const eff = textOf(p.effort)
+  const done = weeks.filter(w => commits[w]).length
   return (
-    <div className={'ph' + (open ? ' open' : '')}>
+    <div className={'ph' + (open ? ' open' : '') + (weeks.length > 0 && done === weeks.length ? ' committed' : '')}>
       <span className="wk">{textOf(p.weeks) || 'Phase ' + n}</span><span className="node" />
       <div className="pcard">
         <div className="phd" onClick={toggle}>
           <span className="no">{n}</span>
           <span className="tt">{textOf(p.title)}</span>
+          {weeks.length > 0 && (
+            <span className={'wkcount' + (done === weeks.length ? ' all' : '')}>
+              {done} of {weeks.length} committed</span>
+          )}
           {eff && <span className={'eff' + (/high/i.test(eff) ? ' hi' : '')}>{eff} effort</span>}
           <span className="chev" />
         </div>
@@ -138,6 +193,9 @@ function LivePhase({ p, n, open, toggle }: { p: Loose; n: number; open: boolean;
           {textOf(p.watchOut) && (
             <div className="watch"><span className="lbl">Watch out</span><span className="v">{textOf(p.watchOut)}</span></div>
           )}
+          {weeks.length > 0 && (
+            <WeekLedger weeks={weeks} now={now} commits={commits} onCommit={onCommit} onUndo={onUndo} />
+          )}
         </div>
       </div>
     </div>
@@ -146,9 +204,12 @@ function LivePhase({ p, n, open, toggle }: { p: Loose; n: number; open: boolean;
 
 export function LiveDetail({ id }: { id: string }) {
   const nav = useNavigate()
+  const me = useMe()
   const [d, setD] = useState<AnalysisDetail | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [openPhase, setOpenPhase] = useState(0)
+  /* Bumped after every commit so the ledger below re-reads from storage. */
+  const [ledger, setLedger] = useState(0)
 
   useEffect(() => {
     let live = true
@@ -221,6 +282,43 @@ export function LiveDetail({ id }: { id: string }) {
   if (acc.plan && gates.length > 0) jumps.push(['gates', 'Decision gates'])
   if (acc.plan && indicators.length > 0) jumps.push(['indicators', 'Indicators'])
   if (acc.evidence && epLimitations.length > 0) jumps.push(['limits', 'What would prove this wrong'])
+
+  /* The week map the plan actually covers. Each phase owns the weeks its own
+   * label names; the first phase to claim a week keeps it, so nothing is
+   * committed twice. This map is also the yardstick the record is scored
+   * against later: a week nobody committed is a week that shows as missed. */
+  const claimed = new Set<number>()
+  const phaseWeekMap: number[][] = phases.map((p, i) => {
+    const ws = phaseWeeks(textOf(p.weeks), i).filter(w => !claimed.has(w))
+    ws.forEach(w => claimed.add(w))
+    return ws
+  })
+  const plannedWeeks = phaseWeekMap.reduce((n, ws) => n + ws.length, 0)
+
+  const startedAt = d?.createdAt ? new Date(d.createdAt).getTime() : 0
+  const planMeta: PlanMeta = {
+    businessName: d?.businessName || '',
+    startedAt: isFinite(startedAt) ? startedAt : 0,
+    horizonWeeks: typeof horizon === 'number' ? horizon : plannedWeeks,
+    phaseCount: phases.length
+  }
+  const nowWeek = planMeta.startedAt ? currentWeek(planMeta.startedAt) : 0
+  /* ledger is read here so a commit re-renders the whole plan section. */
+  void ledger
+  const commits: Record<number, WeekCommit> = {}
+  committedWeeks(id).forEach(c => { commits[c.week] = c })
+  const committedCount = Object.keys(commits).length
+
+  const doCommit = (week: number, phaseIndex: number, phaseTitle: string) => {
+    commitWeek(id, planMeta, week, phaseIndex, phaseTitle, '', me ? me.name : '')
+    setLedger(v => v + 1)
+    toast('Week ' + week + ' committed. It is on the record for this plan.')
+  }
+  const doUndo = (week: number) => {
+    uncommitWeek(id, week)
+    setLedger(v => v + 1)
+    toast('Week ' + week + ' commit removed.')
+  }
 
   const metaRows: [string, string][] = []
   if (fmtDate(d?.createdAt)) metaRows.push(['Started', fmtDate(d?.createdAt)])
@@ -333,11 +431,41 @@ export function LiveDetail({ id }: { id: string }) {
                     {planHeadline && <b className="lvplant">{planHeadline}</b>}
                     {typeof horizon === 'number' && <span className="lvmut">{horizon} weeks, {phases.length} phases, {gates.length} decision gates</span>}
                     {sequencing && <p className="lvbody">{sequencing}</p>}
+                    {plannedWeeks > 0 && (
+                      <div className="planprog">
+                        <span className="lbl">Plan progress</span>
+                        <div className="planbar" role="img"
+                          aria-label={committedCount + ' of ' + plannedWeeks + ' weeks committed'
+                            + (nowWeek > 0 ? '. Today is week ' + nowWeek + ' of ' + plannedWeeks : '')}>
+                          <i className="fill"
+                            style={{ width: Math.round((committedCount / plannedWeeks) * 100) + '%' }} />
+                          {nowWeek > 0 && nowWeek <= plannedWeeks && (
+                            <span className="now"
+                              style={{ left: Math.round(((nowWeek - 1) / plannedWeeks) * 100) + '%' }} />
+                          )}
+                        </div>
+                        <div className="planlegend">
+                          <span className="pk"><i className="sw done" />
+                            {committedCount} of {plannedWeeks} weeks committed</span>
+                          {nowWeek > 0 && nowWeek <= plannedWeeks && (
+                            <span className="pk"><i className="sw now" />
+                              Today, week {nowWeek} of {plannedWeeks}</span>
+                          )}
+                          {nowWeek > plannedWeeks && (
+                            <span className="pk"><i className="sw now" />
+                              The {plannedWeeks} week plan has ended</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="plan">
                     {phases.map((p, i) => (
                       <LivePhase key={i} p={p} n={i + 1} open={openPhase === i}
-                        toggle={() => setOpenPhase(openPhase === i ? -1 : i)} />
+                        toggle={() => setOpenPhase(openPhase === i ? -1 : i)}
+                        weeks={phaseWeekMap[i]} now={nowWeek} commits={commits}
+                        onCommit={w => doCommit(w, i, textOf(p.title))}
+                        onUndo={doUndo} />
                     ))}
                   </div>
                 </div>
