@@ -86,6 +86,27 @@ async function live<T>(path: string, init?: RequestInit): Promise<T> {
   return stripDashes(payload) as T
 }
 
+/** The same adapter for routes that hang off /api directly rather than off
+ *  /api/v1/portal. The engine has two API surfaces: the thin portal one this
+ *  app was built against, and the older, much larger one at /api. Calibration
+ *  and billing live on the second. Same origin, same Clerk session, same
+ *  workspace header, different prefix. */
+async function liveRoot<T>(path: string): Promise<T> {
+  const ws = getWorkspaceId()
+  const token = await getClerkToken()
+  const res = await fetch(API_BASE + '/api' + path, {
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: 'Bearer ' + token } : {}),
+      ...(ws ? { 'X-Workspace-Id': ws } : {})
+    }
+  })
+  if (res.status === 401) { window.location.assign('/login'); throw new Error('Signed out.') }
+  if (!res.ok) throw new Error('Request failed (' + res.status + ')')
+  return stripDashes(await res.json()) as T
+}
+
 /** Live auth is Clerk's, not ours: there is no login route on the API.
  *  The demo login resolves immediately; the live path never calls this,
  *  because the Login screen mounts Clerk's own sign in component. */
@@ -136,7 +157,49 @@ function toRow(r: RawAnalysisRow): AnalysisRow {
   }
 }
 
+/** A business exactly as the businesses table holds it. There is no
+ *  category and no metric on this row: anything numeric has to be joined
+ *  from elsewhere, so the screen does not pretend otherwise. */
+export interface BusinessRow {
+  id: string
+  slug: string
+  name: string
+  createdAt: string | null
+  updatedAt: string | null
+  derivedInputsSyncedAt: string | null
+}
+
+/** What the calibration engine actually reports. Only the fields the portal
+ *  reads are typed; the response carries more (per type, per engine version). */
+export interface CalibrationSummary {
+  totals: { predictions: number; graded: number; coverage: number }
+  intervalCalibration: { sampleSize: number; coverage: number; targetCoverage: number }
+}
+
+/** Billing state. Note there is no credit balance anywhere in this payload,
+ *  which is why the sidebar reports the plan rather than a credit count. */
+export interface BillingStatus {
+  state: string
+  bypassed: boolean
+  planName: string | null
+  cadence: string | null
+  trialEndsAt: string | null
+  currentPeriodEnd: string | null
+  cancelAtPeriodEnd: boolean
+}
+
 export const api = {
+  async listBusinesses(): Promise<BusinessRow[]> {
+    if (DEMO) return []
+    const rows = await live<BusinessRow[]>('/businesses')
+    return Array.isArray(rows) ? rows : []
+  },
+  async calibration(): Promise<CalibrationSummary> {
+    return liveRoot<CalibrationSummary>('/calibration/summary')
+  },
+  async billing(): Promise<BillingStatus> {
+    return liveRoot<BillingStatus>('/portal/billing/status')
+  },
   async listAnalyses(): Promise<AnalysisRow[]> {
     if (DEMO) return data.AN
     const rows = await live<RawAnalysisRow[]>('/analyses')
