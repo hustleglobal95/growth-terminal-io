@@ -1272,3 +1272,58 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
   box-shadow:0 0 0 1px var(--line) inset;transition:color .15s var(--ease),background .15s var(--ease)}
 .keyeye:hover{color:var(--text);background:var(--s3)}
 .keyeye.on{color:var(--text)}
+
+/* ============ The closing check ============ */
+/* Once every week is committed, the analysis asks whether it was right. Each
+   line is one of the engine's own predictions, answered by the team. This is
+   the only place in the portal where a customer grades the machine, so it is
+   given room and a plain three way answer rather than a checkbox. */
+.vfy .vfygrp{margin-top:20px}
+.vfy .vfygrp > .lbl{margin-bottom:8px}
+.vfyrow{display:flex;align-items:center;gap:16px;padding:11px 0;
+  border-top:1px solid var(--line)}
+.vfyrow:first-of-type{border-top:0}
+.vfyrow .vfyt{flex:1;min-width:0;font-size:13px;line-height:1.5;color:var(--muted)}
+.vfyrow.set .vfyt{color:var(--text)}
+
+/* Three states, not two. An unmeasured claim is not a failed one and the
+   control has to let someone say so. */
+.vfyseg{flex:0 0 auto;display:inline-flex;border-radius:9px;overflow:hidden;
+  box-shadow:0 0 0 1px var(--line2) inset;background:var(--s1)}
+.vfyseg button{padding:7px 12px;font-size:11.5px;font-weight:500;color:var(--faint);
+  white-space:nowrap;transition:background .15s var(--ease),color .15s var(--ease)}
+.vfyseg button + button{box-shadow:-1px 0 0 var(--line) inset}
+.vfyseg button:hover{background:var(--s2);color:var(--text)}
+.vfyseg button.on{color:var(--s1);background:var(--text);font-weight:600}
+.vfyseg button.on:hover{background:var(--text)}
+
+.vfynote{width:100%;margin-top:20px;padding:11px 13px;border-radius:10px;resize:vertical;
+  background:var(--s2);border:1px solid var(--line);color:var(--text);
+  font:13px/1.55 var(--sans)}
+.vfynote::placeholder{color:var(--faint)}
+.vfynote:focus{outline:0;border-color:var(--line2)}
+.vfyfoot{display:flex;align-items:center;gap:14px;margin-top:16px}
+.vfyfoot .btn{margin-left:auto}
+.vfyfoot .btn:disabled{opacity:.4;cursor:not-allowed}
+.vfyhint{display:block;margin-top:10px;max-width:62ch;line-height:1.5}
+
+/* Sealed. The answers stop being controls and become the record. */
+.vfy.done .vfyrow .vfyt{color:var(--text)}
+.vfytag{flex:0 0 auto;padding:4px 10px;border-radius:7px;font-size:11px;font-weight:600;
+  background:var(--s2);color:var(--faint);white-space:nowrap}
+.vfytag.yes{background:var(--text);color:var(--s1)}
+.vfytag.no{color:var(--text);box-shadow:0 0 0 1px var(--line2) inset;background:transparent}
+.vfysealed{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.vfysum{font-size:13px;color:var(--muted)}
+.vfysum b{color:var(--text);font-weight:600}
+.vfysum .vfyby{display:block;margin-top:4px;font-size:12px;color:var(--faint)}
+.vfynoteread{font-size:13px;line-height:1.6;color:var(--muted);max-width:62ch}
+
+@media (max-width:860px){
+  .vfyrow{flex-wrap:wrap;gap:10px}
+  .vfyrow .vfyt{flex-basis:100%}
+  .vfyseg{width:100%}
+  .vfyseg button{flex:1}
+  .vfytag{margin-left:0}
+}
