@@ -403,6 +403,32 @@ function scoreVerification(v: Verification | null): ScoredVerification | null {
   }
 }
 
+/** Score a stored record on its own, without the page that rendered it.
+ *  The admin view has the ledger but not the analysis artifact, so the plan
+ *  is reconstructed from the horizon the engine wrote and the phase labels
+ *  the commits carry. Weeks nobody committed still count in the denominator,
+ *  which is the whole point. */
+export function scoreStored(rec: PlanRecord): ScoredPlan {
+  const total = rec.horizonWeeks > 0
+    ? rec.horizonWeeks
+    : rec.weeks.reduce((n, w) => Math.max(n, w.week), 0)
+  const plan: { week: number; phaseIndex: number; phaseTitle: string }[] = []
+  for (let w = 1; w <= total; w++) {
+    const c = rec.weeks.find(x => x.week === w)
+    plan.push({ week: w, phaseIndex: c ? c.phaseIndex : -1, phaseTitle: c ? c.phaseTitle : '' })
+  }
+  return planRecord(rec.analysisId, plan) as ScoredPlan
+}
+
+/** Every ledger this browser holds, scored. This is the founder view's whole
+ *  data source today. When the engine grows plan routes it becomes one fetch
+ *  and nothing above it changes. */
+export function allScored(): ScoredPlan[] {
+  return allRecords()
+    .map(scoreStored)
+    .sort((a, b) => b.startedAt - a.startedAt)
+}
+
 /** Every plan ledger this workspace holds, raw. The internal grab point
  *  until the backend grows plan routes; the shape is already the payload
  *  those routes will return. */

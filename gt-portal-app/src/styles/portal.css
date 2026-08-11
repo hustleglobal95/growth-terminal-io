@@ -1327,3 +1327,61 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
   .vfyseg button{flex:1}
   .vfytag{margin-left:0}
 }
+
+/* ============ Internal: the founder view ============ */
+/* Not in the navigation and gated to one address. It reads the plan ledgers
+   and answers the only question that matters internally: does the engine's
+   call hold up once someone actually runs the plan. */
+.intbanner{display:flex;flex-direction:column;gap:6px;margin:18px 0 22px;
+  padding:14px 16px;border-radius:11px;background:var(--s2);
+  border:1px solid var(--line2)}
+.intbanner b{font-size:13px;font-weight:600}
+.intbanner span{font-size:12.5px;line-height:1.55;color:var(--muted);max-width:78ch}
+
+.intcard{margin-top:22px}
+.intsub{margin-top:7px;font-size:12.5px;line-height:1.55;color:var(--faint);max-width:74ch}
+.intbars{display:flex;flex-direction:column;gap:9px;padding:14px 16px 16px}
+.intbar{display:flex;align-items:center;gap:12px}
+.intbar .intbn{flex:0 0 auto;width:104px;font-size:12px;color:var(--muted)}
+.intbar .intbt{flex:1;min-width:0;height:9px;border-radius:4px;background:var(--s3);overflow:hidden}
+.intbar .intbt i{display:block;height:100%;border-radius:4px;background:var(--text)}
+/* Refuted keeps the one alarm colour. Unmeasured is neither good nor bad and
+   is drawn as absence rather than as a third judgement. */
+.intbar .intbt i.o{background:var(--alert)}
+.intbar .intbt i.f{background:var(--line2)}
+.intbar .intbv{flex:0 0 auto;width:34px;text-align:right;font-size:12.5px;font-weight:600;
+  font-variant-numeric:tabular-nums}
+
+.inttbl{margin-top:4px}
+.introw{display:grid;grid-template-columns:1.6fr .8fr 1.1fr .7fr .9fr .6fr .9fr;
+  gap:14px;align-items:center;padding:12px 15px;
+  border-bottom:1px solid var(--line);cursor:pointer;font-size:12.5px}
+.introw:last-child{border-bottom:0}
+.introw:hover{background:var(--s2)}
+.introw:focus-visible{outline:2px solid var(--text);outline-offset:-2px}
+.introw.h{cursor:default;font-size:11px;color:var(--faint);font-weight:500;
+  background:var(--s2)}
+.introw.h:hover{background:var(--s2)}
+.introw .intb{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.introw .mut{color:var(--muted);font-variant-numeric:tabular-nums}
+.intmini{display:block;margin-top:5px;height:3px;border-radius:2px;background:var(--s3)}
+.intmini b{display:block;height:100%;border-radius:2px;background:var(--text)}
+
+.intcall{font-weight:600;white-space:nowrap}
+.intcall.yes{color:var(--text)}
+.intcall.no{color:var(--alert)}
+.intcall.unsure,.intcall.none{color:var(--faint);font-weight:500}
+
+.intempty{display:flex;flex-direction:column;gap:7px;padding:26px 20px;border-radius:12px;
+  background:var(--s2);border:1px solid var(--line)}
+.intempty b{font-size:13.5px;font-weight:600}
+.intempty span{font-size:12.5px;line-height:1.55;color:var(--muted);max-width:66ch}
+
+.intnote{margin-top:28px;padding-top:18px;border-top:1px solid var(--line)}
+.intnote p{margin-top:8px;font-size:12.5px;line-height:1.6;color:var(--muted);max-width:76ch}
+
+@media (max-width:860px){
+  .introw{grid-template-columns:1.4fr .9fr auto;gap:10px}
+  .introw > span:nth-child(4),.introw > span:nth-child(5){display:none}
+  .intbar .intbn{width:88px}
+}

@@ -19,7 +19,7 @@ const ICONS: Record<string, string> = {
 export const NAV: [string, string][] = [
   ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'], ['Businesses', '/businesses'],
   ['API', '/api-keys'], ['Teams', '/teams'], ['Clients', '/clients'],
-  ['Editor', '/editor'], ['Admin', '/admin'], ['Agent OS', '/agent-os']
+  ['Editor', '/editor'], ['Agent OS', '/agent-os']
 ]
 export const TABS: [string, string][] = [
   ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'], ['Businesses', '/businesses']
