@@ -5,7 +5,10 @@ import { api, AnalysisDetail } from '../lib/api'
 import { useMe } from '../lib/liveData'
 import { analysisAccess } from '../lib/teamData'
 import {
-  PlanMeta, WeekCommit, commitWeek, committedWeeks, currentWeek, phaseWeeks, uncommitWeek
+  CheckAnswer, CheckItem, CheckSpec, PlanMeta, Verification, WeekCommit,
+  checklistFor, commitVerification, commitWeek, committedWeeks, currentWeek,
+  phaseWeeks, reopenVerification, setAnswer, setVerificationNote, uncommitWeek,
+  verificationOf
 } from '../lib/planCommits'
 import { toast } from '../lib/bus'
 import { Detail } from './Detail'
@@ -108,6 +111,13 @@ function LiveRail({ sev, confidence, jumps, meta }: {
 
 const stamp = (ms: number): string => new Date(ms).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 
+/** Whether a field the engine wrote is something a person can answer yes or
+ *  no to. The engine sometimes fills expected impact with "None directly, it
+ *  unblocks the rest", which is an honest answer and a useless checklist
+ *  line. Those are left out rather than asked. */
+const isClaim = (t: string): boolean =>
+  t.length > 12 && !/^(none|n\/?a|not applicable|tbd|to be determined|unknown|indirect)/i.test(t.trim())
+
 /** The week by week commitment ledger for one phase. Each planned week is
  *  committed on its own, so the record at the end of the horizon says which
  *  weeks were actually worked, when, and by whom. Nothing is scored here;
@@ -141,6 +151,94 @@ function WeekLedger({ weeks, now, commits, onCommit, onUndo }: {
           )
         })}
       </div>
+    </div>
+  )
+}
+
+/** The closing check. It appears only once every planned week is committed,
+ *  and every line in it is one of the engine's own predictions quoted back.
+ *  Answering them is how a plan becomes evidence: the engine said in advance
+ *  what would be true, and this is the record of whether it was. */
+function PlanVerify({ spec, items, note, sealed, onAnswer, onNote, onCommit, onReopen }: {
+  spec: CheckSpec[]
+  items: CheckItem[]
+  note: string
+  sealed: Verification | null
+  onAnswer: (q: CheckSpec, a: CheckAnswer) => void
+  onNote: (t: string) => void
+  onCommit: () => void
+  onReopen: () => void
+}) {
+  const groups: string[] = []
+  items.forEach(i => { if (groups.indexOf(i.group) < 0) groups.push(i.group) })
+  const answered = items.filter(i => i.answer).length
+  const yes = items.filter(i => i.answer === 'yes').length
+  const no = items.filter(i => i.answer === 'no').length
+  const OPTS: [CheckAnswer, string][] = [['yes', 'Yes'], ['no', 'No'], ['unsure', 'Cannot tell']]
+
+  return (
+    <div className={'lvpanel vfy' + (sealed ? ' done' : '')} id="verify">
+      <span className="lbl">Did the plan work</span>
+      <p className="lvbody" style={{ maxWidth: '62ch' }}>
+        Every week is committed, so the plan is finished. Each line below is
+        something the engine said would be true by now, in its own words. Answer
+        them and commit, and this analysis carries its own proof.
+      </p>
+
+      {groups.map(g => (
+        <div key={g} className="vfygrp">
+          <span className="lbl">{g}</span>
+          {items.filter(i => i.group === g).map(i => {
+            const q = spec.find(x => x.id === i.id)
+            return (
+              <div key={i.id} className={'vfyrow' + (i.answer ? ' set' : '')}>
+                <span className="vfyt">{i.text}</span>
+                {sealed
+                  ? <span className={'vfytag ' + (i.answer || 'unsure')}>
+                      {i.answer === 'yes' ? 'Yes' : i.answer === 'no' ? 'No' : 'Cannot tell'}</span>
+                  : (
+                    <span className="vfyseg" role="group" aria-label={i.text}>
+                      {OPTS.map(([val, label]) => (
+                        <button key={val} className={i.answer === val ? 'on ' + val : ''}
+                          aria-pressed={i.answer === val}
+                          onClick={() => q && onAnswer(q, val)}>{label}</button>
+                      ))}
+                    </span>
+                  )}
+              </div>
+            )
+          })}
+        </div>
+      ))}
+
+      {sealed
+        ? (
+          <div className="vfysealed">
+            <div className="vfysum">
+              <b>{yes} of {items.length} confirmed</b>
+              {no > 0 && <span>, {no} did not hold</span>}
+              <span className="vfyby">Committed {stamp(sealed.verifiedAt)} by {sealed.verifiedByName}</span>
+            </div>
+            {sealed.note && <p className="vfynoteread">{sealed.note}</p>}
+            <button className="wkbtn undo" onClick={onReopen}>Reopen</button>
+          </div>
+        )
+        : (
+          <>
+            <textarea className="vfynote" rows={3} value={note}
+              onChange={e => onNote(e.target.value)}
+              placeholder="Anything the checklist does not capture. Optional." />
+            <div className="vfyfoot">
+              <span className="lvmut">{answered} of {items.length} answered</span>
+              <button className="btn p" disabled={answered < items.length} onClick={onCommit}>
+                Commit the check</button>
+            </div>
+            {answered < items.length && (
+              <span className="lvmut vfyhint">Answer every line to commit. Use Cannot tell where
+                the number was never measured; it counts as unmeasured, not as a failure.</span>
+            )}
+          </>
+        )}
     </div>
   )
 }
@@ -320,6 +418,77 @@ export function LiveDetail({ id }: { id: string }) {
     toast('Week ' + week + ' commit removed.')
   }
 
+  /* The closing check, built entirely from the engine's own claims. Every
+   * line is a prediction it made in advance: a phase's done-when, an
+   * indicator and its target, a decision gate's condition, a phase's expected
+   * impact. Nothing here is written by the portal except the last line, which
+   * asks the only question the whole analysis was for. */
+  const checkSpec: CheckSpec[] = []
+  const G_LAND = 'What was supposed to land'
+  const G_MOVE = 'What the engine said would move'
+  const G_CALL = 'The call itself'
+  phases.forEach((p, i) => {
+    const dw = textOf(p.doneWhen)
+    if (dw) checkSpec.push({ id: 'done-' + i, group: G_LAND, text: dw })
+  })
+  phases.forEach((p, i) => {
+    const del = textOf(p.deliverable)
+    if (del && !textOf(p.doneWhen)) checkSpec.push({ id: 'del-' + i, group: G_LAND, text: del + ' was delivered' })
+  })
+  indicators.forEach((x, i) => {
+    const nm = textOf(x)
+    const tgt = textOf(pick(x, ['target', 'threshold', 'goal']))
+    if (nm) checkSpec.push({
+      id: 'ind-' + i, group: G_MOVE,
+      text: tgt && tgt !== nm ? nm + ' reached ' + tgt : nm + ' moved as the engine expected'
+    })
+  })
+  gates.forEach((g, i) => {
+    const q = textOf(pick(g, ['condition', 'question', 'criteria', 'checkpoint', 'description']))
+    if (q) checkSpec.push({ id: 'gate-' + i, group: G_MOVE, text: q })
+  })
+  phases.forEach((p, i) => {
+    const ei = textOf(p.expectedImpact)
+    if (ei && isClaim(ei)) checkSpec.push({ id: 'imp-' + i, group: G_MOVE, text: ei })
+  })
+  if (headline) checkSpec.push({
+    id: 'verdict', group: G_CALL,
+    text: 'The constraint this analysis named is no longer the thing holding growth back.'
+  })
+
+  const planFinished = plannedWeeks > 0 && committedCount === plannedWeeks
+  /* The rail only ever lists sections that actually render, so this entry
+   * arrives with the panel and sits directly under the plan it closes. */
+  if (acc.plan && planFinished && checkSpec.length > 0) {
+    const at = jumps.findIndex(j => j[0] === 'plan')
+    const entry: [string, string] = ['verify', 'Did the plan work']
+    if (at >= 0) jumps.splice(at + 1, 0, entry)
+    else jumps.push(entry)
+  }
+  const savedVerification = verificationOf(id)
+  const sealed = savedVerification && savedVerification.verifiedAt ? savedVerification : null
+  const checkItems = sealed ? sealed.items : checklistFor(id, checkSpec)
+  const checkNote = savedVerification ? savedVerification.note : ''
+
+  const doAnswer = (q: CheckSpec, a: CheckAnswer) => {
+    setAnswer(id, planMeta, q, a)
+    setLedger(v => v + 1)
+  }
+  const doNote = (t: string) => {
+    setVerificationNote(id, planMeta, t)
+    setLedger(v => v + 1)
+  }
+  const doVerify = () => {
+    commitVerification(id, planMeta, checkSpec, me ? me.name : '')
+    setLedger(v => v + 1)
+    toast('Check committed. This analysis now carries its own result.')
+  }
+  const doReopen = () => {
+    reopenVerification(id)
+    setLedger(v => v + 1)
+    toast('Check reopened. Your answers are still here.')
+  }
+
   const metaRows: [string, string][] = []
   if (fmtDate(d?.createdAt)) metaRows.push(['Started', fmtDate(d?.createdAt)])
   if (fmtDate(d?.completedAt)) metaRows.push(['Completed', fmtDate(d?.completedAt)])
@@ -469,6 +638,11 @@ export function LiveDetail({ id }: { id: string }) {
                     ))}
                   </div>
                 </div>
+              )}
+
+              {acc.plan && planFinished && checkSpec.length > 0 && (
+                <PlanVerify spec={checkSpec} items={checkItems} note={checkNote} sealed={sealed}
+                  onAnswer={doAnswer} onNote={doNote} onCommit={doVerify} onReopen={doReopen} />
               )}
 
               {acc.plan && gates.length > 0 && (
