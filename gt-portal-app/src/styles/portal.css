@@ -1407,3 +1407,37 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
   .bizrowi{grid-template-columns:1.4fr auto;gap:8px}
   .bizrowi > span:nth-child(2),.bizrowi > span:nth-child(3){display:none}
 }
+
+
+/* ============ API keys, from the real key store ============ */
+/* The engine keeps a hash and a prefix, never the key, so a value is readable
+   exactly once. The one time panel is the loudest thing on this screen because
+   losing that moment means creating another key. Neutral surfaces throughout:
+   nothing here has failed, so nothing here is orange. */
+.apilede{margin:16px 0 14px;color:var(--muted);font-size:12.5px;max-width:70ch}
+.keymake,.keynew{padding:15px 16px;margin-bottom:14px}
+.keyfield{display:block;font-size:12px;color:var(--muted);margin-top:10px}
+.keyinput{display:block;width:100%;margin-top:6px;background:var(--s2);border:1px solid var(--line);
+  border-radius:9px;padding:9px 11px;font-size:13px;color:var(--text);font-family:inherit}
+.keyinput:focus{outline:none;border-color:rgba(0,0,0,.5)}
+.keyscopes{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:8px}
+.keyscope{display:flex;gap:9px;align-items:flex-start;padding:10px 11px;border-radius:9px;
+  border:1px solid var(--line);background:var(--s2);font-size:12px;cursor:pointer;line-height:1.45}
+.keyscope.on{border-color:rgba(0,0,0,.42);background:var(--s3)}
+.keyscope input{margin-top:2px;flex:0 0 auto;accent-color:#000000}
+.keyscope code{font-family:var(--mono);font-size:11.5px}
+.keynote{margin:9px 0 12px;font-size:11.5px;color:var(--faint);max-width:64ch}
+.keyonce{margin:6px 0 10px;font-size:12.5px;color:var(--muted);max-width:66ch}
+.keyshow{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;
+  background:var(--s2);border:1px solid var(--line2);margin-bottom:10px}
+.keyshow code{font-family:var(--mono);font-size:12.5px;word-break:break-all;flex:1;min-width:0}
+.keyname{font-weight:600;font-size:13px;line-height:1.5}
+.keypre{font-family:var(--mono);font-size:11.5px;color:var(--faint);font-weight:400}
+.keyrowi.off{opacity:.55}
+.costrow{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:11px 15px;border-bottom:1px solid var(--line);font-size:12.5px}
+.costrow:last-child{border-bottom:0}
+@media (max-width:860px){
+  .keyrowi{grid-template-columns:1.4fr auto;gap:8px}
+  .keyrowi > span:nth-child(2),.keyrowi > span:nth-child(3){display:none}
+}
