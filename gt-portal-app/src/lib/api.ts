@@ -91,10 +91,11 @@ async function live<T>(path: string, init?: RequestInit): Promise<T> {
  *  app was built against, and the older, much larger one at /api. Calibration
  *  and billing live on the second. Same origin, same Clerk session, same
  *  workspace header, different prefix. */
-async function liveRoot<T>(path: string): Promise<T> {
+export async function liveRoot<T>(path: string, init?: RequestInit): Promise<T> {
   const ws = getWorkspaceId()
   const token = await getClerkToken()
   const res = await fetch(API_BASE + '/api' + path, {
+    ...init,
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
@@ -104,6 +105,7 @@ async function liveRoot<T>(path: string): Promise<T> {
   })
   if (res.status === 401) { window.location.assign('/login'); throw new Error('Signed out.') }
   if (!res.ok) throw new Error('Request failed (' + res.status + ')')
+  if (res.status === 204) return null as unknown as T
   return stripDashes(await res.json()) as T
 }
 
