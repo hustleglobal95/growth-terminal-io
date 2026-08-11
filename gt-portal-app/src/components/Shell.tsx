@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Palette } from './Palette'
 import { onToast } from '../lib/bus'
-import { useMe, initials } from '../lib/liveData'
+import { useMe, useCalibration, useBilling, calibrationLabel, planLabel, workspaceLabel, initials } from '../lib/liveData'
 
 const ICONS: Record<string, string> = {
   Overview: '<rect x="2" y="2" width="5.5" height="5.5" rx="1.2"/><rect x="10.5" y="2" width="5.5" height="5.5" rx="1.2"/><rect x="2" y="10.5" width="5.5" height="5.5" rx="1.2"/><rect x="10.5" y="10.5" width="5.5" height="5.5" rx="1.2"/>',
@@ -41,7 +41,7 @@ export function UserCard() {
       <span className="av">{initials(me)}</span>
       <span className="ucmeta">
         <span className="nm">{me ? me.name : 'Signing in'}</span><br />
-        <span className="ws">{me && me.workspace ? me.workspace : 'Growth Terminal'}</span>
+        <span className="ws">{workspaceLabel(me)}</span>
       </span>
       <button className="signout" title="Sign out" aria-label="Sign out" onClick={signOut}>
         <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -54,6 +54,8 @@ export function UserCard() {
 }
 
 export function Shell() {
+  const cal = useCalibration()
+  const bill = useBilling()
   const [pal, setPal] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
   const loc = useLocation()
@@ -110,8 +112,8 @@ export function Shell() {
             <img className="marklogo" src="/logo-mark.png" alt="" />Growth Terminal
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-            <div className="chip"><i />Calibration: drifting (0%)</div>
-            <div className="chip"><i />Credits: 0 left</div>
+            <div className="chip"><i />{calibrationLabel(cal)}</div>
+            <div className="chip"><i />{planLabel(bill)}</div>
           </div>
           <div className="searchpill" onClick={() => setPal(true)}>
             <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>

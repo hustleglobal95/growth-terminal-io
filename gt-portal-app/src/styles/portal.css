@@ -1385,3 +1385,21 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
   .introw > span:nth-child(4),.introw > span:nth-child(5){display:none}
   .intbar .intbn{width:88px}
 }
+
+/* ============ Businesses, from the real table ============ */
+/* Four columns, because four is what the businesses table can honestly
+   fill. No category and no headline metric: neither exists on the row. */
+.bizrowi{display:grid;grid-template-columns:1.7fr .8fr 1.6fr .9fr;gap:16px;align-items:center;
+  padding:13px 15px;border-bottom:1px solid var(--line);font-size:12.5px;cursor:pointer}
+.bizrowi:last-child{border-bottom:0}
+.bizrowi:hover{background:var(--s2)}
+.bizrowi:focus-visible{outline:2px solid var(--text);outline-offset:-2px}
+.bizrowi.h{cursor:default;font-size:11px;color:var(--faint);font-weight:500;background:var(--s2)}
+.bizrowi.h:hover{background:var(--s2)}
+.bizrowi.skelrow{cursor:default}
+.bizrowi .bizn{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bizrowi .mut{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:860px){
+  .bizrowi{grid-template-columns:1.4fr auto;gap:8px}
+  .bizrowi > span:nth-child(2),.bizrowi > span:nth-child(3){display:none}
+}

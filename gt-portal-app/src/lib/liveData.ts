@@ -6,7 +6,7 @@
  *  rows for a signed-in user. Show an honest empty state instead. */
 import { useEffect, useState } from 'react'
 import { DEMO } from '../config'
-import { api, data, AnalysisRow, OverviewData } from './api'
+import { api, data, AnalysisRow, BillingStatus, BusinessRow, CalibrationSummary, OverviewData } from './api'
 
 export interface Me { name: string; workspace: string }
 
@@ -81,4 +81,71 @@ export function useOverview(): OverviewData | null {
     return () => { live = false }
   }, [])
   return ov
+}
+
+
+/* ---------------------------------------------------------------------- */
+/* Businesses, calibration and billing. Same one-fetch-per-session caching  */
+/* as above: the sidebar renders on every screen and must not refetch.      */
+/* ---------------------------------------------------------------------- */
+
+function onceHook<T>(load: () => Promise<T>) {
+  let cache: T | null = null
+  let promise: Promise<T> | null = null
+  return function useOnce(): T | null {
+    const [v, setV] = useState<T | null>(cache)
+    useEffect(() => {
+      if (cache || DEMO) return
+      let alive = true
+      promise = promise || load()
+      promise
+        .then(x => { cache = x; if (alive) setV(x) })
+        .catch(() => { promise = null })
+      return () => { alive = false }
+    }, [])
+    return v
+  }
+}
+
+export const useBusinesses = onceHook<BusinessRow[]>(() => api.listBusinesses())
+export const useCalibration = onceHook<CalibrationSummary>(() => api.calibration())
+export const useBilling = onceHook<BillingStatus>(() => api.billing())
+
+/** The sidebar's calibration line, from the real grading engine.
+ *  Reports how much has actually been graded, because with a handful of
+ *  resolved predictions a coverage percentage is noise, not a signal. */
+export function calibrationLabel(c: CalibrationSummary | null): string {
+  if (!c || !c.totals) return 'Calibration: loading'
+  const { predictions, graded } = c.totals
+  if (!predictions) return 'Calibration: no predictions yet'
+  if (!graded) return 'Calibration: 0 of ' + predictions + ' graded'
+  const iv = c.intervalCalibration
+  if (iv && iv.sampleSize >= 20) {
+    return 'Calibration: ' + Math.round(iv.coverage * 100) + '% in range'
+  }
+  return 'Calibration: ' + graded + ' of ' + predictions + ' graded'
+}
+
+/** The sidebar's plan line. Billing carries no credit balance, so this
+ *  reports the subscription state rather than inventing a number. */
+export function planLabel(b: BillingStatus | null): string {
+  if (!b) return 'Plan: loading'
+  if (b.bypassed) return 'Plan: internal'
+  if (b.planName) return 'Plan: ' + b.planName
+  return 'Plan: ' + (b.state || 'unknown')
+}
+
+/** The workspace line under the signed in name.
+ *
+ *  The /me endpoint returns the workspace as an internal identifier, for
+ *  example "acct-9d7211d5-4be0-428f-a8bf-4b273b13955c". That is not a name and
+ *  it wraps over three lines in the sidebar. When the value looks like an
+ *  identifier rather than something a person chose, the product name is shown
+ *  instead of leaking a UUID into the interface. */
+export function workspaceLabel(me: Me | null): string {
+  const w = me && me.workspace ? me.workspace.trim() : ''
+  if (!w) return 'Growth Terminal'
+  const looksLikeId = /^acct[-_]/i.test(w) ||
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(w)
+  return looksLikeId ? 'Growth Terminal' : w
 }
