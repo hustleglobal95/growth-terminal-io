@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DEMO } from '../config'
-import { data, AnalysisRow } from '../lib/api'
-import { useMe, useAnalyses, useOverview, useBusinesses, useAccounts, accountName, businessLabel, firstName } from '../lib/liveData'
+import { api, data, AnalysisRow, ApiKeyRow, ADDON_SCOPES, SCOPE_HELP, secretOf } from '../lib/api'
+import { useMe, useAnalyses, useOverview, useBusinesses, useAccounts, useCredits, accountName, businessLabel, firstName } from '../lib/liveData'
 import { toast, noCredits } from '../lib/bus'
 import { NewAnalysis } from '../components/NewAnalysis'
 import { OvBars, Spark } from '../components/charts'
@@ -368,13 +368,6 @@ export function Businesses() {
     </div>
   )
 }
-export const Clients = () => (
-  <div className="scr on">
-    <Header title="Clients"><button className="btn g" onClick={() => toast('Clients are available on GT Agency.')}>Add client</button></Header>
-    <Canvas><CardGrid items={data.BIZ.slice(0, 4)} /></Canvas>
-  </div>
-)
-
 /** A key value, masked until asked for. The mask is the default state on
  *  every load, so a shared screen, a screen recording or a screenshot never
  *  carries the credential out of the room by accident. */
@@ -405,23 +398,178 @@ function KeyValue({ value }: { value: string }) {
   )
 }
 
+/** API keys, from the workspace key store.
+ *
+ *  The keys live at /api/v1/workspace/api-keys, not under the portal prefix,
+ *  which is why they were unreachable from this app until now.
+ *
+ *  The engine stores a hash and a prefix, never the key. So the full value
+ *  exists for exactly one response, the one that creates it, and this screen is
+ *  the only place it will ever be readable. Everything after that is the
+ *  prefix. The interface says that plainly instead of implying a key can be
+ *  recovered later.
+ */
 export function ApiKeys() {
+  const [rows, setRows] = useState<ApiKeyRow[] | null>(null)
+  const [failed, setFailed] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [name, setName] = useState('Sheets add-on')
+  const [scopes, setScopes] = useState<string[]>(ADDON_SCOPES)
+  const [fresh, setFresh] = useState<{ secret: string; name: string } | null>(null)
+  const credits = useCredits()
+
+  const load = React.useCallback(async () => {
+    if (DEMO) { setRows([]); return }
+    try { setRows(await api.listKeys()); setFailed(false) } catch { setFailed(true) }
+  }, [])
+  React.useEffect(() => { void load() }, [load])
+
+  const toggle = (s: string) =>
+    setScopes(scopes.indexOf(s) < 0 ? scopes.concat(s) : scopes.filter(x => x !== s))
+
+  const create = async () => {
+    if (busy || !name.trim() || !scopes.length) return
+    setBusy(true)
+    try {
+      const k = await api.createKey(name.trim(), scopes)
+      const secret = secretOf(k)
+      if (secret) setFresh({ secret, name: name.trim() })
+      else toast('Key created, but the engine did not return its value. Revoke it and try again.')
+      await load()
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not create the key.')
+    } finally { setBusy(false) }
+  }
+
+  const revoke = async (k: ApiKeyRow) => {
+    if (busy) return
+    setBusy(true)
+    try { await api.revokeKey(k.id); await load(); toast('Key revoked.') }
+    catch (e) { toast(e instanceof Error ? e.message : 'Could not revoke the key.') }
+    finally { setBusy(false) }
+  }
+
+  const day = (s: string | null) => {
+    if (!s) return ''
+    const d = new Date(s)
+    return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })
+  }
+  const live = rows ? rows.filter(k => !k.revokedAt) : []
+
   return (
     <div className="scr on">
-      <Header title="API"><button className="btn p" onClick={() => toast('Key created. It is shown once, copy it now.')}>Create key</button></Header>
+      <Header title="API" />
       <Canvas>
-        <p style={{ margin: '16px 0 12px', color: 'var(--muted)', fontSize: 12.5, maxWidth: '70ch' }}>
-          Keys connect the Google Sheets{'™'} add-on to this workspace. A key belongs to the person
-          who created it and can be revoked at any time. Values stay hidden until you show them.</p>
-        <div className="tbl">
-          <div className="keyrowi"><KeyValue value={'gt_ws_live_2f8c ···· 9d14'} />
-            <span className="mut hidem">Created 12 Jul</span><span className="mut hidem">Used 2 min ago</span>
-            <span className="stat ok"><i />Active</span>
-            <button className="btn g" onClick={() => toast('Key revoked. The add-on it was used in is signed out.')}>Revoke</button></div>
-          <div className="keyrowi"><KeyValue value={'gt_ws_live_77aa ···· 03be'} />
-            <span className="mut hidem">Created 2 Jun</span><span className="mut hidem">Used 30 Jul</span>
-            <span className="stat"><i />Revoked</span><span /></div>
+        <p className="apilede">
+          A key connects the Google Sheets{'\u2122'} add-on to this workspace. Paste it into the
+          add-on once and it stays connected until you revoke it here.
+        </p>
+
+        {fresh && (
+          <div className="card keynew">
+            <span className="lbl">Your new key, {fresh.name}</span>
+            <p className="keyonce">This is the only time it will be shown. The engine keeps a hash,
+              not the key, so it cannot be recovered later. Copy it now.</p>
+            <div className="keyshow">
+              <code>{fresh.secret}</code>
+              <button className="btn p" onClick={() => {
+                navigator.clipboard.writeText(fresh.secret)
+                  .then(() => toast('Key copied.'))
+                  .catch(() => toast('Could not reach the clipboard. Select it and copy by hand.'))
+              }}>Copy</button>
+            </div>
+            <button className="ract" onClick={() => setFresh(null)}>I have saved it</button>
+          </div>
+        )}
+
+        <div className="card keymake">
+          <span className="lbl">Create a key</span>
+          <label className="keyfield">Name
+            <input className="keyinput" value={name} onChange={e => setName(e.target.value)}
+              placeholder="Sheets add-on" />
+          </label>
+          <span className="lbl" style={{ marginTop: 12 }}>What it can do</span>
+          <div className="keyscopes">
+            {ADDON_SCOPES.map(s => (
+              <label key={s} className={'keyscope' + (scopes.indexOf(s) < 0 ? '' : ' on')}>
+                <input type="checkbox" checked={scopes.indexOf(s) >= 0} onChange={() => toggle(s)} />
+                <span><code>{s}</code><br /><span className="mut">{SCOPE_HELP[s]}</span></span>
+              </label>
+            ))}
+          </div>
+          <p className="keynote">The add-on needs all three. Untick one only if you are wiring
+            something else against the API.</p>
+          <button className="btn p" disabled={busy || !name.trim() || !scopes.length}
+            onClick={() => void create()}>Create key</button>
         </div>
+
+        <div className="shead" style={{ marginTop: 26 }}>
+          <h2>Your keys</h2>
+          {rows !== null && <span className="hint">{live.length} active</span>}
+        </div>
+
+        {failed && <div className="emptyblock"><b>Could not load your keys.</b>
+          <span>The workspace answered but the key store did not.
+            <button className="ract" style={{ marginLeft: 8 }} onClick={() => void load()}>Try again</button></span>
+        </div>}
+
+        {rows === null && !failed && (
+          <div className="tbl">{[0, 1].map(i => (
+            <div key={i} className="keyrowi skelrow" aria-hidden="true">
+              <span className="skel" style={{ width: '40%' }} />
+              <span className="skel" style={{ width: '60%' }} />
+              <span className="skel" style={{ width: '50%' }} />
+              <span className="skel" style={{ width: '40%' }} />
+              <span />
+            </div>
+          ))}</div>
+        )}
+
+        {rows !== null && rows.length === 0 && !failed && (
+          <div className="emptyblock">
+            <b>No keys yet.</b>
+            <span>Create one above, then paste it into the Sheets{'\u2122'} add-on to connect it
+              to this workspace.</span>
+          </div>
+        )}
+
+        {rows !== null && rows.length > 0 && (
+          <div className="tbl">
+            {rows.map(k => {
+              const dead = !!k.revokedAt
+              return (
+                <div key={k.id} className={'keyrowi' + (dead ? ' off' : '')}>
+                  <span className="keyname">{k.name || 'Unnamed key'}<br />
+                    <code className="keypre">{k.keyPrefix}</code></span>
+                  <span className="mut hidem">{k.scopes && k.scopes.length === ADDON_SCOPES.length
+                    ? 'Full add-on access' : (k.scopes || []).join(', ')}</span>
+                  <span className="mut hidem">Created {day(k.createdAt)}</span>
+                  <span className="mut">{k.lastUsedAt ? 'Used ' + day(k.lastUsedAt) : 'Never used'}</span>
+                  {dead
+                    ? <span className="stat"><i />Revoked</span>
+                    : <button className="btn g" disabled={busy} onClick={() => void revoke(k)}>Revoke</button>}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {credits && credits.costs && Object.keys(credits.costs).length > 0 && (
+          <>
+            <div className="shead" style={{ marginTop: 26 }}>
+              <h2>What each run costs</h2>
+              <span className="hint">{credits.balance} credits left</span>
+            </div>
+            <div className="tbl">
+              {Object.keys(credits.costs).map(k => (
+                <div key={k} className="costrow">
+                  <span>{k.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase())}</span>
+                  <span className="mut">{credits.costs[k]} {credits.costs[k] === 1 ? 'credit' : 'credits'}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </Canvas>
     </div>
   )
