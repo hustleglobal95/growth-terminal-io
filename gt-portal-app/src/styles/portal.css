@@ -794,7 +794,10 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
    screens, where the form takes the full width. */
 .loginsplit{min-height:100vh;display:grid;grid-template-columns:1fr 1fr}
 .loginart{background:#0F0D0B url('/login-bg.jpg') left center/cover no-repeat;border-right:1px solid var(--line)}
-.loginside{display:flex;align-items:center;justify-content:center;padding:40px 32px;background:var(--bg)}
+/* --bg has never existed, so this declaration was dropped and the panel fell
+   through to the page white. Naming the real variable keeps what you see and
+   stops the rule from lying about it. */
+.loginside{display:flex;align-items:center;justify-content:center;padding:40px 32px;background:var(--page)}
 .loginside .logincard{width:min(480px,100%);padding:34px 32px}
 .loginside .cl-rootBox{width:100%;max-width:480px}
 .loginside .cl-cardBox{width:100%}
