@@ -12,6 +12,12 @@ import { live } from './api'
 export type MarkKind = 'highlight' | 'pin' | 'note'
 export type MarkColor = 'yellow' | 'pink' | 'blue' | 'green'
 
+/** How a highlight is drawn. This rides inside the anchor rather than in a
+ *  column of its own: the engine stores the anchor as an opaque blob and
+ *  hands it back untouched, so a new way of drawing a mark costs no schema
+ *  change and no second trip through the backend. */
+export type MarkStyle = 'highlight' | 'underline'
+
 /** Three strings, not offsets. Offsets break the moment anything upstream of
  *  the selection changes by a character, and they fail silently in the worst
  *  way: the highlight lands on the wrong sentence. A quote plus its
@@ -21,6 +27,7 @@ export interface Anchor {
   quote: string
   prefix: string
   suffix: string
+  style?: MarkStyle
 }
 
 export interface Mark {
@@ -69,23 +76,50 @@ function base(analysisId: string): string {
   return '/analyses/' + encodeURIComponent(analysisId) + '/marks'
 }
 
+/** The engine names this field section_id and rejects the camelCase spelling
+ *  with a validation error. That mismatch is what produced "Invalid mark" on
+ *  every attempt to save one. Requests go out snake_case; replies are read
+ *  either way, because a field name is not worth a second outage. */
+interface RawMark extends Omit<Mark, 'sectionId'> {
+  sectionId?: string
+  section_id?: string
+}
+
+function normalize(r: RawMark): Mark {
+  return {
+    id: r.id,
+    kind: r.kind,
+    sectionId: r.sectionId || r.section_id || '',
+    anchor: r.anchor || null,
+    color: r.color || null,
+    body: r.body || null,
+    createdAt: r.createdAt
+  }
+}
+
 export async function listMarks(analysisId: string): Promise<Mark[]> {
-  const rows = await live<Mark[]>(base(analysisId))
-  return Array.isArray(rows) ? rows : []
+  const rows = await live<RawMark[]>(base(analysisId))
+  return Array.isArray(rows) ? rows.map(normalize) : []
 }
 
 export async function createMark(
   analysisId: string,
-  body: { kind: MarkKind; sectionId: string; anchor?: Anchor; color?: MarkColor; body?: string }
+  m: { kind: MarkKind; sectionId: string; anchor?: Anchor; color?: MarkColor; body?: string }
 ): Promise<Mark> {
-  return live<Mark>(base(analysisId), { method: 'POST', body: JSON.stringify(body) })
+  const wire: Record<string, unknown> = { kind: m.kind, section_id: m.sectionId }
+  if (m.anchor) wire.anchor = m.anchor
+  if (m.color) wire.color = m.color
+  if (m.body) wire.body = m.body
+  const r = await live<RawMark>(base(analysisId), { method: 'POST', body: JSON.stringify(wire) })
+  return normalize(r)
 }
 
 export async function patchMark(
-  analysisId: string, markId: string, body: { color?: MarkColor; body?: string }
+  analysisId: string, markId: string, patch: { color?: MarkColor; body?: string }
 ): Promise<Mark> {
-  return live<Mark>(base(analysisId) + '/' + encodeURIComponent(markId),
-    { method: 'PATCH', body: JSON.stringify(body) })
+  const r = await live<RawMark>(base(analysisId) + '/' + encodeURIComponent(markId),
+    { method: 'PATCH', body: JSON.stringify(patch) })
+  return normalize(r)
 }
 
 export async function removeMark(analysisId: string, markId: string): Promise<void> {
@@ -220,7 +254,7 @@ function headMatch(a: string, b: string): number {
  *  halfway through the loop reads a number that the loop itself has already
  *  invalidated. That bug only shows up on selections that span two or more
  *  nodes, which is most of the interesting ones. */
-function paintRange(r: Range, id: string, color: MarkColor): number {
+function paintRange(r: Range, id: string, color: MarkColor, style: MarkStyle): number {
   const nodes: Text[] = []
   const walk = document.createTreeWalker(r.commonAncestorContainer, NodeFilter.SHOW_TEXT)
   let n: Node | null = walk.nextNode()
@@ -242,7 +276,7 @@ function paintRange(r: Range, id: string, color: MarkColor): number {
     const piece = from > 0 ? node.splitText(from) : node
     if (to - from < piece.data.length) piece.splitText(to - from)
     const el = document.createElement('mark')
-    el.className = 'edmk c' + color
+    el.className = 'edmk c' + color + (style === 'underline' ? ' und' : '')
     el.setAttribute('data-mark', id)
     piece.parentNode?.insertBefore(el, piece)
     el.appendChild(piece)
@@ -276,7 +310,129 @@ export function repaint(root: Element, marks: Mark[]): string[] {
   for (const m of hl) {
     const r = findAnchor(root, m.anchor as Anchor)
     if (!r) { lost.push(m.id); continue }
-    if (paintRange(r, m.id, m.color || 'yellow') === 0) lost.push(m.id)
+    const style: MarkStyle = m.anchor && m.anchor.style === 'underline' ? 'underline' : 'highlight'
+    if (paintRange(r, m.id, m.color || 'yellow', style) === 0) lost.push(m.id)
   }
   return lost
+}
+
+/* ------------------------------------------------------------------ */
+/* Freehand selection                                                  */
+/* ------------------------------------------------------------------ */
+
+interface Caret { node: Node; offset: number }
+
+/** The one browser API that turns a screen coordinate back into a position in
+ *  text. Blink and WebKit ship the old spelling, Gecko the new one, and both
+ *  are worth having because this is the whole mechanism the pen rides on. */
+function caretAt(x: number, y: number): Caret | null {
+  type Legacy = { caretRangeFromPoint?: (x: number, y: number) => Range | null }
+  type Modern = { caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null }
+  const legacy = document as unknown as Legacy
+  if (typeof legacy.caretRangeFromPoint === 'function') {
+    const r = legacy.caretRangeFromPoint(x, y)
+    return r ? { node: r.startContainer, offset: r.startOffset } : null
+  }
+  const modern = document as unknown as Modern
+  if (typeof modern.caretPositionFromPoint === 'function') {
+    const pos = modern.caretPositionFromPoint(x, y)
+    return pos ? { node: pos.offsetNode, offset: pos.offset } : null
+  }
+  return null
+}
+
+/** How far off a glyph a stroke may sit and still count. Generous below the
+ *  baseline, because underlining means drawing under the words, and tight to
+ *  the sides, because a line down the margin is a line down the margin. */
+const PAD_X = 2
+const PAD_ABOVE = 6
+const PAD_BELOW = 12
+
+/** caretRangeFromPoint answers with the nearest caret rather than admitting a
+ *  miss, so a stroke in the margin comes back holding the sentence next to
+ *  it. This is the check that turns that into a miss: the point has to
+ *  actually land on the character it was given. */
+function onGlyph(node: Node, offset: number, x: number, y: number): boolean {
+  if (node.nodeType !== 3) return false
+  const t = node as Text
+  const start = Math.max(0, Math.min(offset, t.data.length - 1))
+  if (t.data.length === 0) return false
+  const r = document.createRange()
+  try {
+    r.setStart(t, start)
+    r.setEnd(t, Math.min(start + 1, t.data.length))
+  } catch { return false }
+  const rects = r.getClientRects()
+  for (let i = 0; i < rects.length; i++) {
+    const b = rects[i]
+    if (b.width === 0 && b.height === 0) continue
+    if (x >= b.left - PAD_X && x <= b.right + PAD_X &&
+        y >= b.top - PAD_ABOVE && y <= b.bottom + PAD_BELOW) return true
+  }
+  return false
+}
+
+const WORD = /[\p{L}\p{N}'’-]/u
+
+/** Grow a span out to whole words. A stroke drawn by hand starts and ends
+ *  mid-letter every time, and a mark that begins at "onstraint" is a mark
+ *  nobody meant to make. */
+function snapToWords(text: string, start: number, end: number): [number, number] {
+  let s = start
+  let e = end
+  while (s > 0 && WORD.test(text[s - 1])) s--
+  while (e < text.length && WORD.test(text[e])) e++
+  while (s < e && !text[s].trim()) s++
+  while (e > s && !text[e - 1].trim()) e--
+  return [s, e]
+}
+
+/** Turn a drawn stroke into the text it was drawn over.
+ *
+ *  Every sampled point on the path is resolved to a caret position, the ones
+ *  that landed inside this section are kept, and the span from the earliest
+ *  to the latest is taken and grown to whole words. That is deliberately
+ *  forgiving: underlining a line, striking through it, circling it and
+ *  scribbling over it all describe the same span, and a reader should not
+ *  have to know which gesture the implementation preferred.
+ *
+ *  Returns null when the stroke never crossed any text, which is the honest
+ *  answer to a line drawn in the margin. */
+export function rangeFromStroke(root: Element, points: { x: number; y: number }[]): Range | null {
+  if (!points || points.length === 0) return null
+  const f = flatten(root)
+  if (!f.text) return null
+
+  const hits: number[] = []
+  for (const pt of points) {
+    const c = caretAt(pt.x, pt.y)
+    if (!c) continue
+    if (!root.contains(c.node)) continue
+    if (!onGlyph(c.node, c.offset, pt.x, pt.y)) continue
+    const i = indexOfPoint(f, c.node, c.offset)
+    if (i >= 0) hits.push(i)
+  }
+  if (hits.length === 0) return null
+
+  const [s, e] = snapToWords(f.text, Math.min(...hits), Math.max(...hits))
+  if (e <= s) return null
+
+  const a = pointAt(f, s)
+  const b = pointAt(f, e)
+  if (!a || !b) return null
+  const r = document.createRange()
+  try {
+    r.setStart(a.node, a.offset)
+    r.setEnd(b.node, b.offset)
+  } catch { return null }
+  return r
+}
+
+/** The anchor for a range that was drawn rather than selected. Same three
+ *  strings as any other mark, so nothing downstream needs to know how it was
+ *  made. */
+export function anchorFromRange(root: Element, r: Range, style: MarkStyle): Anchor | null {
+  const a = anchorFromSelection(root, r)
+  if (!a) return null
+  return style === 'underline' ? { ...a, style } : a
 }
