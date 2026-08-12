@@ -51,9 +51,36 @@ export const data = demo as unknown as {
  *  workspace: mine. A new account on a clean browser would either be refused
  *  everywhere or, worse, be handed somebody else's data. A workspace is
  *  something you belong to, not a constant, so it is discovered below rather
- *  than assumed here. */
+ *  than assumed here.
+ *
+ *  Removing the constant was only half the problem. What is stored here
+ *  outlives the session that stored it: nothing cleared it on sign out, so a
+ *  browser that had ever signed anybody in kept their workspace and handed it
+ *  to whoever signed in next. Same leak, slower fuse. So the id is stored
+ *  with the Clerk user it was resolved for, and is only honoured for that
+ *  user. An id with no owner recorded predates this and is not trusted. */
 export function getWorkspaceId(): string | null {
   return localStorage.getItem('gt_workspace')
+}
+
+/** The Clerk user this browser resolved its workspace for, if it recorded
+ *  one. */
+export function workspaceOwner(): string | null {
+  return localStorage.getItem('gt_workspace_user')
+}
+
+export function clearWorkspace() {
+  localStorage.removeItem('gt_workspace')
+  localStorage.removeItem('gt_workspace_user')
+}
+
+/** True when the stored workspace was resolved for this exact user and can be
+ *  used without asking again. Anything else, including a stored id with no
+ *  owner, has to be re-resolved. */
+export function workspaceBelongsTo(uid: string | null): boolean {
+  if (!uid) return false
+  const owner = workspaceOwner()
+  return !!owner && owner === uid && !!getWorkspaceId()
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -83,9 +110,8 @@ export function workspaceResolveWasUnauthenticated(): boolean { return lastWasUn
  *  Two sources, in order of directness, and neither is required to exist: if
  *  both come back empty the caller gets null and says so, because guessing is
  *  what caused the problem this function exists to fix. */
-export async function resolveWorkspace(): Promise<string | null> {
-  const known = getWorkspaceId()
-  if (known) return known
+export async function resolveWorkspace(uid?: string | null): Promise<string | null> {
+  if (workspaceBelongsTo(uid ?? null)) return getWorkspaceId()
   lastResolveTrace = []
   lastWasUnauthenticated = false
 
@@ -102,7 +128,7 @@ export async function resolveWorkspace(): Promise<string | null> {
   try {
     const me = await live<{ workspaceId?: string; workspace?: string }>('/me')
     const id = me.workspaceId || me.workspace || ''
-    if (UUID.test(id)) { setWorkspaceId(id); return id }
+    if (UUID.test(id)) { setWorkspaceId(id, uid); return id }
     lastResolveTrace.push('/me answered, but with no workspace id')
   } catch (e) {
     const m = e instanceof Error ? e.message : 'failed'
@@ -116,7 +142,7 @@ export async function resolveWorkspace(): Promise<string | null> {
     /* One workspace is the common case. More than one needs a picker, which
        is a bigger change than this fix; the first is a defensible default
        until somebody actually has two. */
-    if (list.length > 0 && list[0].id) { setWorkspaceId(list[0].id); return list[0].id }
+    if (list.length > 0 && list[0].id) { setWorkspaceId(list[0].id, uid); return list[0].id }
     lastResolveTrace.push('accounts answered, but the list was empty')
   } catch (e) {
     const m = e instanceof Error ? e.message : 'failed'
@@ -133,8 +159,13 @@ export async function resolveWorkspace(): Promise<string | null> {
  *  is the person who can tell us which of the two routes needs fixing. */
 let lastResolveTrace: string[] = []
 export function workspaceResolveTrace(): string[] { return lastResolveTrace.slice() }
-export function setWorkspaceId(id: string) {
+export function setWorkspaceId(id: string, owner?: string | null) {
   localStorage.setItem('gt_workspace', id)
+  /* Stamped with the user it was resolved for. A write with no owner, which
+     is what the manual picker in config does, clears any stale stamp rather
+     than leaving a wrong one behind. */
+  if (owner) localStorage.setItem('gt_workspace_user', owner)
+  else localStorage.removeItem('gt_workspace_user')
 }
 
 /** The live adapter, confirmed contract: Clerk __session cookie rides on
