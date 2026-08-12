@@ -1431,8 +1431,14 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 .keyshow{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;
   background:var(--s2);border:1px solid var(--line2);margin-bottom:10px}
 .keyshow code{font-family:var(--mono);font-size:12.5px;word-break:break-all;flex:1;min-width:0}
-.keyname{font-weight:600;font-size:13px;line-height:1.5}
-.keypre{font-family:var(--mono);font-size:11.5px;color:var(--faint);font-weight:400}
+.keyname{font-weight:600;font-size:13px;line-height:1.5;display:flex;flex-direction:column;
+  align-items:flex-start;gap:2px;min-width:0}
+/* The prefix row inside a key: mono value, then the lock. Sized down from the
+   standalone control so it sits under the name without shouting. */
+.keypref{margin-left:-4px}
+.keypref .kv{font-size:11.5px;color:var(--faint);font-weight:400}
+.keypref .kv.hid{letter-spacing:.06em}
+.keypref .keyeye{width:24px;height:24px}
 .keyrowi.off{opacity:.55}
 .costrow{display:flex;align-items:center;justify-content:space-between;gap:14px;
   padding:11px 15px;border-bottom:1px solid var(--line);font-size:12.5px}
