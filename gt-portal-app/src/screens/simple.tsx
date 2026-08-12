@@ -489,7 +489,7 @@ export function ApiKeys() {
             <p className="keyonce">This is the only time it will be shown. The engine keeps a hash,
               not the key, so it cannot be recovered later. Copy it now.</p>
             <div className="keyshow">
-              <code>{fresh.secret}</code>
+              <KeyValue value={fresh.secret} />
               <button className="btn p" onClick={() => {
                 navigator.clipboard.writeText(fresh.secret)
                   .then(() => toast('Key copied.'))
