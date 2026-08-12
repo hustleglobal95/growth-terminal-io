@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Palette } from './Palette'
 import { onToast } from '../lib/bus'
 import { useMe, useCalibration, useCredits, calibrationLabel, creditsLabel, workspaceLabel, initials } from '../lib/liveData'
+import { clearWorkspace } from '../lib/api'
 
 const ICONS: Record<string, string> = {
   Overview: '<rect x="2" y="2" width="5.5" height="5.5" rx="1.2"/><rect x="10.5" y="2" width="5.5" height="5.5" rx="1.2"/><rect x="2" y="10.5" width="5.5" height="5.5" rx="1.2"/><rect x="10.5" y="10.5" width="5.5" height="5.5" rx="1.2"/>',
@@ -34,6 +35,9 @@ export function Icon({ name }: { name: string }) {
 export function UserCard() {
   const me = useMe()
   const signOut = () => {
+    /* The workspace goes with the session. Leaving it behind is how the next
+       person to sign in on this browser inherits this one. */
+    clearWorkspace()
     const clerk = (window as unknown as { Clerk?: { signOut?: (o?: object) => Promise<void> } }).Clerk
     if (clerk && clerk.signOut) clerk.signOut({ redirectUrl: '/login' })
     else window.location.assign('/login')
