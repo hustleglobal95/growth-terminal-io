@@ -258,10 +258,12 @@ export interface ApiKeyRow {
   createdByUserId: string
 }
 
-/** The create response. The plaintext key rides along once and is never
- *  retrievable again, so the field name is worth reading defensively rather
- *  than losing the key to a naming guess. */
+/** The create response. The engine returns the key once, on this response
+ *  only, under `keySecret`. That was confirmed against the live route rather
+ *  than guessed: a key created while this read the wrong field is a key nobody
+ *  can ever use, so the other names stay as fallbacks and cost nothing. */
 export interface NewApiKey extends ApiKeyRow {
+  keySecret?: string
   key?: string
   apiKey?: string
   plaintext?: string
@@ -269,7 +271,7 @@ export interface NewApiKey extends ApiKeyRow {
 }
 
 export function secretOf(k: NewApiKey): string {
-  return k.key || k.apiKey || k.plaintext || k.secret || ''
+  return k.keySecret || k.key || k.apiKey || k.plaintext || k.secret || ''
 }
 
 /** What the add-on needs. All three, which is why the create form ticks them
