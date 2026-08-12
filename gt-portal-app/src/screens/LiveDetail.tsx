@@ -11,6 +11,7 @@ import {
   verificationOf
 } from '../lib/planCommits'
 import { toast } from '../lib/bus'
+import { Editorial } from '../components/Editorial'
 import { Detail } from './Detail'
 
 /** Route switch: the bundled Northlane sample keeps the full demo
@@ -308,6 +309,10 @@ export function LiveDetail({ id }: { id: string }) {
   const [openPhase, setOpenPhase] = useState(0)
   /* Bumped after every commit so the ledger below re-reads from storage. */
   const [ledger, setLedger] = useState(0)
+  /* The editorial layer, off by default. Off is the analysis exactly as the
+   * engine wrote it, which is the state anyone reading it for the first time
+   * should get. */
+  const [markup, setMarkup] = useState(false)
 
   useEffect(() => {
     let live = true
@@ -507,6 +512,10 @@ export function LiveDetail({ id }: { id: string }) {
         {d && <span className={'stat' + (complete ? ' ok' : running ? ' run' : '')} style={{ marginLeft: 10 }}>
           <i />{complete ? 'Complete' : failed ? 'Failed' : running ? 'Running' : d.status}</span>}
         <span className="sp" />
+        {d && complete && (
+          <button className={'btn g edtoggle' + (markup ? ' on' : '')} aria-pressed={markup}
+            onClick={() => setMarkup(!markup)}>{markup ? 'Done marking' : 'Mark up'}</button>
+        )}
         <a className="btn g" href={'https://growthterminal.io/portal/analyses/' + id}
           target="_blank" rel="noreferrer">Open in classic portal</a>
       </div>
@@ -681,6 +690,9 @@ export function LiveDetail({ id }: { id: string }) {
                   <p className="lvmut" style={{ maxWidth: '62ch' }}>The engine wrote no phased timeline for this run. When it cannot observe enough to plan honestly, it says so instead of inventing one.</p>
                 </div>
               )}
+
+              {/* Mounted last so the sections it reaches into already exist. */}
+              <Editorial analysisId={id} on={markup} />
             </>
           )}
 

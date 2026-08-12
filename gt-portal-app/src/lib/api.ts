@@ -55,8 +55,12 @@ export function setWorkspaceId(id: string) {
 
 /** The live adapter, confirmed contract: Clerk __session cookie rides on
  *  credentials include, X-Workspace-Id scopes the request. 401 means the
- *  Clerk session is missing or expired, send the user to sign in. */
-async function live<T>(path: string, init?: RequestInit): Promise<T> {
+ *  Clerk session is missing or expired, send the user to sign in.
+ *
+ *  Exported so features that own their own module, like editorial marks, can
+ *  speak to the portal surface without every route in the product having to
+ *  pile into the api object below. */
+export async function live<T>(path: string, init?: RequestInit): Promise<T> {
   const ws = getWorkspaceId()
   const token = await getClerkToken()
   const res = await fetch(API_BASE + PORTAL_API + path, {
