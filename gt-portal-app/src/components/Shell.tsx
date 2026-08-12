@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Palette } from './Palette'
 import { onToast } from '../lib/bus'
-import { useMe, useCalibration, useBilling, calibrationLabel, planLabel, workspaceLabel, initials } from '../lib/liveData'
+import { useMe, useCalibration, useCredits, calibrationLabel, creditsLabel, workspaceLabel, initials } from '../lib/liveData'
 
 const ICONS: Record<string, string> = {
   Overview: '<rect x="2" y="2" width="5.5" height="5.5" rx="1.2"/><rect x="10.5" y="2" width="5.5" height="5.5" rx="1.2"/><rect x="2" y="10.5" width="5.5" height="5.5" rx="1.2"/><rect x="10.5" y="10.5" width="5.5" height="5.5" rx="1.2"/>',
@@ -16,10 +16,12 @@ const ICONS: Record<string, string> = {
   Admin: '<path d="M9 1.5l6 2.5v5c0 4-2.6 6.4-6 7.5-3.4-1.1-6-3.5-6-7.5v-5z"/>',
   'Agent OS': '<rect x="4" y="4" width="10" height="10" rx="2.2"/><path d="M7 1.5v2.5M11 1.5v2.5M7 14v2.5M11 14v2.5M1.5 7H4M1.5 11H4M14 7h2.5M14 11h2.5"/>'
 }
+/* Customer navigation only. Clients, Editor and Agent OS were founder tooling
+   living in the customer product; they belong to the back office at /portal and
+   were removed from here rather than duplicated. */
 export const NAV: [string, string][] = [
-  ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'], ['Businesses', '/businesses'],
-  ['API', '/api-keys'], ['Teams', '/teams'], ['Clients', '/clients'],
-  ['Editor', '/editor'], ['Agent OS', '/agent-os']
+  ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'],
+  ['Businesses', '/businesses'], ['API', '/api-keys'], ['Teams', '/teams']
 ]
 export const TABS: [string, string][] = [
   ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'], ['Businesses', '/businesses']
@@ -55,7 +57,7 @@ export function UserCard() {
 
 export function Shell() {
   const cal = useCalibration()
-  const bill = useBilling()
+  const cred = useCredits()
   const [pal, setPal] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
   const loc = useLocation()
@@ -113,7 +115,7 @@ export function Shell() {
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             <div className="chip"><i />{calibrationLabel(cal)}</div>
-            <div className="chip"><i />{planLabel(bill)}</div>
+            <div className="chip"><i />{creditsLabel(cred)}</div>
           </div>
           <div className="searchpill" onClick={() => setPal(true)}>
             <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>

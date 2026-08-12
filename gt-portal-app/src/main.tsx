@@ -2,13 +2,12 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { Shell } from './components/Shell'
-import { Overview, Analyses, Businesses, Clients, ApiKeys, Stub } from './screens/simple'
+import { Overview, Analyses, Businesses, ApiKeys, Stub } from './screens/simple'
 import { Teams } from './screens/Teams'
 import { Content } from './screens/Content'
 import { ContentSetup } from './screens/ContentSetup'
 import { AnalysisRoute } from './screens/LiveDetail'
 import { More } from './screens/More'
-import { Internal } from './screens/Internal'
 import { Login } from './screens/Login'
 import { ClerkProvider, useAuth } from '@clerk/clerk-react'
 import { setClerkTokenGetter } from './lib/clerkBridge'
@@ -34,9 +33,7 @@ const router = createBrowserRouter([
       { path: '/businesses', element: <Businesses /> },
       { path: '/api-keys', element: <ApiKeys /> },
       { path: '/teams', element: <Teams /> },
-      { path: '/clients', element: <Clients /> },
       { path: '/more', element: <More /> },
-      { path: '/admin', element: <Internal /> },
       { path: '/:id', element: <Stub /> }
     ]
   }

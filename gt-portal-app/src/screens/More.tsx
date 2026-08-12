@@ -2,7 +2,7 @@ import React from 'react'
 import { NavLink, useOutletContext } from 'react-router-dom'
 import { Header } from './simple'
 import { Icon, NAV, TABS, UserCard } from '../components/Shell'
-import { useCalibration, useBilling, calibrationLabel, planLabel } from '../lib/liveData'
+import { useCalibration, useCredits, calibrationLabel, creditsLabel } from '../lib/liveData'
 
 /** The More section. On a phone the bottom bar carries the four destinations
  *  people use hourly; everything else in the workspace lives here, as a real
@@ -14,7 +14,7 @@ const inTabs = new Set(TABS.map(function (t) { return t[0] }))
 
 export function More() {
   const cal = useCalibration()
-  const bill = useBilling()
+  const cred = useCredits()
   const ctx = useOutletContext<{ openPalette: () => void } | null>()
   const rest = NAV.filter(function (n) { return !inTabs.has(n[0]) })
   return (
@@ -26,7 +26,7 @@ export function More() {
 
             <div className="chiprow">
               <div className="chip"><i />{calibrationLabel(cal)}</div>
-              <div className="chip"><i />{planLabel(bill)}</div>
+              <div className="chip"><i />{creditsLabel(cred)}</div>
             </div>
 
             <div className="searchpill" onClick={() => ctx && ctx.openPalette()}>
