@@ -9,7 +9,7 @@ import { Content } from './screens/Content'
 import { ContentSetup } from './screens/ContentSetup'
 import { AnalysisRoute } from './screens/LiveDetail'
 import { More } from './screens/More'
-import { Login } from './screens/Login'
+import { Login, Signup } from './screens/Login'
 import { ClerkProvider, useAuth } from '@clerk/clerk-react'
 import { setClerkTokenGetter } from './lib/clerkBridge'
 
@@ -23,6 +23,9 @@ import './styles/portal.css'
 
 const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
+  /* Outside the gate, like sign in: there is no workspace to resolve for
+     somebody who does not have an account yet. */
+  { path: '/signup', element: <Signup /> },
   {
     /* The gate wraps the shell rather than sitting inside it, so no screen
        and no sidebar hook fires a request before we know who is asking. */
