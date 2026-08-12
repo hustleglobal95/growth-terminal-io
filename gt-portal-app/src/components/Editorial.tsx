@@ -168,8 +168,14 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
     try {
       const row = await fn()
       if (row) setMarks(m => m.concat(row))
-    } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not save that mark.')
+    } catch {
+      /* The write failed. Keep the mark and say so, rather than throwing away
+         work the reader just did because the engine is having a bad day. The
+         layer keeps working for this session and the panel stops claiming
+         anything is being kept, which is the honest pair of statements. */
+      if (optimistic) setMarks(m => m.concat(optimistic))
+      setStored(false)
+      toast('Marks are not saving right now. Yours will last until you leave the page.')
     } finally { busy.current = false }
   }, [stored])
 
