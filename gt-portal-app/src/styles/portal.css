@@ -1604,3 +1604,15 @@ mark.edmk.und::selection{background:var(--s3)}
   .edkit{bottom:78px;gap:8px;padding:7px 9px}
   .edpad{bottom:134px;max-height:38vh}
 }
+
+/* ============ Working out the workspace ============ */
+/* Shown for the moment between signing in and knowing which workspace this
+   account belongs to, and shown for good when the answer is nobody's. */
+.wsgate{max-width:520px;margin:96px auto;padding:22px 24px;border-radius:14px;
+  background:var(--s1);border:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:flex-start;gap:9px}
+.wsgate b{font-size:15px;font-weight:600}
+.wsgatemut{font-size:13px;line-height:1.6;color:var(--muted);max-width:62ch}
+.wsgaterow{display:flex;align-items:center;gap:9px;margin-top:6px}
+@media (max-width:760px){ .wsgate{margin:64px 14px} }
+.wsgatewhy{margin:2px 0 0;padding-left:16px;font-size:11.5px;line-height:1.7;color:var(--faint)}
