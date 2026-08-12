@@ -398,6 +398,24 @@ function KeyValue({ value }: { value: string }) {
   )
 }
 
+/** The same lock, sized for a row in the key table. What it hides is the
+ *  prefix rather than the key itself, since the key is unrecoverable after
+ *  the moment it was made. A prefix still identifies a credential, so it
+ *  starts locked: nothing about a screen share or a recording should depend
+ *  on remembering to look away. */
+function KeyPrefix({ value }: { value: string }) {
+  const [shown, setShown] = useState(false)
+  const label = shown ? 'Hide this key' : 'Show this key'
+  return (
+    <span className="keyval keypref">
+      <code className={'kv' + (shown ? '' : ' hid')}>{shown ? value : MASK}</code>
+      <button className={'keyeye' + (shown ? ' on' : '')} aria-pressed={shown}
+        aria-label={label} title={label}
+        onClick={() => setShown(!shown)}><Lock open={shown} /></button>
+    </span>
+  )
+}
+
 /** API keys, from the workspace key store.
  *
  *  The keys live at /api/v1/workspace/api-keys, not under the portal prefix,
@@ -539,8 +557,8 @@ export function ApiKeys() {
               const dead = !!k.revokedAt
               return (
                 <div key={k.id} className={'keyrowi' + (dead ? ' off' : '')}>
-                  <span className="keyname">{k.name || 'Unnamed key'}<br />
-                    <code className="keypre">{k.keyPrefix}</code></span>
+                  <span className="keyname">{k.name || 'Unnamed key'}
+                    <KeyPrefix value={k.keyPrefix} /></span>
                   <span className="mut hidem">{k.scopes && k.scopes.length === ADDON_SCOPES.length
                     ? 'Full add-on access' : (k.scopes || []).join(', ')}</span>
                   <span className="mut hidem">Created {day(k.createdAt)}</span>
