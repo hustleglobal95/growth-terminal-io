@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { toast } from '../lib/bus'
 import {
-  Mark, MarkColor, Anchor, COLORS, SECTIONS, sectionLabel,
+  Mark, MarkColor, MarkStyle, Anchor, COLORS, SECTIONS, sectionLabel,
   listMarks, createMark, patchMark, removeMark,
-  anchorFromSelection, repaint, unpaint
+  anchorFromSelection, anchorFromRange, rangeFromStroke, repaint, unpaint
 } from '../lib/marks'
 
 /** The editorial layer. One component, mounted once, that reaches into the
@@ -15,8 +15,6 @@ import {
  */
 
 function localId(): string {
-  /* Only used while storage is unavailable, so it never has to survive a
-   * reload or collide with a server id. */
   return 'local-' + Math.random().toString(36).slice(2, 10)
 }
 
@@ -25,34 +23,43 @@ function sectionEl(id: string): HTMLElement | null {
   return el instanceof HTMLElement ? el : null
 }
 
-/* ------------------------------------------------------------------ */
-
-function Pen() {
-  return (
-    <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor"
-      strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M11.2 2.6l2.2 2.2-7.5 7.5-2.9.7.7-2.9z" />
-      <path d="M2.5 14.2h11" />
-    </svg>
-  )
+function present(): string[] {
+  return SECTIONS.map(s => s[0]).filter(id => !!sectionEl(id))
 }
 
+/* ------------------------------------------------------------------ */
+/* Icons                                                               */
+/* ------------------------------------------------------------------ */
+
+const ico = {
+  viewBox: '0 0 16 16', width: 13, height: 13, fill: 'none',
+  stroke: 'currentColor', strokeWidth: 1.5,
+  strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const,
+  'aria-hidden': true
+}
+
+function Marker() {
+  return <svg {...ico}><path d="M3.2 10.4l5.4-5.4 2.4 2.4-5.4 5.4H3.2z" /><path d="M2.4 14.2h11.2" /></svg>
+}
+function PenNib() {
+  return <svg {...ico}><path d="M11.2 2.6l2.2 2.2-6.2 6.2-2.9.7.7-2.9z" /><path d="M2.4 14.2h11.2" /></svg>
+}
+function Scribble() {
+  return <svg {...ico}><path d="M2.2 9.6c2-3.4 3.6-3.4 4.4-1.2.8 2.2 2 2.6 3-.2.7-2 2.2-2.2 4.2.4" /></svg>
+}
+function Pad() {
+  return <svg {...ico}><rect x="3" y="2.4" width="10" height="11.2" rx="1.6" /><path d="M5.6 5.8h4.8M5.6 8.4h4.8M5.6 11h2.8" /></svg>
+}
 function PinIcon({ on }: { on: boolean }) {
   return (
-    <svg viewBox="0 0 16 16" width="13" height="13" fill={on ? 'currentColor' : 'none'}
-      stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-      aria-hidden="true">
-      <path d="M6.2 2.2h3.6l-.5 3.4 2.3 2.1H4.4l2.3-2.1z" />
-      <path d="M8 7.7v6.1" />
+    <svg {...ico} fill={on ? 'currentColor' : 'none'}>
+      <path d="M6.2 2.2h3.6l-.5 3.4 2.3 2.1H4.4l2.3-2.1z" /><path d="M8 7.7v6.1" />
     </svg>
   )
 }
 
 /* ------------------------------------------------------------------ */
 
-/** The strip that appears at the top of every section while the layer is on:
- *  pin the section, and open a note on it. Portalled into the section itself
- *  so it moves with the content and disappears cleanly. */
 function SectionTools({ id, pinned, note, onPin, onNote }: {
   id: string
   pinned: boolean
@@ -63,7 +70,6 @@ function SectionTools({ id, pinned, note, onPin, onNote }: {
   const [open, setOpen] = useState(false)
   const [text, setText] = useState(note ? note.body || '' : '')
   useEffect(() => { setText(note ? note.body || '' : '') }, [note])
-
   const dirty = text.trim() !== (note ? (note.body || '').trim() : '')
 
   return (
@@ -74,12 +80,13 @@ function SectionTools({ id, pinned, note, onPin, onNote }: {
       </button>
       <button className={'edchip' + (open || note ? ' on' : '')} aria-expanded={open}
         onClick={() => setOpen(!open)}>
-        <Pen />{note ? 'Note' : 'Add a note'}
+        <Pad />{note ? 'Note' : 'Add a note'}
       </button>
       {open && (
         <div className="ednote">
           <label className="lbl" htmlFor={'note-' + id}>Your note on {sectionLabel(id).toLowerCase()}</label>
-          <textarea id={'note-' + id} rows={3} value={text} placeholder="What you want to remember about this section."
+          <textarea id={'note-' + id} rows={3} value={text}
+            placeholder="What you want to remember about this section."
             onChange={e => setText(e.target.value)} />
           <div className="ednoterow">
             <button className="btn p" disabled={!dirty}
@@ -97,6 +104,7 @@ function SectionTools({ id, pinned, note, onPin, onNote }: {
 /* ------------------------------------------------------------------ */
 
 interface PopState { x: number; y: number; sectionId: string; anchor: Anchor }
+interface Stroke { pts: { x: number; y: number }[] }
 
 export function Editorial({ analysisId, on }: { analysisId: string; on: boolean }) {
   const [marks, setMarks] = useState<Mark[]>([])
@@ -105,11 +113,18 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
   const [pop, setPop] = useState<PopState | null>(null)
   const [lost, setLost] = useState(0)
   const [hosts, setHosts] = useState<string[]>([])
-  const busy = useRef(false)
 
-  /* Load once per analysis. A storage route that is not live yet is not an
-   * error the reader caused, so the layer still works and says plainly that
-   * nothing is being kept. */
+  /* The kit. Ink and nib are remembered between strokes, because nobody wants
+     to pick yellow again for every sentence in a paragraph. */
+  const [style, setStyle] = useState<MarkStyle>('highlight')
+  const [color, setColor] = useState<MarkColor>('yellow')
+  const [draw, setDraw] = useState(false)
+  const [pad, setPad] = useState(false)
+  const [stroke, setStroke] = useState<Stroke | null>(null)
+
+  const busy = useRef(false)
+  const svgRef = useRef<SVGSVGElement | null>(null)
+
   useEffect(() => {
     let alive = true
     setReady(false)
@@ -119,19 +134,15 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
     return () => { alive = false }
   }, [analysisId])
 
-  /* Which sections actually rendered. Checked on every toggle because role
-   * gating and the plan panel change what exists. */
   useEffect(() => {
     if (!on) { setHosts([]); return }
-    setHosts(SECTIONS.map(s => s[0]).filter(id => !!sectionEl(id)))
+    setHosts(present())
   }, [on, ready, analysisId])
 
-  /* Paint and unpaint. The dependency on marks is what makes the mark list
-   * the single source of truth: change the list, the page follows. */
   useEffect(() => {
     if (!on) {
       SECTIONS.forEach(s => { const el = sectionEl(s[0]); if (el) unpaint(el) })
-      setPop(null)
+      setPop(null); setStroke(null)
       return
     }
     let missing = 0
@@ -143,7 +154,6 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
     setLost(missing)
   }, [on, marks, hosts])
 
-  /* Clean up if the layer is still on when the screen goes away. */
   useEffect(() => () => {
     SECTIONS.forEach(s => { const el = sectionEl(s[0]); if (el) unpaint(el) })
   }, [])
@@ -163,21 +173,28 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
     } finally { busy.current = false }
   }, [stored])
 
-  /* Selection inside a section opens the colour picker. Anything selected
-   * outside one, or a selection that collapses, closes it. */
+  const addMark = useCallback(async (sectionId: string, anchor: Anchor, ink: MarkColor) => {
+    const optimistic: Mark = {
+      id: localId(), kind: 'highlight', sectionId, anchor, color: ink, body: null,
+      createdAt: new Date().toISOString()
+    }
+    await save(() => createMark(analysisId, { kind: 'highlight', sectionId, anchor, color: ink }), optimistic)
+  }, [analysisId, save])
+
+  /* Selection with a finger or a mouse: the popover offers the ink. */
   useEffect(() => {
-    if (!on) return
+    if (!on || draw) return
     const handler = () => {
       const sel = window.getSelection()
       if (!sel || sel.isCollapsed || sel.rangeCount === 0) { setPop(null); return }
       const range = sel.getRangeAt(0)
-      const host = SECTIONS.map(s => s[0]).map(sectionEl)
+      const host = present().map(sectionEl)
         .find(el => el && el.contains(range.commonAncestorContainer))
       if (!host) { setPop(null); return }
       const anchor = anchorFromSelection(host, range)
       if (!anchor) { setPop(null); return }
       const r = range.getBoundingClientRect()
-      setPop({ x: r.left + r.width / 2, y: r.top, sectionId: host.id, anchor })
+      setPop({ x: r.left + r.width / 2, y: r.top, sectionId: host.id, anchor: { ...anchor, ...(style === 'underline' ? { style } : {}) } })
     }
     document.addEventListener('mouseup', handler)
     document.addEventListener('keyup', handler)
@@ -185,12 +202,11 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
       document.removeEventListener('mouseup', handler)
       document.removeEventListener('keyup', handler)
     }
-  }, [on])
+  }, [on, draw, style])
 
-  /* Clicking a painted mark removes it. One gesture, no menu: the colour
-   * picker is for making marks, the mark itself is for unmaking. */
+  /* Clicking a painted mark removes it. */
   useEffect(() => {
-    if (!on) return
+    if (!on || draw) return
     const click = (e: MouseEvent) => {
       const t = e.target
       if (!(t instanceof HTMLElement)) return
@@ -204,7 +220,7 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
     document.addEventListener('click', click)
     return () => document.removeEventListener('click', click)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [on, stored])
+  }, [on, draw, stored])
 
   const drop = async (markId: string) => {
     setMarks(m => m.filter(x => x.id !== markId))
@@ -213,16 +229,61 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
     catch (e) { toast(e instanceof Error ? e.message : 'Could not remove that mark.') }
   }
 
-  const highlight = async (color: MarkColor) => {
+  const highlight = async (ink: MarkColor) => {
     if (!pop) return
     const { sectionId, anchor } = pop
     setPop(null)
     window.getSelection()?.removeAllRanges()
-    const optimistic: Mark = {
-      id: localId(), kind: 'highlight', sectionId, anchor, color, body: null,
-      createdAt: new Date().toISOString()
+    await addMark(sectionId, anchor, ink)
+  }
+
+  /* ---------------- the pen ---------------- */
+
+  const strokePoint = (e: React.PointerEvent) => ({ x: e.clientX, y: e.clientY })
+
+  const penDown = (e: React.PointerEvent) => {
+    if (!draw) return
+    e.preventDefault()
+    ;(e.target as Element).setPointerCapture?.(e.pointerId)
+    setStroke({ pts: [strokePoint(e)] })
+  }
+
+  const penMove = (e: React.PointerEvent) => {
+    if (!draw || !stroke) return
+    e.preventDefault()
+    const pt = strokePoint(e)
+    const last = stroke.pts[stroke.pts.length - 1]
+    /* Sample rather than record everything: a dense path costs nothing to
+       draw and a lot to hit test, and two pixels is finer than any hand. */
+    if (last && Math.abs(pt.x - last.x) + Math.abs(pt.y - last.y) < 3) return
+    setStroke({ pts: stroke.pts.concat(pt) })
+  }
+
+  const penUp = async () => {
+    if (!draw || !stroke) return
+    const pts = stroke.pts
+    setStroke(null)
+    if (pts.length < 2) return
+
+    /* Step out of the way before hit testing. The overlay is the thing that
+       caught the gesture, and it would also catch every caret lookup. */
+    const svg = svgRef.current
+    const prev = svg ? svg.style.pointerEvents : ''
+    if (svg) svg.style.pointerEvents = 'none'
+
+    let hit: { id: string; anchor: Anchor } | null = null
+    for (const id of present()) {
+      const el = sectionEl(id)
+      if (!el) continue
+      const r = rangeFromStroke(el, pts)
+      if (!r) continue
+      const a = anchorFromRange(el, r, style)
+      if (a) { hit = { id, anchor: a }; break }
     }
-    await save(() => createMark(analysisId, { kind: 'highlight', sectionId, anchor, color }), optimistic)
+    if (svg) svg.style.pointerEvents = prev
+
+    if (!hit) { toast('That stroke did not cross any text.'); return }
+    await addMark(hit.id, hit.anchor, color)
   }
 
   const setPin = async (sectionId: string, want: boolean) => {
@@ -257,7 +318,11 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
 
   const pins = marks.filter(m => m.kind === 'pin')
   const notes = marks.filter(m => m.kind === 'note')
-  const highlights = marks.filter(m => m.kind === 'highlight')
+  const inked = marks.filter(m => m.kind === 'highlight' && m.anchor)
+
+  const path = stroke && stroke.pts.length > 1
+    ? 'M' + stroke.pts.map(p => p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' L')
+    : ''
 
   return (
     <>
@@ -273,8 +338,37 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
           el, 'edtools-' + id)
       })}
 
-      {pop && (
-        <div className="edui edpop" role="toolbar" aria-label="Highlight colour"
+      {/* The drawing surface. Only in the way when the pen is out. */}
+      <svg ref={svgRef} className={'edui edcanvas' + (draw ? ' on' : '')}
+        onPointerDown={penDown} onPointerMove={penMove}
+        onPointerUp={() => void penUp()} onPointerCancel={() => setStroke(null)}>
+        {path && <path d={path} className={'edstroke c' + color + (style === 'underline' ? ' und' : '')} />}
+      </svg>
+
+      {/* The kit itself. */}
+      <div className="edui edkit" role="toolbar" aria-label="Markup tools">
+        <div className="edseg">
+          <button className={'edtool' + (style === 'highlight' ? ' on' : '')} aria-pressed={style === 'highlight'}
+            title="Marker" onClick={() => setStyle('highlight')}><Marker /></button>
+          <button className={'edtool' + (style === 'underline' ? ' on' : '')} aria-pressed={style === 'underline'}
+            title="Pen, underlines" onClick={() => setStyle('underline')}><PenNib /></button>
+        </div>
+        <div className="edinks">
+          {COLORS.map(([key, label]) => (
+            <button key={key} className={'edswatch c' + key + (color === key ? ' on' : '')}
+              title={label} aria-label={label} aria-pressed={color === key}
+              onClick={() => setColor(key)} />
+          ))}
+        </div>
+        <button className={'edtool' + (draw ? ' on' : '')} aria-pressed={draw}
+          title={draw ? 'Drawing. Tap to go back to selecting' : 'Draw over the text instead of selecting it'}
+          onClick={() => { setDraw(!draw); setPop(null) }}><Scribble /></button>
+        <button className={'edtool' + (pad ? ' on' : '')} aria-pressed={pad}
+          title="Notepad" onClick={() => setPad(!pad)}><Pad /></button>
+      </div>
+
+      {pop && !draw && (
+        <div className="edui edpop" role="toolbar" aria-label="Ink"
           style={{ left: pop.x, top: pop.y }}>
           {COLORS.map(([key, label]) => (
             <button key={key} className={'edswatch c' + key} title={label} aria-label={label}
@@ -284,10 +378,45 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
         </div>
       )}
 
+      {pad && (
+        <div className="edui edpad">
+          <div className="edpadhead">
+            <b>Notepad</b>
+            <span className="hint">{inked.length} marked, {notes.length} noted</span>
+            <button className="ract" onClick={() => setPad(false)}>Close</button>
+          </div>
+          <div className="edpadbody">
+            {inked.length === 0 && notes.length === 0 && (
+              <p className="edempty">Anything you mark lands here, in the order you marked it.</p>
+            )}
+            {inked.map(m => (
+              <div key={m.id} className={'edquote c' + (m.color || 'yellow')}>
+                <button className="edqjump"
+                  onClick={() => sectionEl(m.sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
+                  {sectionLabel(m.sectionId)}
+                </button>
+                <p>{m.anchor ? m.anchor.quote : ''}</p>
+                <button className="edqx" aria-label="Remove this mark"
+                  onClick={() => void drop(m.id)}>Remove</button>
+              </div>
+            ))}
+            {notes.map(n => (
+              <div key={n.id} className="edquote note">
+                <button className="edqjump"
+                  onClick={() => sectionEl(n.sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
+                  {sectionLabel(n.sectionId)}
+                </button>
+                <p>{n.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="edui edsum">
         <div className="shead">
           <h2>Marked</h2>
-          <span className="hint">{highlights.length} highlighted, {pins.length} pinned, {notes.length} noted</span>
+          <span className="hint">{inked.length} marked, {pins.length} pinned, {notes.length} noted</span>
         </div>
 
         {!stored && (
@@ -295,12 +424,12 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
             anything you mark here lasts until you leave the page.</p>
         )}
         {lost > 0 && (
-          <p className="edwarn">{lost === 1 ? 'One highlight could not be placed' : lost + ' highlights could not be placed'} and
+          <p className="edwarn">{lost === 1 ? 'One mark could not be placed' : lost + ' marks could not be placed'} and
             {lost === 1 ? ' it is' : ' they are'} not shown. The text they pointed at is no longer on this page.</p>
         )}
 
-        {pins.length === 0 && notes.length === 0 && highlights.length === 0 && (
-          <p className="edempty">Select any text to highlight it. Pin a section to collect it here.</p>
+        {pins.length === 0 && notes.length === 0 && inked.length === 0 && (
+          <p className="edempty">Select any text to mark it, or pick up the pen and draw over it.</p>
         )}
 
         {pins.length > 0 && (
