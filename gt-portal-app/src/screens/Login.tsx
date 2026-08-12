@@ -40,10 +40,15 @@ export function Login() {
   if (!DEMO && CLERK_PUBLISHABLE_KEY) {
     return (
       <Split>
+        {/* Clerk defaults input text to black. This card is near black, so
+            leaving colorInputForeground unset meant you typed your email into
+            an invisible field. The two old names, colorText and
+            colorInputBackground, are deprecated aliases of the two below. */}
         <SignIn afterSignInUrl="/" appearance={{
           variables: {
             colorPrimary: '#FC5802', colorBackground: '#16130F',
-            colorText: '#F5F1EA', colorInputBackground: '#1D1A15'
+            colorForeground: '#F5F1EA', colorInput: '#1D1A15',
+            colorInputForeground: '#F5F1EA'
           },
           elements: {
             rootBox: { width: '100%', maxWidth: '480px' },
