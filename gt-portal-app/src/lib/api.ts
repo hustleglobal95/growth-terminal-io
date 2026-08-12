@@ -58,6 +58,24 @@ export function getWorkspaceId(): string | null {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+/** A 401 normally means the session is gone, so the adapters below send the
+ *  user to sign in. During bootstrap that is wrong and dangerous: Clerk
+ *  registers its token getter in an effect, so the very first request can
+ *  legitimately arrive without one, and redirecting on that answer produces a
+ *  sign in loop for somebody who is already signed in. Inside this wrapper a
+ *  401 is just an error to retry. */
+let quiet = 0
+async function withoutAuthRedirect<T>(fn: () => Promise<T>): Promise<T> {
+  quiet++
+  try { return await fn() } finally { quiet-- }
+}
+
+/** True when the last resolution attempt failed because there was no session,
+ *  as opposed to no workspace. The caller needs to tell those apart: one is a
+ *  trip to the sign in screen, the other is a message. */
+let lastWasUnauthenticated = false
+export function workspaceResolveWasUnauthenticated(): boolean { return lastWasUnauthenticated }
+
 /** Ask the engine which workspace the signed in user belongs to, and remember
  *  it. Auth is checked before the workspace header on every route, so a signed
  *  in caller can ask this question without already knowing the answer.
@@ -69,14 +87,27 @@ export async function resolveWorkspace(): Promise<string | null> {
   const known = getWorkspaceId()
   if (known) return known
   lastResolveTrace = []
+  lastWasUnauthenticated = false
 
+  /* Ask for a token first. Without one the engine answers 401 and we learn
+     nothing except that we were early. */
+  const token = await getClerkToken()
+  if (!token) {
+    lastWasUnauthenticated = true
+    lastResolveTrace.push('no session token yet')
+    return null
+  }
+
+  return withoutAuthRedirect(async () => {
   try {
     const me = await live<{ workspaceId?: string; workspace?: string }>('/me')
     const id = me.workspaceId || me.workspace || ''
     if (UUID.test(id)) { setWorkspaceId(id); return id }
     lastResolveTrace.push('/me answered, but with no workspace id')
   } catch (e) {
-    lastResolveTrace.push('/me: ' + (e instanceof Error ? e.message : 'failed'))
+    const m = e instanceof Error ? e.message : 'failed'
+    if (m === 'Signed out.') lastWasUnauthenticated = true
+    lastResolveTrace.push('/me: ' + m)
   }
 
   try {
@@ -88,10 +119,13 @@ export async function resolveWorkspace(): Promise<string | null> {
     if (list.length > 0 && list[0].id) { setWorkspaceId(list[0].id); return list[0].id }
     lastResolveTrace.push('accounts answered, but the list was empty')
   } catch (e) {
-    lastResolveTrace.push('accounts: ' + (e instanceof Error ? e.message : 'failed'))
+    const m = e instanceof Error ? e.message : 'failed'
+    if (m === 'Signed out.') lastWasUnauthenticated = true
+    lastResolveTrace.push('accounts: ' + m)
   }
 
   return null
+  })
 }
 
 /** Why the last resolution came up empty. Kept so the screen that reports the
@@ -123,7 +157,10 @@ export async function live<T>(path: string, init?: RequestInit): Promise<T> {
       ...(init?.headers || {})
     }
   })
-  if (res.status === 401) { window.location.assign('/login'); throw new Error('Signed out.') }
+  if (res.status === 401) {
+    if (!quiet) window.location.assign('/login')
+    throw new Error('Signed out.')
+  }
   if (!res.ok) {
     let msg = 'Request failed (' + res.status + ')'
     try {
@@ -159,7 +196,10 @@ async function liveWs<T>(path: string, init?: RequestInit): Promise<T> {
       ...(init?.headers || {})
     }
   })
-  if (res.status === 401) { window.location.assign('/login'); throw new Error('Signed out.') }
+  if (res.status === 401) {
+    if (!quiet) window.location.assign('/login')
+    throw new Error('Signed out.')
+  }
   if (!res.ok) {
     let msg = 'Request failed (' + res.status + ')'
     try {
@@ -192,7 +232,10 @@ export async function liveRoot<T>(path: string, init?: RequestInit): Promise<T> 
       ...(ws ? { 'X-Workspace-Id': ws } : {})
     }
   })
-  if (res.status === 401) { window.location.assign('/login'); throw new Error('Signed out.') }
+  if (res.status === 401) {
+    if (!quiet) window.location.assign('/login')
+    throw new Error('Signed out.')
+  }
   if (!res.ok) throw new Error('Request failed (' + res.status + ')')
   if (res.status === 204) return null as unknown as T
   return stripDashes(await res.json()) as T
