@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { DEMO } from '../config'
-import { getWorkspaceId, resolveWorkspace, workspaceResolveTrace } from '../lib/api'
+import { getWorkspaceId, resolveWorkspace, workspaceResolveTrace, workspaceResolveWasUnauthenticated } from '../lib/api'
 
 /** Nothing authenticated renders until we know which workspace this account
  *  belongs to.
@@ -16,8 +16,8 @@ import { getWorkspaceId, resolveWorkspace, workspaceResolveTrace } from '../lib/
  *  not something to guess at twice.
  */
 
-const TRIES = 3
-const GAP = 500
+const TRIES = 6
+const GAP = 450
 
 type State = 'resolving' | 'ready' | 'unknown'
 
@@ -44,6 +44,12 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
         setTimeout(() => { if (alive) void attempt(left - 1) }, GAP)
         return
       }
+      /* Out of attempts. If every one of them was refused for want of a
+         session then this really is a signed out browser and the sign in
+         screen is the honest destination. Anything else means we are signed
+         in and simply have no workspace, which is a message, not a redirect.
+         Getting this the wrong way round is a sign in loop. */
+      if (workspaceResolveWasUnauthenticated()) { window.location.assign('/login'); return }
       setState('unknown')
     }
 
