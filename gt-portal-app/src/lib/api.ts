@@ -1,4 +1,4 @@
-import { DEMO, API_BASE, PORTAL_API, DEFAULT_WORKSPACE_ID } from '../config'
+import { DEMO, API_BASE, PORTAL_API } from '../config'
 import { getClerkToken } from './clerkBridge'
 import { stripDashes } from './sanitize'
 import demo from '../data/demo.json'
@@ -44,11 +44,61 @@ export const data = demo as unknown as {
   STUBS: Record<string, [string, [string, string][]]>
 }
 
-/** Workspace scoping. The API requires X-Workspace-Id on every portal
- *  request; 400 missing_workspace_id means this was not set. */
+/** The workspace this browser is scoped to, or nothing.
+ *
+ *  This used to fall back to a hardcoded id when storage was empty, which
+ *  meant every signed in browser that had never stored one sent the same
+ *  workspace: mine. A new account on a clean browser would either be refused
+ *  everywhere or, worse, be handed somebody else's data. A workspace is
+ *  something you belong to, not a constant, so it is discovered below rather
+ *  than assumed here. */
 export function getWorkspaceId(): string | null {
-  return localStorage.getItem('gt_workspace') || DEFAULT_WORKSPACE_ID || null
+  return localStorage.getItem('gt_workspace')
 }
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** Ask the engine which workspace the signed in user belongs to, and remember
+ *  it. Auth is checked before the workspace header on every route, so a signed
+ *  in caller can ask this question without already knowing the answer.
+ *
+ *  Two sources, in order of directness, and neither is required to exist: if
+ *  both come back empty the caller gets null and says so, because guessing is
+ *  what caused the problem this function exists to fix. */
+export async function resolveWorkspace(): Promise<string | null> {
+  const known = getWorkspaceId()
+  if (known) return known
+  lastResolveTrace = []
+
+  try {
+    const me = await live<{ workspaceId?: string; workspace?: string }>('/me')
+    const id = me.workspaceId || me.workspace || ''
+    if (UUID.test(id)) { setWorkspaceId(id); return id }
+    lastResolveTrace.push('/me answered, but with no workspace id')
+  } catch (e) {
+    lastResolveTrace.push('/me: ' + (e instanceof Error ? e.message : 'failed'))
+  }
+
+  try {
+    const r = await liveRoot<{ accounts?: { id: string }[] }>('/portal/accounts')
+    const list = Array.isArray(r.accounts) ? r.accounts : []
+    /* One workspace is the common case. More than one needs a picker, which
+       is a bigger change than this fix; the first is a defensible default
+       until somebody actually has two. */
+    if (list.length > 0 && list[0].id) { setWorkspaceId(list[0].id); return list[0].id }
+    lastResolveTrace.push('accounts answered, but the list was empty')
+  } catch (e) {
+    lastResolveTrace.push('accounts: ' + (e instanceof Error ? e.message : 'failed'))
+  }
+
+  return null
+}
+
+/** Why the last resolution came up empty. Kept so the screen that reports the
+ *  failure can report the actual reason rather than a shrug: whoever hits this
+ *  is the person who can tell us which of the two routes needs fixing. */
+let lastResolveTrace: string[] = []
+export function workspaceResolveTrace(): string[] { return lastResolveTrace.slice() }
 export function setWorkspaceId(id: string) {
   localStorage.setItem('gt_workspace', id)
 }
