@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { Shell } from './components/Shell'
+import { WorkspaceGate } from './components/WorkspaceGate'
 import { Overview, Analyses, Businesses, ApiKeys, Stub } from './screens/simple'
 import { Teams } from './screens/Teams'
 import { Content } from './screens/Content'
@@ -23,7 +24,9 @@ import './styles/portal.css'
 const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
   {
-    element: <Shell />,
+    /* The gate wraps the shell rather than sitting inside it, so no screen
+       and no sidebar hook fires a request before we know who is asking. */
+    element: <WorkspaceGate><Shell /></WorkspaceGate>,
     children: [
       { path: '/', element: <Overview /> },
       { path: '/analyses', element: <Analyses /> },
