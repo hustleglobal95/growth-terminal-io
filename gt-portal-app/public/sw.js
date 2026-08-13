@@ -1,22 +1,32 @@
 /* Growth Terminal service worker. App shell cached, navigations network first
    so a deploy is picked up on the next load, assets cache first.
 
-   v2. Two faults in v1 combined to serve an unstyled app after a deploy, and
-   it could not heal itself:
+   v3. v2 named the disease and only cured half of it.
 
-     1. The cache name never changed, so a cache written by an older build
-        outlived every deploy.
-     2. Every response was stored, including the SPA HTML fallback that
-        _redirects returns for a path that is not on the server yet. During a
-        deploy window a request for a new hashed asset could answer with that
-        HTML, and the HTML was then cached under the stylesheet URL forever.
-        The browser refused to apply HTML as CSS, so the app rendered with no
-        styles on every later load.
+   _redirects is a catch all: '/*  /index.html  200'. A request for a hashed
+   asset that is not on the server yet does not 404, it answers 200 with the
+   HTML shell. v2 stored any response that was ok, status 200 and same origin,
+   and an HTML shell is all three. So during a deploy window a request for
+   index-abc.css could be answered with HTML, and that HTML was written into
+   the cache under the stylesheet URL. Cache first meant it was served from
+   then on, forever, and a browser will not apply HTML as CSS. The app
+   rendered with no styles on every later load and could not heal itself.
 
-   The fixes: version the cache name, so activate evicts the previous one, and
-   only store a successful same origin response whose type matches what the
-   request asked for. */
-const SHELL = 'gt-shell-v2';
+   v3 adds the check v2's own comment promised but never wrote: a response is
+   only stored, and only served, if its content type matches what the request
+   actually asked for. HTML is never acceptable for a stylesheet or a script.
+
+   Two defences, not one:
+
+     1. On write. A mismatched response is passed to the page and dropped
+        rather than cached, so the window can no longer poison the cache.
+     2. On read. A cached entry that fails the same check is deleted and
+        refetched, so a cache already poisoned by v1 or v2 repairs itself on
+        the next load instead of waiting for the version bump to reach it.
+
+   The version bump alone would evict the bad entries on activate. The read
+   check is there because caches outlive assumptions. */
+const SHELL = 'gt-shell-v3';
 
 /* Only a real, successful, same origin response is worth keeping. An opaque,
    redirected or error response is passed through to the page and dropped. */
@@ -24,12 +34,50 @@ function storable(r) {
   return !!r && r.ok && r.status === 200 && r.type === 'basic';
 }
 
+function ctype(r) {
+  return ((r && r.headers && r.headers.get('content-type')) || '').toLowerCase();
+}
+
+function isHtml(r) {
+  return ctype(r).indexOf('text/html') !== -1;
+}
+
 /* The app shell must actually be a document. Navigating straight to an asset
    URL is still mode navigate, and caching that under '/' would hand the
    offline fallback a stylesheet instead of the app. */
 function isDocument(r) {
-  const t = r.headers.get('content-type') || '';
-  return t.indexOf('text/html') !== -1;
+  return isHtml(r);
+}
+
+/* What did this request actually ask for. destination is the honest answer
+   when the browser sets one; a bare fetch() leaves it empty, so fall back to
+   the extension, which is enough for the hashed assets we care about. */
+function wants(req) {
+  const d = req.destination;
+  if (d === 'style' || d === 'script' || d === 'image' || d === 'font') return d;
+  const p = new URL(req.url).pathname.toLowerCase();
+  if (p.endsWith('.css')) return 'style';
+  if (p.endsWith('.js') || p.endsWith('.mjs')) return 'script';
+  if (p.endsWith('.woff2') || p.endsWith('.woff') || p.endsWith('.ttf')) return 'font';
+  if (/\.(png|jpg|jpeg|gif|svg|webp|avif|ico)$/.test(p)) return 'image';
+  return '';
+}
+
+/* True when the response is a plausible answer to the request. Anything we
+   cannot classify is allowed through, because guessing wrong here would break
+   a request that works; the one thing we are certain about is that the HTML
+   shell is never a stylesheet, a script, a font or an image. */
+function typeOk(req, res) {
+  const w = wants(req);
+  if (!w) return true;
+  const t = ctype(res);
+  if (!t) return true;
+  if (isHtml(res)) return false;
+  if (w === 'style') return t.indexOf('css') !== -1;
+  if (w === 'script') return t.indexOf('javascript') !== -1 || t.indexOf('ecmascript') !== -1;
+  if (w === 'image') return t.indexOf('image/') !== -1;
+  if (w === 'font') return t.indexOf('font') !== -1 || t.indexOf('octet-stream') !== -1;
+  return true;
 }
 
 self.addEventListener('install', function (e) {
@@ -61,11 +109,21 @@ self.addEventListener('fetch', function (e) {
     return;
   }
 
-  e.respondWith(caches.match(e.request).then(function (hit) {
-    return hit || fetch(e.request).then(function (r) {
-      if (storable(r)) {
+  const req = e.request;
+
+  e.respondWith(caches.match(req).then(function (hit) {
+    /* A cached entry that is not what the request asked for is poison from an
+       older worker. Drop it and go to the network. */
+    if (hit && !typeOk(req, hit)) {
+      caches.open(SHELL).then(function (c) { c.delete(req); });
+      hit = null;
+    }
+    if (hit) return hit;
+
+    return fetch(req).then(function (r) {
+      if (storable(r) && typeOk(req, r)) {
         const copy = r.clone();
-        caches.open(SHELL).then(function (c) { c.put(e.request, copy); });
+        caches.open(SHELL).then(function (c) { c.put(req, copy); });
       }
       return r;
     });
