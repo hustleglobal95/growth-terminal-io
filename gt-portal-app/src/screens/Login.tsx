@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DEMO, CLERK_PUBLISHABLE_KEY } from '../config'
 import { login } from '../lib/api'
@@ -35,33 +35,67 @@ const CLERK_LOOK = {
     fontFamily: '"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif'
   },
   elements: {
-    rootBox: { width: '100%', maxWidth: '480px' },
-    cardBox: {
-      width: '100%',
-      border: '1px solid rgba(0,0,0,.09)',
-      borderRadius: '14px',
-      boxShadow: '0 1px 2px rgba(0,0,0,.04)'
+    /* The page writes its own heading, so Clerk's is hidden rather than
+       stacked underneath it. That also retires "Sign in to Growth Terminal
+       Engine", which is the name of an internal service and meant nothing to
+       the person reading it. */
+    header: { display: 'none' },
+    /* No card. The heading, the fields and the fine print are one column on
+       the page, which is how every other screen in the product is built. */
+    rootBox: { width: '100%' },
+    cardBox: { width: '100%', border: 'none', boxShadow: 'none' },
+    card: { background: 'transparent', boxShadow: 'none', padding: '0', gap: '18px' },
+    socialButtonsBlockButton: {
+      borderColor: 'rgba(0,0,0,.14)',
+      borderRadius: '10px',
+      height: '42px'
     },
-    card: { boxShadow: 'none' },
-    headerTitle: { fontWeight: 600, letterSpacing: '-.015em' },
-    socialButtonsBlockButton: { borderColor: 'rgba(0,0,0,.14)' },
+    formFieldInput: { borderRadius: '10px', height: '42px' },
     formButtonPrimary: {
       textTransform: 'none' as const,
       fontWeight: 600,
-      letterSpacing: '-.01em'
+      letterSpacing: '-.01em',
+      borderRadius: '10px',
+      height: '42px',
+      boxShadow: 'none'
     },
+    footer: { background: 'transparent' },
     footerActionLink: { color: '#000000', fontWeight: 600 }
   }
 }
 
-/** Split sign in: brand key art fills the left half, the form the right.
- *  The art panel reads /login-bg.jpg from public and disappears under
- *  900px so phones get a clean full-width form. */
+function Wordmark({ className }: { className: string }) {
+  return <span className={className}><i />Growth Terminal</span>
+}
+
+/** The picture makes the argument, so the words underneath it stay short.
+ *
+ *  It is a pipe carrying flow in the dark, choked at one point, with the heat
+ *  banked up behind the choke and a trickle getting through. That is the
+ *  product in one frame: the constraint is not everywhere, it is somewhere,
+ *  and until it moves nothing else you widen will matter. */
+function Art() {
+  return (
+    <div className="lgart">
+      <Wordmark className="lgmark" />
+      <div className="lgsay">
+        <span className="lgeyebrow">The constraint</span>
+        <h2>Everything you built runs through one narrow point.</h2>
+        <p className="lgnote">Growth Terminal finds it, prices what widening it is worth, and
+          checks the answer against what the money did next.</p>
+      </div>
+    </div>
+  )
+}
+
+/** The art argues, the right half gets out of the way. Under 980px the panel
+ *  folds and the form takes the screen, with the wordmark moved across so the
+ *  page is still signed. */
 function Split({ children }: { children: React.ReactNode }) {
   return (
-    <div className="loginsplit">
-      <div className="loginart" aria-hidden="true" />
-      <div className="loginside">{children}</div>
+    <div className="lgsplit">
+      <Art />
+      <div className="lgform">{children}</div>
     </div>
   )
 }
@@ -90,13 +124,19 @@ export function Login() {
   if (!DEMO && CLERK_PUBLISHABLE_KEY) {
     return (
       <Split>
-        {/* signUpUrl keeps the link at the bottom of this card inside the app.
-            Left unset it points at Clerk's hosted portal on
-            accounts.growthterminal.io, whose DNS is proxied through Cloudflare
-            and answers Error 1000, so the only way anyone could reach sign up
-            was a dead end. Clerk itself works here because it rides the
-            backend proxy rather than that hostname. */}
-        <SignIn afterSignInUrl="/" signUpUrl="/signup" appearance={CLERK_LOOK} />
+        <div className="lgformin">
+          <Wordmark className="lgformmark" />
+          <h1 className="lghead">Sign in to your workspace.</h1>
+          <p className="lgsub">Every analysis, every business, every 90 day plan. One console.</p>
+          {/* signUpUrl keeps the link at the bottom of this card inside the app.
+              Left unset it points at Clerk's hosted portal on
+              accounts.growthterminal.io, whose DNS is proxied through Cloudflare
+              and answers Error 1000, so the only way anyone could reach sign up
+              was a dead end. Clerk itself works here because it rides the
+              backend proxy rather than that hostname. */}
+          <SignIn afterSignInUrl="/" signUpUrl="/signup" appearance={CLERK_LOOK} />
+          <p className="lgfine">Growth Terminal reads the workbooks you connect and nothing else.</p>
+        </div>
       </Split>
     )
   }
@@ -141,7 +181,13 @@ export function Signup() {
   if (DEMO || !CLERK_PUBLISHABLE_KEY) return <Login />
   return (
     <Split>
-      <SignUp afterSignUpUrl="/" signInUrl="/login" appearance={CLERK_LOOK} />
+      <div className="lgformin">
+        <Wordmark className="lgformmark" />
+        <h1 className="lghead">Create your workspace.</h1>
+        <p className="lgsub">One workbook is enough to start. The first analysis takes a few minutes.</p>
+        <SignUp afterSignUpUrl="/" signInUrl="/login" appearance={CLERK_LOOK} />
+        <p className="lgfine">Growth Terminal reads the workbooks you connect and nothing else.</p>
+      </div>
     </Split>
   )
 }
