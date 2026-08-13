@@ -792,19 +792,71 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 /* Split login: artwork on the left, sign in on the right. The art panel
    uses the brand key art at /login-bg.jpg and folds away on small
    screens, where the form takes the full width. */
-.loginsplit{min-height:100vh;display:grid;grid-template-columns:1fr 1fr}
-.loginart{background:#0F0D0B url('/login-bg.jpg') left center/cover no-repeat;border-right:1px solid var(--line)}
-/* --bg has never existed, so this declaration was dropped and the panel fell
-   through to the page white. Naming the real variable keeps what you see and
-   stops the rule from lying about it. */
-.loginside{display:flex;align-items:center;justify-content:center;padding:40px 32px;background:var(--page)}
-.loginside .logincard{width:min(480px,100%);padding:34px 32px}
-.loginside .cl-rootBox{width:100%;max-width:480px}
-.loginside .cl-cardBox{width:100%}
-@media (max-width:900px){
-  .loginsplit{grid-template-columns:1fr}
-  .loginart{display:none}
-  .loginside{padding:28px 20px}
+/* The first split lived on .loginsplit, .loginart and .loginside, reading a
+   stock photograph from /login-bg.jpg. Nothing renders those class names any
+   more, so the rules are gone rather than left to rot. The image is still in
+   public if it is ever wanted again. */
+
+/* ---------- sign in ------------------------------------------------------
+   The old left panel was a stock photograph of a city at night, which could
+   sit in front of any software ever made. This one argues the product's one
+   idea instead: four things could be limiting revenue, exactly one of them
+   is, and we say which. It is the same picture the analysis draws, at the
+   size of a poster, so the first screen is a demonstration rather than a
+   mood. Everything is type and rules, so it costs no image bytes and stays
+   sharp at any width. */
+.lgsplit{min-height:100vh;display:grid;grid-template-columns:1.06fr .94fr}
+
+.lgart{position:relative;overflow:hidden;color:#F5F1EA;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:46px 52px;border-right:1px solid var(--line);
+  background:#0B0A09 url('/login-art.jpg') center/cover no-repeat}
+/* A scrim, not a filter. The picture keeps its own light; this only buys back
+   enough contrast at the top and bottom edges for type to sit on it without
+   an outline or a box, both of which would look like an apology. */
+.lgart::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(11,10,9,.72) 0%,rgba(11,10,9,.12) 30%,
+    rgba(11,10,9,.34) 62%,rgba(11,10,9,.88) 100%)}
+.lgart > *{position:relative;z-index:1}
+
+.lgmark{display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:700;letter-spacing:-.02em}
+.lgmark i{display:block;width:9px;height:9px;border-radius:2px;background:#FC5802}
+
+.lgeyebrow{display:block;font-size:10px;font-weight:500;letter-spacing:.16em;
+  text-transform:uppercase;color:rgba(245,241,234,.62)}
+
+@keyframes lgfadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* The words sit at the foot of the picture, where the scrim is heaviest and
+   the image has already said its piece. */
+.lgsay{max-width:440px;animation:lgfadein .7s var(--ease) .15s both}
+.lgsay h2{margin:12px 0 0;font-size:clamp(28px,3.1vw,38px);line-height:1.08;
+  letter-spacing:-.032em;font-weight:600}
+.lgsay .lgnote{margin:16px 0 0}
+
+.lgnote{max-width:400px;font-size:12.5px;line-height:1.65;color:rgba(245,241,234,.55)}
+
+.lgform{display:flex;align-items:center;justify-content:center;padding:48px 44px;background:var(--page)}
+.lgformin{width:min(400px,100%)}
+.lgformmark{display:none}
+.lghead{margin:0 0 5px;font-size:23px;font-weight:600;letter-spacing:-.028em}
+.lgsub{margin:0 0 24px;font-size:13.5px;line-height:1.55;color:var(--faint)}
+.lgfine{margin-top:22px;font-size:11.5px;line-height:1.6;color:var(--faint)}
+.lgform .cl-rootBox{width:100%}
+.lgform .cl-cardBox{width:100%}
+/* Demo mode keeps its own form, so it needs the width the Clerk box gets. */
+.lgform .logincard{width:100%;padding:0}
+
+@media (max-width:980px){
+  .lgsplit{grid-template-columns:1fr}
+  .lgart{display:none}
+  .lgform{padding:36px 20px}
+  .lgformmark{display:flex;align-items:center;gap:9px;margin-bottom:26px;
+    font-size:14.5px;font-weight:700;letter-spacing:-.02em;color:var(--text)}
+  .lgformmark i{display:block;width:9px;height:9px;border-radius:2px;background:#FC5802}
+}
+@media (prefers-reduced-motion:reduce){
+  .lgbar i b{animation:none}
 }
 
 /* Polish pass: focus rings, skeletons, row actions, empty states, sign out.
