@@ -1814,3 +1814,43 @@ mark.edmk.und::selection{background:var(--s3)}
   .updwrap{left:12px;right:12px;bottom:12px;max-width:none}
   .updlist{max-height:200px}
 }
+
+/* ---------- Teams: delegation --------------------------------------------
+   A project is a business, its lead, and the actual work. The card opens on
+   the two things that block delegation rather than on an alphabetical list:
+   nobody leading it, and nobody holding the tasks. */
+
+.dgbanner{display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:11px 14px;
+  background:var(--s2);border-radius:var(--r2);font-size:12.5px;color:var(--muted)}
+.dgbanner b{color:var(--text);font-weight:600}
+.dgdot{width:3px;height:3px;border-radius:50%;background:var(--line2)}
+
+.dgcard{margin-bottom:10px;padding-top:0;padding-bottom:0}
+.dgcard.nolead{box-shadow:inset 2px 0 0 var(--line2)}
+.dghead{display:flex;align-items:center;gap:12px;padding:14px 0;cursor:pointer}
+.dghead:focus-visible{outline:2px solid rgba(0,0,0,.55);outline-offset:-2px;border-radius:8px}
+.dgcaret{flex:0 0 auto;width:7px;height:7px;border-right:1.5px solid var(--faint);
+  border-bottom:1.5px solid var(--faint);transform:rotate(-45deg);transition:transform .18s var(--ease)}
+.dgcaret.on{transform:rotate(45deg)}
+.dgname{flex:1;min-width:0;display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;
+  letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.dgstats{display:flex;align-items:center;gap:12px;flex:0 0 auto}
+.dgstat{font-size:11.5px;color:var(--faint);white-space:nowrap}
+.dgstat b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+.dgstat.warn b{color:var(--muted)}
+.dgstat.bad b{color:var(--alert)}
+.dgstat.done,.dgstat.quiet{color:var(--faint)}
+
+.dglead{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.dglead .lbl{font-size:10.5px}
+
+.dgbody{border-top:1px solid var(--line);padding:4px 0 14px}
+.dgadd{margin-top:10px}
+
+@media(max-width:900px){
+  .dghead{flex-wrap:wrap}
+  .dgname{flex:1 0 100%}
+  .dgstats{order:3}
+  .dglead{order:2;margin-left:auto}
+}
