@@ -4,19 +4,53 @@ import { DEMO, CLERK_PUBLISHABLE_KEY } from '../config'
 import { login } from '../lib/api'
 import { SignIn, SignUp } from '@clerk/clerk-react'
 
-/** Clerk defaults input text to black. This card is near black, so leaving
- *  colorInputForeground unset meant you typed your email into an invisible
- *  field. The two old names, colorText and colorInputBackground, are
- *  deprecated aliases of the two below. */
+/** Clerk, wearing the same clothes as the rest of the product.
+ *
+ *  These values were left over from the dark theme, so the first thing anyone
+ *  saw was a near black card floating on a white page, in an app that is white
+ *  everywhere else. The numbers below are not new: they are the tokens in
+ *  portal.css. Primary is --amber, which the white theme redefines to black,
+ *  so the sign in button matches .btn.p rather than inventing a colour. The
+ *  card gets the same hairline and radius as every other surface, --border on
+ *  --card at --r, so it reads as one of ours.
+ *
+ *  Orange stays where it belongs, on errors, as --alert. It is not the button.
+ *
+ *  colorInputForeground is load bearing: Clerk defaults input text to black,
+ *  which was invisible on the old dark field. It is spelled out here so the
+ *  next person to change the palette sees it. */
 const CLERK_LOOK = {
   variables: {
-    colorPrimary: '#FC5802', colorBackground: '#16130F',
-    colorForeground: '#F5F1EA', colorInput: '#1D1A15',
-    colorInputForeground: '#F5F1EA'
+    colorPrimary: '#000000',
+    colorPrimaryForeground: '#FFFFFF',
+    colorBackground: '#FFFFFF',
+    colorForeground: '#000000',
+    colorMutedForeground: '#6E6E6E',
+    colorInput: '#FFFFFF',
+    colorInputForeground: '#000000',
+    colorBorder: 'rgba(0,0,0,.14)',
+    colorDanger: '#FC5802',
+    colorShimmer: 'rgba(0,0,0,.05)',
+    borderRadius: '12px',
+    fontFamily: '"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif'
   },
   elements: {
     rootBox: { width: '100%', maxWidth: '480px' },
-    cardBox: { width: '100%' }
+    cardBox: {
+      width: '100%',
+      border: '1px solid rgba(0,0,0,.09)',
+      borderRadius: '14px',
+      boxShadow: '0 1px 2px rgba(0,0,0,.04)'
+    },
+    card: { boxShadow: 'none' },
+    headerTitle: { fontWeight: 600, letterSpacing: '-.015em' },
+    socialButtonsBlockButton: { borderColor: 'rgba(0,0,0,.14)' },
+    formButtonPrimary: {
+      textTransform: 'none' as const,
+      fontWeight: 600,
+      letterSpacing: '-.01em'
+    },
+    footerActionLink: { color: '#000000', fontWeight: 600 }
   }
 }
 
