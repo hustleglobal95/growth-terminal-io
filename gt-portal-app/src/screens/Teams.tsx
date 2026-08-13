@@ -110,6 +110,38 @@ export function Teams() {
     }
   }
 
+  /* What changed while this person was elsewhere.
+   *
+   *  These four hooks have to run on every render, including the ones where
+   *  the team has not arrived yet, so they sit above the early returns and
+   *  tolerate a null d. Putting them below the returns is what made this
+   *  screen throw: the hook count changed the moment the fetch resolved. */
+  const myName = me ? (me.name || '') : ''
+  const allEvents = useMemo(() => (d ? buildActivity(d) : []), [d])
+  const since = seenAt !== null ? seenAt : (d ? lastSeen(d.accountId, myName) : null)
+  const newEvents = useMemo(
+    () => unseen(allEvents, since, myName),
+    [allEvents, since, myName])
+
+  useLiveUpdates(allEvents, d !== null && since !== null)
+
+  /* Open once, on arrival, and only when there is something to say. A first
+     visit has no mark, so it stays quiet and simply records the position. */
+  useEffect(() => {
+    if (!d || shownOnce.current) return
+    shownOnce.current = true
+    if (since === null) { markSeen(d.accountId, myName, Date.now()); return }
+    if (newEvents.length > 0) setUpdatesOpen(true)
+  }, [d, since, newEvents.length, myName])
+
+  const clearUpdates = () => {
+    if (!d) return
+    const ts = Date.now()
+    markSeen(d.accountId, myName, ts)
+    setSeenAt(ts)
+    setUpdatesOpen(false)
+  }
+
   if (DEMO) return (
     <div className="scr on">
       <Header title="Teams" />
@@ -147,33 +179,6 @@ export function Teams() {
   const role = preview || effectiveRole()
   const perms = PERMS[role]
 
-  /* What changed while this person was elsewhere. The mark is per person per
-     workspace and lives in this browser, because it is a reading position
-     rather than shared state. Own actions are filtered out upstream. */
-  const myName = me ? (me.name || '') : ''
-  const allEvents = useMemo(() => buildActivity(d), [d])
-  const since = seenAt !== null ? seenAt : lastSeen(d.accountId, myName)
-  const newEvents = useMemo(
-    () => unseen(allEvents, since, myName),
-    [allEvents, since, myName])
-
-  useLiveUpdates(allEvents, since !== null)
-
-  /* Open once, on arrival, and only when there is something to say. A first
-     visit has no mark, so it stays quiet and simply records the position. */
-  useEffect(() => {
-    if (shownOnce.current) return
-    shownOnce.current = true
-    if (since === null) { markSeen(d.accountId, myName, Date.now()); return }
-    if (newEvents.length > 0) setUpdatesOpen(true)
-  }, [since, newEvents.length, d.accountId, myName])
-
-  const clearUpdates = () => {
-    const ts = Date.now()
-    markSeen(d.accountId, myName, ts)
-    setSeenAt(ts)
-    setUpdatesOpen(false)
-  }
   const open = openId ? d.tickets.find(t => t.id === openId) || null : null
   const pendingApprovals = d.approvals.filter(a => a.status === 'pending')
 
