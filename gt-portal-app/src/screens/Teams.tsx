@@ -24,6 +24,7 @@ import { toast } from '../lib/bus'
 import { useAccounts, useBusinesses, useMe } from '../lib/liveData'
 import { TodayView, BoardView, BoardHandlers } from './TeamsBoard'
 import { UpdatesPanel, UpdatesPill, useLiveUpdates } from './TeamsUpdates'
+import { DelegateView, DelegateHandlers } from './TeamsDelegate'
 import { lastSeen, markSeen, unseen } from '../lib/teamSeen'
 import { Role, ROLES, PERMS, roleOf, setRoleOf, viewAs, setViewAs, effectiveRole } from '../lib/teamData'
 import {
@@ -72,6 +73,7 @@ export function Teams() {
   const [openId, setOpenId] = useState<string | null>(null)
   const [invite, setInvite] = useState(false)
   const [newTicket, setNewTicket] = useState(false)
+  const [seedProject, setSeedProject] = useState('')
   const [newAssign, setNewAssign] = useState(false)
   const [askApproval, setAskApproval] = useState<TeamTicket | true | null>(null)
   const [preview, setPreview] = useState<Role | null>(viewAs())
@@ -218,6 +220,13 @@ export function Teams() {
     canApprove: perms.approve,
     members: memberNames,
     busy
+  }
+
+  const delegateHandlers: DelegateHandlers = {
+    setLead: (slug, userId, name) => void run(
+      () => teamApi.assignBusiness(d.accountId, slug, userId),
+      name ? name + ' now leads this project.' : 'Lead cleared.'),
+    addWork: slug => { setSeedProject(slug); setNewTicket(true) }
   }
 
   /* ------------------------------------------------ Team */
@@ -534,7 +543,10 @@ export function Teams() {
           {tab === 'Team' && <TeamTab />}
           {tab === 'Tickets' && <TicketsTab />}
           {tab === 'History' && <HistoryTab />}
-          {tab === 'Business Assignment' && <AssignTab />}
+          {tab === 'Business Assignment' && (
+            <DelegateView d={d} biz={bizList} now={now} h={boardHandlers}
+              dh={delegateHandlers} canAssign={perms.assign} />
+          )}
           {tab === 'Activity' && <ActivityTab />}
           {tab === 'Collaboration' && <CollabTab />}
           {tab === 'Approvals' && <ApprovalsTab />}
@@ -563,9 +575,10 @@ export function Teams() {
           onOpenActivity={() => { clearUpdates(); setTab('Activity') }} />
       )}
 
-      {newTicket && <TicketModal projects={bizList} onClose={() => setNewTicket(false)}
+      {newTicket && <TicketModal projects={bizList} seedProject={seedProject}
+        onClose={() => { setNewTicket(false); setSeedProject('') }}
         onCreate={f => void run(
-          () => teamApi.createTicket(d.accountId, { ...f, creatorName: d.accountName }).then(() => setNewTicket(false)),
+          () => teamApi.createTicket(d.accountId, { ...f, creatorName: d.accountName }).then(() => { setNewTicket(false); setSeedProject('') }),
           'Ticket created.')}
         MemberSelect={MemberSelect} />}
 
@@ -721,15 +734,18 @@ function InviteModal({ onClose, onCreate }: { onClose: () => void; onCreate: (r:
   )
 }
 
-function TicketModal({ onClose, onCreate, projects, MemberSelect }: {
+function TicketModal({ onClose, onCreate, projects, MemberSelect, seedProject }: {
   onClose: () => void
   onCreate: (f: { projectSlug: string; title: string; description: string; assignee: string }) => void
   projects: { slug: string; name: string }[]
   MemberSelect: (p: { value: string; onPick: (name: string) => void }) => React.JSX.Element
+  /** Set when the task was started from a project card, so the picker opens
+   *  on that project instead of making somebody choose it twice. */
+  seedProject?: string
 }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [projectSlug, setProjectSlug] = useState('')
+  const [projectSlug, setProjectSlug] = useState(seedProject || '')
   const [assignee, setAssignee] = useState('')
   return (
     <Modal title="New ticket" onClose={onClose}>
