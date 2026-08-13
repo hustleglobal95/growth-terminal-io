@@ -64,8 +64,18 @@ const CLERK_LOOK = {
   }
 }
 
+/** The GT mark and the name, locked up. The mark was a plain orange square
+ *  standing in for it, which was fine while nothing else on the screen was
+ *  finished and is not fine now. Alt is empty because the words are right
+ *  there beside it: a screen reader announcing "Growth Terminal logo Growth
+ *  Terminal" helps nobody. */
 function Wordmark({ className }: { className: string }) {
-  return <span className={className}><i />Growth Terminal</span>
+  return (
+    <span className={className}>
+      <img src="/logo-mark.png" alt="" width={26} height={26} />
+      Growth Terminal
+    </span>
+  )
 }
 
 /** The picture makes the argument, so the words underneath it stay short.
