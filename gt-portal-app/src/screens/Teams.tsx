@@ -21,7 +21,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Header } from './simple'
 import { DEMO } from '../config'
 import { toast } from '../lib/bus'
-import { useAccounts, useBusinesses } from '../lib/liveData'
+import { useAccounts, useBusinesses, useMe } from '../lib/liveData'
+import { TodayView, BoardView, BoardHandlers } from './TeamsBoard'
+import { UpdatesPanel, UpdatesPill, useLiveUpdates } from './TeamsUpdates'
+import { lastSeen, markSeen, unseen } from '../lib/teamSeen'
 import { Role, ROLES, PERMS, roleOf, setRoleOf, viewAs, setViewAs, effectiveRole } from '../lib/teamData'
 import {
   TeamData, TeamTicket, TeamApproval, Stage, ItemType, InviteRole,
@@ -29,7 +32,7 @@ import {
   fetchTeam, teamApi, memberLabel, initialsOf, stageProgress, parseTs, buildActivity
 } from '../lib/teamLive'
 
-const TABS = ['Team', 'Tickets', 'History', 'Business Assignment', 'Activity', 'Collaboration', 'Approvals'] as const
+const TABS = ['Today', 'Board', 'Team', 'Tickets', 'History', 'Business Assignment', 'Activity', 'Collaboration', 'Approvals'] as const
 type Tab = typeof TABS[number]
 
 const fmtTs = (ts: number) => ts
@@ -60,16 +63,21 @@ const ITEM_LABEL: Record<ItemType, string> = {
 export function Teams() {
   const accs = useAccounts()
   const bizRows = useBusinesses()
+  const me = useMe()
+  const [now] = useState(() => Date.now())
   const [d, setD] = useState<TeamData | null>(null)
   const [failed, setFailed] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [tab, setTab] = useState<Tab>('Team')
+  const [tab, setTab] = useState<Tab>('Today')
   const [openId, setOpenId] = useState<string | null>(null)
   const [invite, setInvite] = useState(false)
   const [newTicket, setNewTicket] = useState(false)
   const [newAssign, setNewAssign] = useState(false)
   const [askApproval, setAskApproval] = useState<TeamTicket | true | null>(null)
   const [preview, setPreview] = useState<Role | null>(viewAs())
+  const [updatesOpen, setUpdatesOpen] = useState(false)
+  const [seenAt, setSeenAt] = useState<number | null>(null)
+  const shownOnce = React.useRef(false)
 
   const acc = accs && accs.length ? accs[0] : null
 
@@ -138,6 +146,34 @@ export function Teams() {
 
   const role = preview || effectiveRole()
   const perms = PERMS[role]
+
+  /* What changed while this person was elsewhere. The mark is per person per
+     workspace and lives in this browser, because it is a reading position
+     rather than shared state. Own actions are filtered out upstream. */
+  const myName = me ? (me.name || '') : ''
+  const allEvents = useMemo(() => buildActivity(d), [d])
+  const since = seenAt !== null ? seenAt : lastSeen(d.accountId, myName)
+  const newEvents = useMemo(
+    () => unseen(allEvents, since, myName),
+    [allEvents, since, myName])
+
+  useLiveUpdates(allEvents, since !== null)
+
+  /* Open once, on arrival, and only when there is something to say. A first
+     visit has no mark, so it stays quiet and simply records the position. */
+  useEffect(() => {
+    if (shownOnce.current) return
+    shownOnce.current = true
+    if (since === null) { markSeen(d.accountId, myName, Date.now()); return }
+    if (newEvents.length > 0) setUpdatesOpen(true)
+  }, [since, newEvents.length, d.accountId, myName])
+
+  const clearUpdates = () => {
+    const ts = Date.now()
+    markSeen(d.accountId, myName, ts)
+    setSeenAt(ts)
+    setUpdatesOpen(false)
+  }
   const open = openId ? d.tickets.find(t => t.id === openId) || null : null
   const pendingApprovals = d.approvals.filter(a => a.status === 'pending')
 
@@ -157,6 +193,27 @@ export function Teams() {
   const Avatar = ({ name }: { name: string }) => (
     <span className="av tmav" title={name}>{initialsOf(name)}</span>
   )
+
+  /* Everything Today and Board can do, in one object. They never call the
+     engine themselves; they hand back an intention and the same run() that
+     serves every other tab performs it, so one refetch keeps all nine views
+     in step. */
+  const boardHandlers: BoardHandlers = {
+    openTicket: setOpenId,
+    setStage: (t, stage) => void run(
+      () => teamApi.patchTicket(d.accountId, t.id, { stage }), 'Moved to ' + stage + '.'),
+    setAssignee: (t, assignee) => void run(
+      () => teamApi.patchTicket(d.accountId, t.id, { assignee }),
+      assignee ? 'Assigned to ' + assignee + '.' : 'Owner cleared.'),
+    decideApproval: (a, ok) => void run(
+      () => teamApi.decideApproval(d.accountId, a.id, ok ? 'approved' : 'changes_requested', ''),
+      ok ? 'Approved.' : 'Changes requested.'),
+    newTicket: () => setNewTicket(true),
+    canAssign: perms.assign,
+    canApprove: perms.approve,
+    members: memberNames,
+    busy
+  }
 
   /* ------------------------------------------------ Team */
   const TeamTab = () => (
@@ -454,7 +511,8 @@ export function Teams() {
   return (
     <div className="scr on">
       <Header title="Teams">
-        {tab === 'Tickets' && <button className="btn p" onClick={() => setNewTicket(true)}>New ticket</button>}
+        <UpdatesPill count={updatesOpen ? 0 : newEvents.length} onClick={() => setUpdatesOpen(true)} />
+        {(tab === 'Tickets' || tab === 'Today') && <button className="btn p" onClick={() => setNewTicket(true)}>New ticket</button>}
         {tab === 'Team' && perms.manageTeam && <button className="btn p" onClick={() => setInvite(true)}>Invite member</button>}
       </Header>
       <div className="canvas" style={{ gridTemplateColumns: 'minmax(0,1fr)' }}>
@@ -466,6 +524,8 @@ export function Teams() {
               </button>
             ))}
           </div>
+          {tab === 'Today' && <TodayView d={d} now={now} myName={me ? (me.name || '') : ''} h={boardHandlers} />}
+          {tab === 'Board' && <BoardView d={d} now={now} h={boardHandlers} />}
           {tab === 'Team' && <TeamTab />}
           {tab === 'Tickets' && <TicketsTab />}
           {tab === 'History' && <HistoryTab />}
@@ -491,6 +551,12 @@ export function Teams() {
 
       {invite && <InviteModal onClose={() => setInvite(false)}
         onCreate={r => void run(() => teamApi.createInvite(d.accountId, r).then(() => setInvite(false)), 'Invite link created.')} />}
+
+      {updatesOpen && (
+        <UpdatesPanel items={newEvents} now={now} workspaceName={d.accountName}
+          onDismiss={clearUpdates}
+          onOpenActivity={() => { clearUpdates(); setTab('Activity') }} />
+      )}
 
       {newTicket && <TicketModal projects={bizList} onClose={() => setNewTicket(false)}
         onCreate={f => void run(
