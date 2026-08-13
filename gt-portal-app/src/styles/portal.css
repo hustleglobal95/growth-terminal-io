@@ -819,8 +819,10 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
     rgba(11,10,9,.34) 62%,rgba(11,10,9,.88) 100%)}
 .lgart > *{position:relative;z-index:1}
 
-.lgmark{display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:700;letter-spacing:-.02em}
-.lgmark i{display:block;width:9px;height:9px;border-radius:2px;background:#FC5802}
+.lgmark{display:flex;align-items:center;gap:10px;font-size:14.5px;font-weight:700;letter-spacing:-.02em}
+/* The mark carries its own dark tile, so it needs no plate behind it. Sized
+   in one place: change this and the mobile lockup follows. */
+.lgmark img,.lgformmark img{display:block;width:26px;height:26px;flex:0 0 auto}
 
 .lgeyebrow{display:block;font-size:10px;font-weight:500;letter-spacing:.16em;
   text-transform:uppercase;color:rgba(245,241,234,.62)}
@@ -851,9 +853,8 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
   .lgsplit{grid-template-columns:1fr}
   .lgart{display:none}
   .lgform{padding:36px 20px}
-  .lgformmark{display:flex;align-items:center;gap:9px;margin-bottom:26px;
+  .lgformmark{display:flex;align-items:center;gap:10px;margin-bottom:26px;
     font-size:14.5px;font-weight:700;letter-spacing:-.02em;color:var(--text)}
-  .lgformmark i{display:block;width:9px;height:9px;border-radius:2px;background:#FC5802}
 }
 @media (prefers-reduced-motion:reduce){
   .lgbar i b{animation:none}
