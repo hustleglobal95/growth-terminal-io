@@ -64,16 +64,18 @@ const CLERK_LOOK = {
   }
 }
 
-/** The mark alone, at the size of a mark rather than a favicon.
+/** Mark and address, locked up.
  *
- *  The name used to sit beside it, which meant the page said "Growth
- *  Terminal" three times: here, in the fine print, and inside the copy. The
- *  mark can hold the corner on its own. Alt carries the name now that no
- *  visible text does. */
+ *  The address rather than the company name, because the name is already said
+ *  twice further down the page and because a reviewer, or anyone who lands
+ *  here from a link, should be able to see at a glance exactly what site they
+ *  are about to type a password into. Set at a size you read rather than
+ *  inspect. Alt on the mark is empty now that visible text names the place. */
 function Wordmark({ className }: { className: string }) {
   return (
     <span className={className}>
-      <img src="/logo-mark.png" alt="Growth Terminal" width={64} height={64} />
+      <img src="/logo-mark.png" alt="" width={64} height={64} />
+      <b>www.growthterminal.io</b>
     </span>
   )
 }
