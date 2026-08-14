@@ -13,6 +13,7 @@ import {
 import { toast } from '../lib/bus'
 import { Editorial } from '../components/Editorial'
 import { Detail } from './Detail'
+import { Why } from '../components/Why'
 
 /** Route switch: the bundled Northlane sample keeps the full demo
  *  experience; every real analysis id renders the live detail. */
@@ -179,7 +180,7 @@ function PlanVerify({ spec, items, note, sealed, onAnswer, onNote, onCommit, onR
 
   return (
     <div className={'lvpanel vfy' + (sealed ? ' done' : '')} id="verify">
-      <span className="lbl">Did the plan work</span>
+      <span className="lbl">Did the plan work</span><Why k="verify" />
       <p className="lvbody" style={{ maxWidth: '62ch' }}>
         Every week is committed, so the plan is finished. Each line below is
         something the engine said would be true by now, in its own words. Answer
@@ -560,44 +561,44 @@ export function LiveDetail({ id }: { id: string }) {
                     !acc.evidence && 'evidence', !acc.financials && 'financials', !acc.plan && 'the plan'
                   ].filter(Boolean).join(', ')}.</p></div>
               )}
-              {category && <div className="lvcat">Constraint category<b>{category}</b></div>}
+              {category && <div className="lvcat">Constraint category<b>{category}</b><Why k="category" /></div>}
               <h1 className="lvhead">{headline || 'Constraint identified.'}</h1>
               {isFinite(sev) && sev > 0 && (
                 <div className="lvsevrow">
                   <Sev n={Math.min(10, Math.max(0, sev))} />
-                  <span className="lvmut">Severity {sev} of 10{confidence ? ', ' + confidence.toLowerCase() + ' confidence' : ''}</span>
+                  <Why k="severity" /><span className="lvmut">Severity {sev} of 10{confidence ? ', ' + confidence.toLowerCase() + ' confidence' : ''}</span>
                 </div>
               )}
 
               {((acc.financials && upside) || subDiagnosis) && (
                 <div className="lvcall">
-                  {acc.financials && upside && <div className="lvpanel amber"><span className="lbl">If you act</span>
+                  {acc.financials && upside && <div className="lvpanel amber"><span className="lbl">If you act</span><Why k="upside" />
                     <p className="lvbody"><b className="lvfig">{upside}</b> Engine-computed: raw impact adjusted by execution and causal success probability.</p></div>}
-                  {subDiagnosis && <div className="lvpanel"><span className="lbl">Sub-diagnosis</span>
+                  {subDiagnosis && <div className="lvpanel"><span className="lbl">Sub-diagnosis</span><Why k="subDiagnosis" />
                     <p className="lvbody">{subDiagnosis}</p></div>}
                 </div>
               )}
 
               {finding && (
-                <div className="lvpanel" id="verdict"><span className="lbl">What the engine found</span>
+                <div className="lvpanel" id="verdict"><span className="lbl">What the engine found</span><Why k="verdict" />
                   <p className="lvbody">{finding}</p></div>
               )}
 
               {narrativeText && (
-                <div className="lvpanel" id="narrative"><span className="lbl">The verdict, in full</span>
+                <div className="lvpanel" id="narrative"><span className="lbl">The verdict, in full</span><Why k="narrative" />
                   <p className="lvbody lvpre">{narrativeText}</p></div>
               )}
 
               {causes.length > 0 && (
-                <div className="lvpanel" id="causes"><span className="lbl">Root causes</span>
+                <div className="lvpanel" id="causes"><span className="lbl">Root causes</span><Why k="causes" />
                   <ul className="lvlist">{causes.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
               )}
 
               {acc.evidence && (supporting.length > 0 || contradicting.length > 0) && (
                 <div className="lvcall" id="evidence">
-                  {supporting.length > 0 && <div className="lvpanel"><span className="lbl">Evidence for this call</span>
+                  {supporting.length > 0 && <div className="lvpanel"><span className="lbl">Evidence for this call</span><Why k="supporting" />
                     <ul className="lvlist">{supporting.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
-                  {contradicting.length > 0 && <div className="lvpanel"><span className="lbl">Evidence against it</span>
+                  {contradicting.length > 0 && <div className="lvpanel"><span className="lbl">Evidence against it</span><Why k="contradicting" />
                     <ul className="lvlist">{contradicting.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
                 </div>
               )}
@@ -605,13 +606,13 @@ export function LiveDetail({ id }: { id: string }) {
               {acc.plan && phases.length > 0 && (
                 <div className="lvtimeline" id="plan">
                   <div className="lvplanhead">
-                    <span className="lbl">The plan, as the engine wrote it</span>
+                    <span className="lbl">The plan, as the engine wrote it</span><Why k="plan" />
                     {planHeadline && <b className="lvplant">{planHeadline}</b>}
                     {typeof horizon === 'number' && <span className="lvmut">{horizon} weeks, {phases.length} phases, {gates.length} decision gates</span>}
                     {sequencing && <p className="lvbody">{sequencing}</p>}
                     {plannedWeeks > 0 && (
                       <div className="planprog">
-                        <span className="lbl">Plan progress</span>
+                        <span className="lbl">Plan progress</span><Why k="planprog" />
                         <div className="planbar" role="img"
                           aria-label={committedCount + ' of ' + plannedWeeks + ' weeks committed'
                             + (nowWeek > 0 ? '. Today is week ' + nowWeek + ' of ' + plannedWeeks : '')}>
@@ -655,7 +656,7 @@ export function LiveDetail({ id }: { id: string }) {
               )}
 
               {acc.plan && gates.length > 0 && (
-                <div className="lvpanel" id="gates"><span className="lbl">Decision gates</span>
+                <div className="lvpanel" id="gates"><span className="lbl">Decision gates</span><Why k="gates" />
                   {gates.map((g, i) => (
                     <div key={i} className="gate" style={{ margin: '6px 0 0' }}>
                       <span className="lbl">Gate {i + 1}{textOf(g.timing) ? ', ' + textOf(g.timing) : ''}</span>
@@ -670,7 +671,7 @@ export function LiveDetail({ id }: { id: string }) {
               )}
 
               {acc.plan && indicators.length > 0 && (
-                <div className="lvpanel" id="indicators"><span className="lbl">Indicators the engine is watching</span>
+                <div className="lvpanel" id="indicators"><span className="lbl">Indicators the engine is watching</span><Why k="indicators" />
                   <ul className="lvlist">{indicators.map((x, i) => {
                     const nm = textOf(x)
                     const tgt = textOf(pick(x, ['target', 'threshold', 'goal']))
@@ -679,7 +680,7 @@ export function LiveDetail({ id }: { id: string }) {
               )}
 
               {acc.evidence && epLimitations.length > 0 && (
-                <div className="lvpanel" id="limits"><span className="lbl">What would prove this wrong</span>
+                <div className="lvpanel" id="limits"><span className="lbl">What would prove this wrong</span><Why k="limits" />
                   <ul className="lvlist">{epLimitations.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
               )}
 
