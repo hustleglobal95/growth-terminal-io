@@ -1854,3 +1854,48 @@ mark.edmk.und::selection{background:var(--s3)}
   .dgstats{order:3}
   .dglead{order:2;margin-left:auto}
 }
+
+/* ---------------------------------------------------------------------------
+   "What is this box" on the live analysis.
+
+   The mark is quiet until hovered and only turns solid while its explanation is
+   open, so a page of twelve panels does not read as twelve unanswered
+   questions. It is absolutely placed, which is why .lvpanel needs a position:
+   panels are flex columns and an inline button would have become a row of its
+   own and pushed the content down.
+   --------------------------------------------------------------------------- */
+.lvpanel,.lvtimeline,.lvcat,.lvsevrow{position:relative}
+.why{
+  position:absolute;top:12px;right:12px;z-index:2;
+  width:20px;height:20px;padding:0;border-radius:50%;
+  border:1px solid var(--line2);background:transparent;color:var(--faint);
+  font:600 11px/1 Inter,system-ui,sans-serif;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:color .15s var(--ease),border-color .15s var(--ease),
+             background .15s var(--ease);
+}
+/* The visible ring stays 20px so it does not shout, but WCAG 2.5.8 wants 24px
+   of target. A transparent overlay buys the extra 4px without changing what
+   anyone sees. */
+.why::before{content:"";position:absolute;top:50%;left:50%;
+  width:26px;height:26px;transform:translate(-50%,-50%)}
+.why:hover{color:var(--text);border-color:var(--text)}
+.why:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.why.on{background:#000000;border-color:#000000;color:#FFFFFF}
+.whybody{
+  margin:0;padding:11px 13px;max-width:66ch;
+  background:var(--recess);border:1px solid var(--line);border-radius:var(--r3);
+  font-size:12.5px;line-height:1.6;color:var(--muted);
+}
+.whybody b{color:var(--text);font-weight:600}
+/* The severity row is a flex row, so the mark can just sit in it. The category
+   chip is a flex COLUMN, where a static mark became a third line under the
+   category name; it gets the corner treatment instead, with room reserved so
+   it never sits on top of a long category. */
+.lvsevrow .why{position:static;margin-left:0;flex:0 0 auto}
+.lvcat{padding-right:36px}
+.lvcat .why{top:8px;right:8px}
+@media(max-width:640px){
+  .why{top:10px;right:10px}
+  .whybody{font-size:12px}
+}
