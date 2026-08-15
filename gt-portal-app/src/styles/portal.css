@@ -1899,3 +1899,130 @@ mark.edmk.und::selection{background:var(--s3)}
   .why{top:10px;right:10px}
   .whybody{font-size:12px}
 }
+
+/* ===========================================================================
+   DARK GLASS SKIN, August 2026
+   ---------------------------------------------------------------------------
+   A skin, not a restructure. No markup changed: every rule here retargets
+   classes that already exist, so the layer can be deleted and the portal
+   returns to exactly what it was.
+
+   One decision worth recording. The spec made Signal Amber the primary colour
+   everywhere. Primary stays black on light surfaces, because that was chosen
+   deliberately and because black on warm off-white is the stronger, more
+   serious pairing. Amber is used only where black cannot be seen, which after
+   this layer means the dark sidebar and dark header zones. So the rule is
+   surface-dependent rather than a single accent, and each surface gets the
+   colour that actually reads on it.
+   =========================================================================== */
+:root{
+  /* Warm off-white replaces pure white. The page stops glaring and white cards
+     sitting on it finally have an edge without needing a heavier border. */
+  --page:#F9F9F7;
+  --border:rgba(15,15,14,.08);
+  --border2:rgba(15,15,14,.16);
+
+  /* Dark surfaces. The sidebar and any header zone share these, so there is
+     one place to change the chrome. */
+  --chrome:#191917;
+  --chrome-deep:#0F0F0E;
+  --on-dark:rgba(255,255,255,.92);
+  --on-dark-2:rgba(255,255,255,.50);
+  --on-dark-3:rgba(255,255,255,.28);
+  --dark-line:rgba(255,255,255,.06);
+  --signal:rgba(249,115,22,1);      /* only ever used on dark */
+}
+
+/* ---------- the sidebar goes dark ---------- */
+.side{
+  background:var(--chrome);
+  border-right:1px solid var(--dark-line);
+  width:210px;flex:0 0 210px;padding:22px 16px;
+}
+.side .mark{color:var(--on-dark)}
+.side .chip{
+  border-color:var(--dark-line);color:var(--on-dark-2);
+  background:rgba(255,255,255,.02);
+}
+.side .chip i{background:var(--signal)}
+
+/* Selection is a left edge, not a filled pill. On a dark panel a fill reads as
+   a second surface and the eye has to work out which one is the page. */
+.nav a{
+  position:relative;color:var(--on-dark-3);border-radius:0;
+  padding:9px 10px 9px 14px;
+  transition:color .2s var(--ease);
+}
+.nav a::before{
+  content:"";position:absolute;left:0;top:6px;bottom:6px;width:2.5px;
+  border-radius:0 2px 2px 0;background:var(--signal);
+  opacity:0;transition:opacity .2s var(--ease);
+}
+.nav a:hover{color:var(--on-dark-2)}
+.nav a.on{background:none;color:var(--on-dark)}
+.nav a.on::before{opacity:1}
+.nav a svg{opacity:.55}
+.nav a.on svg{opacity:1}
+
+/* Anything else the sidebar carries inherits the dark treatment rather than
+   keeping light-surface colours that would vanish. */
+.side .lbl,.side .cs{color:var(--on-dark-3)}
+.side .btn:not(.p){
+  color:var(--on-dark);box-shadow:0 0 0 1px var(--dark-line) inset;background:none;
+}
+.side .btn:not(.p):hover{background:rgba(255,255,255,.04)}
+
+/* The verdict rail starts where the narrower sidebar ends. */
+.stick{left:210px}
+
+/* ---------- metadata reads as instrumentation ---------- */
+/* Small labels become monospace and spaced. This is the single change that
+   makes a light interface feel like a product rather than a document. */
+.lbl{
+  font-family:var(--mono);font-size:9.5px;font-weight:500;
+  letter-spacing:.10em;text-transform:uppercase;color:var(--faint);
+}
+.shead .lbl,.tmstat .lbl{font-size:9px}
+
+/* Headings tighten. */
+h1,h2,h3,.shead h2{letter-spacing:-.028em}
+
+/* ---------- component patterns ---------- */
+/* Badges: a tinted wash, a defined edge, monospace. Same construction whatever
+   the colour, so status is read by hue and never by shape. */
+.pill{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  letter-spacing:.07em;text-transform:uppercase;
+  border-radius:4px;padding:3px 7px;
+  background:rgba(15,15,14,.06);
+  box-shadow:0 0 0 1px rgba(15,15,14,.10) inset;
+}
+.pill.n{background:none;box-shadow:0 0 0 1px var(--border2) inset}
+
+/* Progress: thinner, quieter track, square-ish. A 3px bar reads as a reading
+   rather than as decoration. */
+.planbar,.tmbar,.bar{border-radius:2px;background:rgba(15,15,14,.07)}
+.planbar{height:4px}
+.tmbar{height:3px}
+
+/* Cards sit on the warm page with a hairline rather than a shadow. */
+.card,.lvpanel,.tmstat{border-color:var(--border)}
+
+/* Tab and panel changes fade rather than cut. */
+@keyframes gt-tab-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.gt-tab-in,.scr.on .wrap>*{animation:gt-tab-in .26s ease-out both}
+
+/* Live states breathe. Nothing else on the page moves on its own. */
+@keyframes gt-live{0%,100%{opacity:.5}50%{opacity:1}}
+.stat.ok i,.side .chip i{animation:gt-live 2s ease-in-out infinite}
+
+@media(prefers-reduced-motion:reduce){
+  .gt-tab-in,.scr.on .wrap>*{animation:none}
+  .stat.ok i,.side .chip i{animation:none;opacity:1}
+  .nav a,.nav a::before{transition:none}
+}
+
+@media(max-width:900px){
+  .side{width:250px;flex:0 0 250px;padding:24px}
+  .stick{left:0}
+}
