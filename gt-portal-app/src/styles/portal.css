@@ -2220,3 +2220,47 @@ body{
 /* Progress fills sit inside a rounded track; without their own radius the fill
    squares off against a rounded end and the bar looks broken at low values. */
 .planbar .fill,.tmbar i,.bar i{border-radius:2px}
+
+/* ---------------------------------------------------------------------------
+   Analyses: bringing the table into the same language as everything else.
+
+   Every other small label in the portal is now tracked monospace. The table
+   header was still sentence case Inter, so the one place in the product that
+   is literally a set of column labels was the one place not using the label
+   treatment. A column header is instrumentation, not prose.
+   --------------------------------------------------------------------------- */
+.trow.h{
+  font-family:var(--mono);font-size:9.5px;font-weight:500;
+  letter-spacing:.10em;text-transform:uppercase;
+  border-bottom:1px solid var(--border);
+}
+
+/* Filter chips read as controls rather than as text, and the selected one is
+   stated by weight and ink rather than by a grey fill that competes with the
+   table underneath it. */
+.fchip{
+  font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+  border-radius:6px;padding:6px 11px;
+  background:transparent;border-color:var(--border);
+}
+.fchip:hover{background:var(--s2)}
+.fchip.on{
+  background:var(--text);color:#FFFFFF;border-color:var(--text);font-weight:600;
+}
+
+/* Figures in the table are compared down the column, so they align and sit in
+   the mono face rather than in body text. */
+.trow .num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12px}
+
+/* A row is a target. Give the whole row the hover, and let the left edge say
+   which one, the same way the sidebar does. */
+.trow:not(.h){position:relative;transition:background .18s var(--ease)}
+.trow:not(.h)::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:var(--text);opacity:0;transition:opacity .18s var(--ease);
+}
+.trow:not(.h):hover::before{opacity:1}
+
+@media(prefers-reduced-motion:reduce){
+  .trow:not(.h),.trow:not(.h)::before{transition:none}
+}
