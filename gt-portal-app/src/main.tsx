@@ -20,6 +20,11 @@ function ClerkTokenBridge() {
 }
 import { DEMO, CLERK_PUBLISHABLE_KEY, CLERK_PROXY_URL } from './config'
 import './styles/portal.css'
+import { initLava } from './lib/lava'
+
+/* Started once, outside React, because it owns a single element and a single
+   animation frame loop and has nothing to do with any screen. */
+initLava()
 
 const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
