@@ -53,26 +53,57 @@ export const DEFAULT_WORKSPACE_ID = '9d7211d5-4be0-428f-a8bf-4b273b13955c'
 
 /** Checkout.
  *
- *  The engine owns payment. The portal's only jobs are to ask it for a
- *  checkout session and to send the browser wherever it says, so this is the
- *  single line that has to change when the route is confirmed.
+ *  The engine owns payment. The portal asks it for a session and sends the
+ *  browser wherever it answers with, so these are the only lines that change
+ *  if a route moves.
  *
- *  It is deliberately empty. An empty value means the portal has no confirmed
- *  way to start a purchase and it says so, which is the correct behaviour: a
- *  Top up button that posts to a guessed path and gets the app shell back at
- *  status 200 would look like it worked and do nothing at all, which is the
- *  same failure that makes app.growthterminal.io the wrong host for the
- *  Stripe webhook.
+ *  Paths are relative to API_BASE + '/api', which is what liveRoot prefixes,
+ *  so '/checkout/credits' is POSTed to growthterminal.io/api/checkout/credits.
  *
- *  Expected contract when it is filled in: POST to API_BASE + '/api' + this
- *  path, carrying the Clerk session and X-Workspace-Id like every other call,
- *  and answer with { url } pointing at Stripe's hosted checkout.
- *
- *  Example: '/checkout/create-session'
+ *  There are no Stripe price IDs anywhere in this file on purpose: the server
+ *  builds every line item from inline price_data, so the portal names what is
+ *  being bought and never how much it costs Stripe. The prices below are for
+ *  display only, and if one of them ever disagrees with the server the server
+ *  is right.
  */
-export const CHECKOUT_START_PATH = ''
+export const CHECKOUT_CREDITS_PATH = '/checkout/credits'
+export const CHECKOUT_PRODUCT_PATH = '/checkout/sheet-product'
+/** Subscriptions exist on the server but the portal does not sell them yet. */
+export const CHECKOUT_PLAN_PATH = ''
 
-/** Where Stripe sends the browser back to. These are the values
- *  PUBLIC_BASE_URL on the server has to agree with. */
+/** Where Stripe sends the browser back to. The server currently hardcodes its
+ *  own return paths; these are sent on every request so that it can honour
+ *  them instead, which is the one change that lets the marketing site and the
+ *  portal both send people back to the right place. */
 export const CHECKOUT_SUCCESS_PATH = '/billing/success'
 export const CHECKOUT_CANCEL_PATH = '/billing/cancel'
+
+export interface CreditBundle { bundle: number; price: string; each: string }
+
+/** Volume pricing as the engine charges it. */
+export const CREDIT_BUNDLES: CreditBundle[] = [
+  { bundle: 100, price: '$100', each: '$1.00 each' },
+  { bundle: 250, price: '$225', each: '$0.90 each' },
+  { bundle: 500, price: '$400', each: '$0.80 each' },
+  { bundle: 1000, price: '$700', each: '$0.70 each' }
+]
+
+export interface SheetProduct { productId: string; name: string; price: string; blurb: string }
+
+/** Sheet products sold through Stripe.
+ *
+ *  Note what is missing. The engine also exposes productId 'ai-guide' at $55,
+ *  and it is deliberately not listed here: Attract, Don't Sell is priced at
+ *  $50 and sells through Gumroad, which is what the landing page at
+ *  /attract/ and the Gumroad listing both say. Adding a $55 Stripe button for
+ *  it would put the same guide on sale at two prices through two checkouts,
+ *  with refunds handled in one of them and not the other. Add the entry back
+ *  when the price and the channel agree. */
+export const SHEET_PRODUCTS: SheetProduct[] = [
+  {
+    productId: 'funnel-tracker',
+    name: 'Funnel Tracker',
+    price: '$79',
+    blurb: 'The workbook the engine reads. Drop your numbers in and run an analysis against it.'
+  }
+]
