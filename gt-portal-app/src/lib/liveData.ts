@@ -185,12 +185,45 @@ export function creditsLabel(c: Credits | null): string {
 }
 
 /** The sidebar's plan line. Billing carries no credit balance, so this
- *  reports the subscription state rather than inventing a number. */
+ *  reports the subscription state rather than inventing a number.
+ *
+ *  A trial is the one billing fact with a deadline attached, so when there is
+ *  one the days left are what the line says. Somebody on day two of a trial and
+ *  somebody on the last day of it are in very different situations, and a chip
+ *  reading "Plan: Professional" tells neither of them anything. */
 export function planLabel(b: BillingStatus | null): string {
   if (!b) return 'Plan: loading'
   if (b.bypassed) return 'Plan: internal'
-  if (b.planName) return 'Plan: ' + b.planName
-  return 'Plan: ' + (b.state || 'unknown')
+  const name = b.planName || b.state || 'unknown'
+  const days = trialDaysLeft(b)
+  if (days !== null) {
+    if (days <= 0) return name + ': trial ends today'
+    return name + ': ' + days + (days === 1 ? ' day left in trial' : ' days left in trial')
+  }
+  return 'Plan: ' + name
+}
+
+/** Whole days until a trial ends, or null when there is no trial running.
+ *  Counted from the start of today so it does not tick over mid afternoon. */
+export function trialDaysLeft(b: BillingStatus | null): number | null {
+  if (!b || !b.trialEndsAt) return null
+  const end = new Date(b.trialEndsAt)
+  if (isNaN(end.getTime())) return null
+  const today = new Date()
+  const a = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
+  const z = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate())
+  const days = Math.round((z - a) / 86400000)
+  return days < 0 ? null : days
+}
+
+/** Whether the engine reports a subscription that entitles this workspace to
+ *  the product. Used to tell "you have not paid" apart from "something else
+ *  went wrong", which the gate could not previously distinguish. */
+export function subscriptionLive(b: BillingStatus | null): boolean {
+  if (!b) return false
+  if (b.bypassed) return true
+  if (b.planName) return true
+  return ['active', 'trialing', 'trial', 'past_due'].includes(String(b.state || '').toLowerCase())
 }
 
 /** The workspace line under the signed in name.
