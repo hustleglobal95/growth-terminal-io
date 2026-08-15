@@ -50,3 +50,29 @@ export const CLERK_PROXY_URL = 'https://growthterminal.io/api/__clerk'
  *  (portal/w/<id>/...). A workspace switcher can override it later via
  *  setWorkspaceId, which stores the choice in localStorage. */
 export const DEFAULT_WORKSPACE_ID = '9d7211d5-4be0-428f-a8bf-4b273b13955c'
+
+/** Checkout.
+ *
+ *  The engine owns payment. The portal's only jobs are to ask it for a
+ *  checkout session and to send the browser wherever it says, so this is the
+ *  single line that has to change when the route is confirmed.
+ *
+ *  It is deliberately empty. An empty value means the portal has no confirmed
+ *  way to start a purchase and it says so, which is the correct behaviour: a
+ *  Top up button that posts to a guessed path and gets the app shell back at
+ *  status 200 would look like it worked and do nothing at all, which is the
+ *  same failure that makes app.growthterminal.io the wrong host for the
+ *  Stripe webhook.
+ *
+ *  Expected contract when it is filled in: POST to API_BASE + '/api' + this
+ *  path, carrying the Clerk session and X-Workspace-Id like every other call,
+ *  and answer with { url } pointing at Stripe's hosted checkout.
+ *
+ *  Example: '/checkout/create-session'
+ */
+export const CHECKOUT_START_PATH = ''
+
+/** Where Stripe sends the browser back to. These are the values
+ *  PUBLIC_BASE_URL on the server has to agree with. */
+export const CHECKOUT_SUCCESS_PATH = '/billing/success'
+export const CHECKOUT_CANCEL_PATH = '/billing/cancel'

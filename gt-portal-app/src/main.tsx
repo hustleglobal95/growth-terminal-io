@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { Shell } from './components/Shell'
 import { WorkspaceGate } from './components/WorkspaceGate'
 import { Overview, Analyses, Businesses, ApiKeys, Stub } from './screens/simple'
+import { CheckoutSuccess, CheckoutCancel } from './screens/Billing'
 import { Teams } from './screens/Teams'
 import { Content } from './screens/Content'
 import { ContentSetup } from './screens/ContentSetup'
@@ -35,6 +36,10 @@ const router = createBrowserRouter([
     /* The gate wraps the shell rather than sitting inside it, so no screen
        and no sidebar hook fires a request before we know who is asking. */
     element: <WorkspaceGate><Shell /></WorkspaceGate>,
+    /* A render error used to fall through to React Router's own developer
+       page. Anything reached through a payment redirect has to fail into the
+       product, not into a stack trace. */
+    errorElement: <WorkspaceGate><Shell /></WorkspaceGate>,
     children: [
       { path: '/', element: <Overview /> },
       { path: '/analyses', element: <Analyses /> },
@@ -45,7 +50,16 @@ const router = createBrowserRouter([
       { path: '/api-keys', element: <ApiKeys /> },
       { path: '/teams', element: <Teams /> },
       { path: '/more', element: <More /> },
-      { path: '/:id', element: <Stub /> }
+      /* Stripe sends the browser back to these two. They are ordinary routes
+         and not special cases: the success screen confirms against the engine
+         rather than trusting the redirect that brought it here. */
+      { path: '/billing/success', element: <CheckoutSuccess /> },
+      { path: '/billing/cancel', element: <CheckoutCancel /> },
+      { path: '/:id', element: <Stub /> },
+      /* Everything else, at any depth. Without this, a two segment address
+         matched no route at all and React Router printed "Unexpected
+         Application Error! 404 Not Found" over the whole window. */
+      { path: '*', element: <Stub /> }
     ]
   }
 ])
