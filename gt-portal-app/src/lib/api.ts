@@ -1,4 +1,4 @@
-import { DEMO, API_BASE, PORTAL_API } from '../config'
+import { DEMO, API_BASE, PORTAL_API, CHECKOUT_START_PATH, CHECKOUT_SUCCESS_PATH, CHECKOUT_CANCEL_PATH } from '../config'
 import { getClerkToken } from './clerkBridge'
 import { stripDashes } from './sanitize'
 import demo from '../data/demo.json'
@@ -418,6 +418,40 @@ export const SCOPE_HELP: Record<string, string> = {
 export interface Credits {
   balance: number
   costs: Record<string, number>
+}
+
+/** Whether the portal has a confirmed way to start a purchase. */
+export function checkoutConfigured(): boolean {
+  return !DEMO && CHECKOUT_START_PATH.length > 0
+}
+
+/** Ask the engine for a checkout session and hand back the URL to send the
+ *  browser to.
+ *
+ *  Everything about this is deliberately suspicious of a 200. The host that
+ *  serves this app answers every unknown path with the app shell at status
+ *  200, so "the request succeeded" proves nothing on its own; only a JSON body
+ *  carrying a URL on Stripe's domain does. Getting that wrong would produce a
+ *  Top up button that appears to work, navigates nowhere useful, and takes no
+ *  money, which is worse than one that plainly refuses. */
+export async function startCheckout(sku?: string): Promise<string> {
+  if (!checkoutConfigured()) {
+    throw new Error('Checkout is not configured yet.')
+  }
+  const origin = window.location.origin
+  const body = await liveRoot<{ url?: string }>(CHECKOUT_START_PATH, {
+    method: 'POST',
+    body: JSON.stringify({
+      sku: sku || undefined,
+      successUrl: origin + CHECKOUT_SUCCESS_PATH,
+      cancelUrl: origin + CHECKOUT_CANCEL_PATH
+    })
+  })
+  const url = body && typeof body.url === 'string' ? body.url : ''
+  if (!/^https:\/\/(checkout\.stripe\.com|billing\.stripe\.com)\//.test(url)) {
+    throw new Error('The server did not return a Stripe checkout URL.')
+  }
+  return url
 }
 
 export const api = {

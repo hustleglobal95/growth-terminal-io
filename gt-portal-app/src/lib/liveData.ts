@@ -92,8 +92,17 @@ export function useOverview(): OverviewData | null {
 function onceHook<T>(load: () => Promise<T>) {
   let cache: T | null = null
   let promise: Promise<T> | null = null
-  return function useOnce(): T | null {
+  /* Every mounted copy of the hook, so an explicit refresh updates the sidebar
+     on whatever screen the person is standing on rather than only the one that
+     asked. Coming back from checkout with a stale credit count in the chrome
+     is exactly the moment this matters. */
+  const listeners = new Set<(v: T | null) => void>()
+  const hook = function useOnce(): T | null {
     const [v, setV] = useState<T | null>(cache)
+    useEffect(() => {
+      listeners.add(setV)
+      return () => { listeners.delete(setV) }
+    }, [])
     useEffect(() => {
       if (cache || DEMO) return
       let alive = true
@@ -105,6 +114,22 @@ function onceHook<T>(load: () => Promise<T>) {
     }, [])
     return v
   }
+  /** Drop the cached value and fetch again, telling every mounted copy. */
+  hook.refresh = async (): Promise<T | null> => {
+    if (DEMO) return cache
+    cache = null
+    promise = null
+    try {
+      const x = await load()
+      cache = x
+      listeners.forEach(fn => fn(x))
+      return x
+    } catch {
+      promise = null
+      return null
+    }
+  }
+  return hook
 }
 
 export const useBusinesses = onceHook<BusinessRow[]>(() => api.listBusinesses())
