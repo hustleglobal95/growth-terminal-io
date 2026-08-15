@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { DEMO } from '../config'
 import {
-  clearWorkspace, resolveWorkspace, workspaceBelongsTo,
+  api, clearWorkspace, resolveWorkspace, workspaceBelongsTo,
   workspaceResolveTrace, workspaceResolveWasUnauthenticated
 } from '../lib/api'
+import { subscriptionLive } from '../lib/liveData'
 
 /** Nothing authenticated renders until we know which workspace this account
  *  belongs to.
@@ -23,6 +24,12 @@ import {
  *
  *  When the answer cannot be found, this says so and stops. A workspace is
  *  not something to guess at twice.
+ *
+ *  It also says WHY, which it used to skip. Three quite different people were
+ *  getting the same sentence: somebody who never subscribed, somebody whose
+ *  invitation has not been accepted, and somebody hitting a real fault. Only
+ *  one of those has anything to do here, and telling them apart costs one
+ *  request to the billing endpoint.
  */
 
 const TRIES = 6
@@ -30,6 +37,9 @@ const GAP = 450
 const CLERK_WAIT = 6000
 
 type State = 'resolving' | 'ready' | 'unknown'
+
+/* Why there is no workspace, as far as the engine will say. */
+type Reason = 'checking' | 'no-subscription' | 'subscribed' | 'unsaid'
 
 type ClerkGlobal = {
   loaded?: boolean
@@ -68,6 +78,18 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<State>(
     DEMO || workspaceBelongsTo(uidNow()) ? 'ready' : 'resolving'
   )
+  const [reason, setReason] = useState<Reason>('checking')
+
+  /* Only asked once we already know there is no workspace, so the happy path
+     never waits on it. */
+  useEffect(() => {
+    if (state !== 'unknown') return
+    let alive = true
+    api.billing()
+      .then(b => { if (alive) setReason(subscriptionLive(b) ? 'subscribed' : 'no-subscription') })
+      .catch(() => { if (alive) setReason('unsaid') })
+    return () => { alive = false }
+  }, [state])
 
   useEffect(() => {
     if (state !== 'resolving') return
@@ -124,10 +146,29 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
     return (
       <div className="scr on">
         <div className="wsgate">
-          <b>This account is not in a workspace yet.</b>
-          <span className="wsgatemut">You are signed in, but the engine does not have a
-            workspace for this account, so there is nothing here to show you. If you have
-            just been invited, the invitation may not have been accepted yet.</span>
+          <b>{reason === 'no-subscription'
+            ? 'There is no active subscription on this account.'
+            : 'This account is not in a workspace yet.'}</b>
+          <span className="wsgatemut">
+            {reason === 'checking' && 'You are signed in. Checking what this account has.'}
+            {reason === 'no-subscription' && (
+              <>You are signed in, but the engine has no plan against this account, so there
+                is no workspace to open. If you have just paid, the subscription can take a
+                moment to appear: reload in a minute. If you paid with a different email
+                address than the one you signed in with, that is the usual cause, and we can
+                move it across.</>
+            )}
+            {reason === 'subscribed' && (
+              <>Your subscription is active, but this account is not attached to a workspace
+                yet. That normally means an invitation is waiting to be accepted, or the
+                workspace is still being set up. Reloading in a minute usually resolves it.</>
+            )}
+            {reason === 'unsaid' && (
+              <>You are signed in, but the engine did not answer when asked what this account
+                has, so we cannot tell you whether this is a subscription problem or a fault
+                on our side. Reloading is worth one try.</>
+            )}
+          </span>
           {workspaceResolveTrace().length > 0 && (
             <ul className="wsgatewhy">
               {workspaceResolveTrace().map((r, i) => <li key={i}>{r}</li>)}

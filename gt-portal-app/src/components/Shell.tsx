@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Palette } from './Palette'
 import { onToast } from '../lib/bus'
-import { useMe, useCalibration, useCredits, calibrationLabel, creditsLabel, workspaceLabel, initials } from '../lib/liveData'
+import { useMe, useCalibration, useCredits, useBilling, calibrationLabel, creditsLabel, planLabel, trialDaysLeft, workspaceLabel, initials } from '../lib/liveData'
 import { clearWorkspace } from '../lib/api'
 
 const ICONS: Record<string, string> = {
@@ -62,6 +62,10 @@ export function UserCard() {
 export function Shell() {
   const cal = useCalibration()
   const cred = useCredits()
+  /* This hook existed and was consumed by nobody, so the engine tracked the
+     subscription and the product never mentioned it. A person paying every
+     month could not see what they were paying for. */
+  const bill = useBilling()
   const [pal, setPal] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
   const loc = useLocation()
@@ -118,6 +122,11 @@ export function Shell() {
             <img className="marklogo" src="/logo-mark-60.png" srcSet="/logo-mark-60.png 2x, /logo-mark-90.png 3x" alt="" />Growth Terminal
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {bill && (
+              <div className={'chip' + (trialDaysLeft(bill) !== null ? ' warn' : '')}>
+                <i />{planLabel(bill)}
+              </div>
+            )}
             <div className="chip"><i />{calibrationLabel(cal)}</div>
             <div className="chip"><i />{creditsLabel(cred)}</div>
           </div>
