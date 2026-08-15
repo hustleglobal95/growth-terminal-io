@@ -2177,3 +2177,46 @@ svg{shape-rendering:geometricPrecision}
   .card,.tile,.lvpanel,.tmstat,.bizcard,.tbl,.dgcard{transition:none}
   .bizcard:hover,.dgcard:hover,.tile[role="button"]:hover{transform:none}
 }
+
+/* ---------------------------------------------------------------------------
+   Typographic quality.
+
+   Not a size change. The 163 half-pixel font sizes in this file were left
+   alone on purpose: on a 2x display 12.5px is exactly 25 device pixels, so
+   they rasterise cleanly, and rounding all of them would reflow every line in
+   the portal to fix a problem that mostly does not exist. What does help is
+   turning on the typographic features the fonts already ship with and the
+   browser leaves off by default.
+   --------------------------------------------------------------------------- */
+body{
+  /* Kerning and contextual alternates. Without these, pairs like "Av" and "Ta"
+     sit at their default widths and headline spacing looks slightly loose. */
+  text-rendering:optimizeLegibility;
+  font-feature-settings:"kern" 1,"liga" 1,"calt" 1;
+}
+/* Uppercase tracked labels are everywhere now. "case" moves punctuation and
+   figures up to cap height, so a hyphen inside an uppercase label stops
+   sitting too low and the line reads as one weight. */
+.lbl,.pill,.eyebrow,.k,.chip{font-feature-settings:"kern" 1,"case" 1,"tnum" 1}
+
+/* Large display figures get the tighter fit the variable font is cut for at
+   size, rather than the body optical size scaled up. */
+.fig,.evc .fig,.buy .amt,.tmnum,.lvhead{font-optical-sizing:auto;letter-spacing:-.03em}
+
+/* ---------------------------------------------------------------------------
+   Edge quality on the boxes.
+   --------------------------------------------------------------------------- */
+/* A rounded box that clips its children antialiases the child against the
+   corner twice, once for the child and once for the clip, which is what makes
+   a corner look chewed. Isolating the box gives it one compositing pass. */
+.card,.tile,.lvpanel,.tmstat,.bizcard,.tbl,.dgcard,.side{isolation:isolate}
+
+/* Hairline borders drawn with a shadow instead of a border land on exact
+   device pixels and stay one pixel at any zoom, where a real 1px border
+   thickens on fractional layout positions. */
+.pill,.chip,.badge{border:0;box-shadow:0 0 0 1px rgba(15,15,14,.10) inset}
+.side .chip{box-shadow:0 0 0 1px var(--dark-line) inset}
+
+/* Progress fills sit inside a rounded track; without their own radius the fill
+   squares off against a rounded end and the bar looks broken at low values. */
+.planbar .fill,.tmbar i,.bar i{border-radius:2px}
