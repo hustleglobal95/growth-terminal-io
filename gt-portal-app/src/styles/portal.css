@@ -2504,3 +2504,43 @@ body::before{background-size:70px 70px}
 /* One line of orientation under a header: the same shape the key screen
    already opens with, so a screen holding a single row still has a top. */
 .pgintro{margin:16px 0 14px;color:var(--muted);font-size:12.5px;line-height:1.6;max-width:70ch}
+
+/* ---------------------------------------------------------------------------
+   Latest from the blog, in the rail.
+   --------------------------------------------------------------------------- */
+
+/* Same shape the rail's old Latest block had: a stack of two line titles with
+   a quiet meta line under each. What changed is where the rows come from, so
+   the styling stays deliberately close rather than announcing itself. */
+.railnote{display:flex;flex-direction:column;gap:4px;padding:8px 9px;margin:0 -9px;
+  border-radius:8px;text-decoration:none;color:inherit;
+  transition:background .16s var(--ease)}
+.railnote:hover{background:var(--s2)}
+.railnote .t{font-size:12.5px;line-height:1.35;color:var(--text);font-weight:500;
+  overflow:hidden;text-overflow:ellipsis;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.railnote:hover .t{color:var(--text)}
+
+/* Category and date on one line. The category is the label face the rest of
+   the portal uses for a taxonomy term; the date is mono and tabular so four
+   stacked rows line up on the right. */
+.railnote .m{display:flex;align-items:center;gap:7px;min-width:0}
+.railnote .cat{font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:.10em;
+  text-transform:uppercase;color:var(--faint);overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.railnote .d{margin-left:auto;flex:none;font-family:var(--mono);font-size:9.5px;
+  font-variant-numeric:tabular-nums;color:var(--faint)}
+
+/* The way out to everything else, set apart from the four rows above it so it
+   does not read as a fifth post. */
+.railmore{display:inline-flex;align-items:center;gap:6px;margin-top:11px;
+  font-size:11.5px;font-weight:500;color:var(--muted);text-decoration:none}
+.railmore::after{content:"";width:5px;height:5px;border-right:1.5px solid currentColor;
+  border-top:1.5px solid currentColor;transform:rotate(45deg);
+  transition:transform .16s var(--ease)}
+.railmore:hover{color:var(--text)}
+.railmore:hover::after{transform:rotate(45deg) translate(1.5px,-1.5px)}
+
+/* Focus has to be visible on a rail that is now entirely links. */
+.railnote:focus-visible,.railmore:focus-visible{outline:2px solid var(--text);
+  outline-offset:2px;border-radius:8px}
