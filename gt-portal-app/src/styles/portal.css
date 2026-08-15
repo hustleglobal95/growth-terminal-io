@@ -2436,3 +2436,33 @@ body::before{opacity:.018}
    The module already refuses to start in both cases; this is the belt to that
    pair of braces, so a stale element can never be left visible. */
 @media (prefers-reduced-motion:reduce),(pointer:coarse){ .lava{display:none} }
+
+/* ---------------------------------------------------------------------------
+   Pixel pass.
+   --------------------------------------------------------------------------- */
+
+/* Straight one-pixel rules want the pixel grid, not exact geometry. The
+   earlier blanket geometricPrecision was right for icon curves and wrong for
+   these: a vertical 1px line at an integer x is drawn as two half-intensity
+   pixels instead of one solid one, which is why chart gridlines and gate
+   markers looked grey rather than black. <line> is straight by definition, so
+   it is safe to snap. Curves keep their smoothing. */
+svg line{shape-rendering:crispEdges}
+svg polyline,svg path,svg circle{shape-rendering:geometricPrecision}
+
+/* The explain ring is a 20px circle with a 1px border sitting at whatever
+   subpixel offset its panel lands on, which is the worst case for a stroked
+   curve. Drawn as an inset shadow it lands on device pixels instead, the same
+   fix already used on the pills. */
+.why{border:0;box-shadow:0 0 0 1px var(--line2) inset}
+.why:hover{box-shadow:0 0 0 1px var(--text) inset}
+.why.on{background:#000000;color:#FFFFFF;box-shadow:0 0 0 1px #000000 inset}
+#verdict .why{box-shadow:0 0 0 1px rgba(255,255,255,.22) inset}
+#verdict .why:hover{box-shadow:0 0 0 1px var(--on-dark) inset}
+#verdict .why.on{background:#FFFFFF;color:var(--chrome-deep);box-shadow:0 0 0 1px #FFFFFF inset}
+
+/* The grain tile is a 140 unit SVG painted at 140 CSS px, so on a 2x display
+   each noise cell covers four device pixels and the texture reads as soft
+   blotches rather than grain. Halving the tile puts one cell on one device
+   pixel where it belongs. */
+body::before{background-size:70px 70px}
