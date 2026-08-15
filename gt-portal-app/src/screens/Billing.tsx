@@ -237,3 +237,127 @@ export function CheckoutCancel() {
     </div>
   )
 }
+
+/** The addresses the engine actually sends people to.
+ *
+ *  The server builds its success and cancel URLs itself, from PUBLIC_BASE_URL
+ *  plus a hardcoded path: /checkout for a subscription, /settings/credits for
+ *  a credit bundle. Neither existed in this app, so with PUBLIC_BASE_URL
+ *  pointed here a buyer paid and landed on the 404 page. These two components
+ *  are those addresses.
+ *
+ *  They are kept alongside /billing/success rather than replacing it. If the
+ *  engine is later changed to honour the successUrl the portal already sends,
+ *  that path is ready; until then, these are where people actually arrive.
+ *  Two doors into the same room is cheap. A locked door is not.
+ */
+
+/* How the engine marks a cancelled return, per checkout type. */
+const wasCancelled = (search: string) => {
+  const q = new URLSearchParams(search)
+  return q.get('canceled') === '1' || q.get('canceled') === 'true' ||
+    q.get('purchase') === 'canceled' || q.get('cancelled') === '1'
+}
+
+type SubState =
+  | { k: 'checking'; tries: number }
+  | { k: 'active'; plan: string | null; trialEndsAt: string | null }
+  | { k: 'pending' }
+  | { k: 'unknown' }
+
+/* Which states the engine reports for a subscription that entitles somebody
+   to use the product. Anything else is not treated as a failure, only as not
+   yet confirmed, because guessing wrong in the confident direction is how a
+   product tells someone they are paid up when they are not. */
+const LIVE_STATES = ['active', 'trialing', 'trial', 'past_due']
+
+/** Where a subscription purchase lands: /checkout */
+export function SubscriptionReturn() {
+  const nav = useNavigate()
+  const [st, setSt] = useState<SubState>({ k: 'checking', tries: 0 })
+  const cancelled = wasCancelled(window.location.search)
+
+  useEffect(() => {
+    if (cancelled) return
+    let alive = true
+    const run = async () => {
+      for (let i = 0; i < ATTEMPTS; i++) {
+        if (!alive) return
+        setSt({ k: 'checking', tries: i })
+        try {
+          const b = await api.billing()
+          const live = b && (LIVE_STATES.includes(String(b.state || '').toLowerCase()) || !!b.planName)
+          if (live) {
+            if (!alive) return
+            clearPending()
+            setSt({ k: 'active', plan: b.planName || null, trialEndsAt: b.trialEndsAt || null })
+            return
+          }
+        } catch {
+          /* A failed read is not a failed payment. Keep asking. */
+        }
+        await new Promise(r => setTimeout(r, GAP_MS))
+      }
+      if (alive) setSt({ k: 'pending' })
+    }
+    void run()
+    return () => { alive = false }
+  }, [cancelled])
+
+  if (cancelled) return <CheckoutCancel />
+
+  return (
+    <div className="scr on">
+      <Header title="Checkout" />
+      <div className="canvas" style={{ gridTemplateColumns: 'minmax(0,1fr)' }}>
+        <div className="wrap">
+          {st.k === 'checking' && (
+            <div className="emptypage">
+              <span className="lbl">Confirming</span>
+              <h2>Checking your subscription with the engine.</h2>
+              <p>Stripe has sent you back. Your plan is activated by the engine when it
+                receives the payment notification, which usually lands a moment after you do,
+                so this waits for the subscription itself rather than assuming it.</p>
+              <div className="act"><span className="mut">Attempt {st.tries + 1} of {ATTEMPTS}.</span></div>
+            </div>
+          )}
+
+          {st.k === 'active' && (
+            <div className="emptypage">
+              <span className="lbl">Active</span>
+              <h2>{st.plan ? st.plan + ' is active.' : 'Your subscription is active.'}</h2>
+              <p>This is the subscription the engine reports against your workspace, not a
+                message from the checkout page.{st.trialEndsAt ? ' Your trial runs until ' +
+                  new Date(st.trialEndsAt).toLocaleDateString('en-GB',
+                    { day: 'numeric', month: 'long', year: 'numeric' }) + '.' : ''}</p>
+              <div className="act">
+                <button className="btn p" onClick={() => nav('/')}>Open the workspace</button>
+              </div>
+            </div>
+          )}
+
+          {(st.k === 'pending' || st.k === 'unknown') && (
+            <div className="emptypage">
+              <span className="lbl">Not confirmed yet</span>
+              <h2>Payment may have gone through, but the subscription is not showing yet.</h2>
+              <p>Notifications from the payment provider occasionally take longer than this.
+                Give it a few minutes and reload. Your receipt email is the record that the
+                payment happened; if the plan still has not appeared after that, send it to
+                us and we will attach it to this account.</p>
+              <div className="act">
+                <button className="btn p" onClick={() => window.location.reload()}>Check again</button>
+                <button className="btn g" style={{ marginLeft: 8 }} onClick={() => nav('/')}>Overview</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** Where a credit bundle lands: /settings/credits */
+export function CreditsReturn() {
+  if (wasCancelled(window.location.search)) return <CheckoutCancel />
+  return <CheckoutSuccess />
+}
