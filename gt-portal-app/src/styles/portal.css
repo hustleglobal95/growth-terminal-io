@@ -2264,3 +2264,75 @@ body{
 @media(prefers-reduced-motion:reduce){
   .trow:not(.h),.trow:not(.h)::before{transition:none}
 }
+
+/* ===========================================================================
+   THE ANALYSIS: HIERARCHY
+   ---------------------------------------------------------------------------
+   Measured on a real analysis, the page was a 3,934px stack of identical white
+   cards at the same radius and the same elevation. "What the engine found",
+   which is the one sentence the product exists to produce, looked exactly like
+   "Evidence against it".
+
+   Three tiers instead. The answer, the reasoning behind it, and the material
+   underneath. Nothing here changes markup; it reads the ids the screen already
+   sets, so a panel that is not part of the argument keeps the default card.
+   =========================================================================== */
+
+/* --- Tier one. The verdict. -----------------------------------------------
+   Ink on a light page is the strongest emphasis available, and it echoes the
+   sidebar so the two most important surfaces in the product share a language.
+   This is the constraint being named, which is the whole promise. */
+#verdict{
+  background:var(--chrome-deep);
+  border-color:transparent;
+  padding:22px 24px;
+  box-shadow:0 1px 2px rgba(15,15,14,.10),0 18px 40px -18px rgba(15,15,14,.35);
+}
+#verdict .lbl{color:var(--signal)}
+#verdict .lvbody{
+  color:var(--on-dark);font-size:16px;line-height:1.5;letter-spacing:-.012em;
+  max-width:60ch;
+}
+/* The explain mark has to invert too, or it disappears into the ink. */
+#verdict .why{border-color:rgba(255,255,255,.22);color:rgba(255,255,255,.55)}
+#verdict .why:hover{border-color:var(--on-dark);color:var(--on-dark)}
+#verdict .why.on{background:#FFFFFF;border-color:#FFFFFF;color:var(--chrome-deep)}
+#verdict .whybody{
+  background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);
+  color:var(--on-dark-2);
+}
+#verdict .whybody b{color:var(--on-dark)}
+
+/* --- Tier two. The reasoning. ---------------------------------------------
+   Root causes and the long narrative stay white cards and keep their lift.
+   They are claims, so they sit on the page rather than in it. --- */
+
+/* --- Tier three. The material. --------------------------------------------
+   Evidence, indicators and limits are what the claim rests on. They recess:
+   no elevation, seated on the page tint rather than raised above it, so the
+   eye reads them as substrate and can skip them without feeling it missed a
+   section. */
+#evidence .lvpanel,#indicators,#limits{
+  background:var(--recess);
+  box-shadow:none;
+  border-color:rgba(15,15,14,.07);
+}
+
+/* Evidence for and against are a pair, and they were indistinguishable. A
+   quiet left edge makes the balance legible at a glance: supported on the
+   left, contradicted on the right, without colouring either as good or bad. */
+#evidence .lvpanel{border-left:2px solid rgba(15,15,14,.20)}
+#evidence .lvpanel:last-child{border-left-color:var(--signal)}
+
+/* --- The plan is a different kind of object. ------------------------------
+   It is not a statement about the past, it is instructions for the future, so
+   it gets a rule above it rather than a card around it. --- */
+#plan .lvplanhead{
+  border-top:1px solid var(--border2);padding-top:20px;margin-top:8px;
+}
+#plan .lvplanhead .lbl{color:var(--text)}
+
+@media(max-width:760px){
+  #verdict{padding:18px}
+  #verdict .lvbody{font-size:15px}
+}
