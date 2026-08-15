@@ -2601,3 +2601,10 @@ html{scrollbar-gutter:stable}
 .agentmount{margin-top:18px;min-height:72px;display:flex;align-items:center}
 .agentrow{padding:12px 15px;border-top:1px solid var(--line);font-size:13px;color:var(--text)}
 .agentrow:first-child{border-top:0}
+
+/* An empty state that sits inside a section rather than standing in for a
+   whole page. The 620px measure is right when the card is the only thing on
+   screen and wrong when a full width list sits directly under it, because two
+   stacked blocks with different right edges and no reason for the difference
+   read as a broken card rather than a considered one. */
+.emptypage.wide{max-width:none}
