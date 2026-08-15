@@ -2087,3 +2087,86 @@ body{
 }
 
 @media(prefers-reduced-motion:reduce){ body{background-attachment:scroll} }
+
+/* ===========================================================================
+   FIDELITY PASS
+   ---------------------------------------------------------------------------
+   Four things, in descending order of how much they change what you see.
+   =========================================================================== */
+
+/* 1. Figures line up.
+   In a report full of money and percentages, proportional digits mean a 1 is
+   narrower than a 7, so a column of numbers wobbles and the eye cannot compare
+   down it. Tabular figures were applied in eighteen scattered places; this
+   makes it the rule everywhere a number appears, and turns on slashed zero so
+   0 and O stop being ambiguous in an id or a code. */
+body,.card,.tile,.lvpanel,.tmstat,table,.pill,.lbl,.fig,.v,.sc,.i,
+.stat,.tbl,.bizcard,.planlegend,.dgstat,.whybody{
+  font-variant-numeric:tabular-nums slashed-zero;
+}
+/* Headlines are set for shape, not for comparison, so they keep proportional
+   figures where the spacing looks better. */
+h1,.lvhead,.hero h1{font-variant-numeric:proportional-nums}
+
+/* 2. Depth.
+   One shadow reads as a sticker. Real elevation is two lights: a tight contact
+   shadow where the card meets the page, and a wide soft one for the ambient
+   fill, plus a one-pixel inset highlight along the top edge so the card has a
+   lit surface rather than just an outline. */
+:root{
+  --lift-1:
+    0 1px 1px rgba(15,15,14,.04),
+    0 2px 4px -1px rgba(15,15,14,.05),
+    0 6px 14px -6px rgba(15,15,14,.08);
+  --lift-2:
+    0 1px 1px rgba(15,15,14,.05),
+    0 3px 6px -2px rgba(15,15,14,.06),
+    0 12px 28px -10px rgba(15,15,14,.13),
+    0 24px 48px -24px rgba(15,15,14,.10);
+  --lift-edge:inset 0 1px 0 rgba(255,255,255,.9);
+}
+.card,.tile,.lvpanel,.tmstat,.bizcard,.tbl,.dgcard{
+  box-shadow:var(--lift-edge),var(--lift-1);
+  transition:box-shadow .28s var(--ease),transform .28s var(--ease);
+}
+/* Interactive boxes rise slightly when pointed at. Static ones do not, because
+   a report that moves under the cursor is distracting. */
+.bizcard:hover,.dgcard:hover,.tile[role="button"]:hover{
+  box-shadow:var(--lift-edge),var(--lift-2);
+  transform:translateY(-1px);
+}
+/* The two stakes and modals sit higher than everything else. */
+.stake,.namodal,.updcard{box-shadow:var(--lift-edge),var(--lift-2)}
+
+/* On the dark sidebar a white inset edge would glow, so it gets the opposite:
+   a dark contact shadow and a faint light line. */
+.side{box-shadow:0 0 0 1px rgba(255,255,255,.03) inset, 24px 0 48px -32px rgba(15,15,14,.5)}
+
+/* 3. Colour depth.
+   sRGB clips Signal Amber. On a display that can show more, use the wider
+   gamut version, which is the same colour with the saturation it was picked
+   for. Everything falls back cleanly on screens that cannot. */
+@supports (color:color(display-p3 1 1 1)){
+  :root{
+    --signal:color(display-p3 .953 .451 .086);
+    --green:color(display-p3 .216 .839 .478);
+  }
+}
+
+/* 4. Vector crispness.
+   Icons are stroked at 1.5px and sit at arbitrary subpixel offsets inside flex
+   rows, which is where strokes go soft. Geometric precision keeps the maths
+   exact rather than snapping to the pixel grid and thickening one side. */
+svg{shape-rendering:geometricPrecision}
+.nav a svg,.side svg,.btn svg{shape-rendering:geometricPrecision;vector-effect:non-scaling-stroke}
+/* Sparklines and bars are data, so they keep crisp edges rather than being
+   smoothed into approximations. */
+.spark,.planbar,.tmbar,.bar{shape-rendering:auto}
+/* The mark is a raster asset, so let the browser use the highest quality
+   downscale it has rather than the fast one. */
+.marklogo,img.gtmark{image-rendering:auto}
+
+@media(prefers-reduced-motion:reduce){
+  .card,.tile,.lvpanel,.tmstat,.bizcard,.tbl,.dgcard{transition:none}
+  .bizcard:hover,.dgcard:hover,.tile[role="button"]:hover{transform:none}
+}
