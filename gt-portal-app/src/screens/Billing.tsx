@@ -23,27 +23,41 @@ import { Header } from './simple'
 import { api } from '../lib/api'
 import { useCredits } from '../lib/liveData'
 
-/* The balance is stashed the moment checkout starts, so returning here can
-   tell "42 credits, unchanged" apart from "42 credits, just arrived". Session
-   storage, not local: it belongs to this tab and this purchase. */
-const BEFORE_KEY = 'gt_credits_before_checkout'
+/* What was bought, stashed the moment checkout starts.
+   It used to be only the balance, which quietly assumed every purchase grants
+   credits. The workbook does not. A workbook buyer would pay successfully and
+   then be told the credits had not arrived, which is alarming and false. So
+   what is remembered is the purchase, not just the number.
 
-export function rememberBalanceBeforeCheckout(balance: number | null) {
+   Session storage, not local: it belongs to this tab and this purchase. */
+const KEY = 'gt_checkout_pending'
+
+export type CheckoutKind = 'credits' | 'product'
+
+export interface PendingCheckout {
+  kind: CheckoutKind
+  label: string
+  balance: number | null
+}
+
+export function rememberCheckout(p: PendingCheckout | null) {
   try {
-    if (typeof balance === 'number') sessionStorage.setItem(BEFORE_KEY, String(balance))
-    else sessionStorage.removeItem(BEFORE_KEY)
+    if (p) sessionStorage.setItem(KEY, JSON.stringify(p))
+    else sessionStorage.removeItem(KEY)
   } catch { /* private browsing, and this is only ever an improvement */ }
 }
 
-function readBefore(): number | null {
+function readPending(): PendingCheckout | null {
   try {
-    const v = sessionStorage.getItem(BEFORE_KEY)
-    return v === null ? null : Number(v)
+    const raw = sessionStorage.getItem(KEY)
+    if (!raw) return null
+    const p = JSON.parse(raw)
+    return p && (p.kind === 'credits' || p.kind === 'product') ? p as PendingCheckout : null
   } catch { return null }
 }
 
-function clearBefore() {
-  try { sessionStorage.removeItem(BEFORE_KEY) } catch { /* nothing to do */ }
+function clearPending() {
+  try { sessionStorage.removeItem(KEY) } catch { /* nothing to do */ }
 }
 
 const ATTEMPTS = 10
@@ -54,6 +68,10 @@ type State =
   | { k: 'arrived'; balance: number; gained: number | null }
   | { k: 'pending'; balance: number | null }
   | { k: 'unknown' }
+  /* A purchase the portal has no way to verify. The workbook grants no
+     credits, so there is no number here that can move, and polling one would
+     only produce a false alarm. */
+  | { k: 'unverifiable'; label: string }
 
 export function CheckoutSuccess() {
   const nav = useNavigate()
@@ -61,7 +79,18 @@ export function CheckoutSuccess() {
 
   useEffect(() => {
     let alive = true
-    const before = readBefore()
+    const pending = readPending()
+
+    /* Nothing in this workspace changes when a workbook is bought, so there is
+       nothing to wait for and nothing to claim. Say what is true and point at
+       the thing that actually is the confirmation. */
+    if (pending && pending.kind === 'product') {
+      clearPending()
+      setSt({ k: 'unverifiable', label: pending.label })
+      return
+    }
+
+    const before = pending ? pending.balance : null
 
     const run = async () => {
       let last: number | null = null
@@ -75,7 +104,7 @@ export function CheckoutSuccess() {
              honest evidence the portal can gather on its own. */
           if (before !== null && last !== null && last > before) {
             if (!alive) return
-            clearBefore()
+            clearPending()
             void useCredits.refresh()
             setSt({ k: 'arrived', balance: last, gained: last - before })
             return
@@ -151,6 +180,22 @@ export function CheckoutSuccess() {
             </div>
           )}
 
+          {st.k === 'unverifiable' && (
+            <div className="emptypage">
+              <span className="lbl">Payment sent</span>
+              <h2>Check your email for the receipt.</h2>
+              <p>Stripe takes the payment and sends the receipt, and that email is the
+                confirmation, not this page: this is only the address Stripe returns you to,
+                and it can be opened by anyone. Nothing in the workspace changes when you buy
+                {' '}{st.label}, so there is no balance here for us to point at.</p>
+              <p>If the receipt has not arrived in a few minutes, send it to us when it does
+                and we will match the payment to this workspace.</p>
+              <div className="act">
+                <button className="btn p" onClick={() => nav('/')}>Back to overview</button>
+              </div>
+            </div>
+          )}
+
           {st.k === 'unknown' && (
             <div className="emptypage">
               <span className="lbl">Could not check</span>
@@ -171,7 +216,7 @@ export function CheckoutSuccess() {
 
 export function CheckoutCancel() {
   const nav = useNavigate()
-  useEffect(() => { clearBefore() }, [])
+  useEffect(() => { clearPending() }, [])
   return (
     <div className="scr on">
       <Header title="Checkout" />

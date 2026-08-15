@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DEMO, CREDIT_BUNDLES, SHEET_PRODUCTS } from '../config'
 import { api, data, AnalysisRow, ApiKeyRow, ADDON_SCOPES, SCOPE_HELP, secretOf, startCheckout, checkoutConfigured, Purchase } from '../lib/api'
-import { rememberBalanceBeforeCheckout } from './Billing'
+import { rememberCheckout } from './Billing'
 import { useMe, useAnalyses, useOverview, useBusinesses, useAccounts, useCredits, accountName, businessLabel, firstName } from '../lib/liveData'
 import { toast, noCredits } from '../lib/bus'
 import { BLOG_POSTS, BLOG_URL } from '../lib/blogPosts'
@@ -518,11 +518,13 @@ function BuyPanel({ balance }: { balance: number | null }) {
   const [busy, setBusy] = useState<string | null>(null)
   if (!checkoutConfigured()) return null
 
-  const go = async (id: string, p: Purchase) => {
+  const go = async (id: string, p: Purchase, label: string) => {
     setBusy(id)
-    /* Recorded before leaving, so the screen we come back to can tell an
-       arrived purchase apart from an unchanged balance. */
-    rememberBalanceBeforeCheckout(balance)
+    /* Recorded before leaving, so the screen we come back to knows what it is
+       looking at. A bundle can be confirmed by watching the balance rise; a
+       workbook cannot be confirmed here at all, and the return screen has to
+       know which of those it is rather than assuming the first. */
+    rememberCheckout({ kind: p.kind, label, balance })
     try {
       window.location.assign(await startCheckout(p))
     } catch (e) {
@@ -543,7 +545,8 @@ function BuyPanel({ balance }: { balance: number | null }) {
             <span className="fig">{b.price}</span>
             <span className="cap">{b.each}</span>
             <button className="btn p" disabled={busy !== null}
-              onClick={() => void go('c' + b.bundle, { kind: 'credits', bundle: b.bundle })}>
+              onClick={() => void go('c' + b.bundle, { kind: 'credits', bundle: b.bundle },
+                b.bundle + ' credits')}>
               {busy === 'c' + b.bundle ? 'Opening checkout' : 'Buy'}
             </button>
           </div>
@@ -563,7 +566,8 @@ function BuyPanel({ balance }: { balance: number | null }) {
                 <span className="mut">{pr.blurb}</span>
                 <span className="pr">{pr.price}</span>
                 <button className="btn g" disabled={busy !== null}
-                  onClick={() => void go(pr.productId, { kind: 'product', productId: pr.productId })}>
+                  onClick={() => void go(pr.productId, { kind: 'product', productId: pr.productId },
+                    pr.name)}>
                   {busy === pr.productId ? 'Opening checkout' : 'Buy'}
                 </button>
               </div>
