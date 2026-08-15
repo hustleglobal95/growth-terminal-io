@@ -93,7 +93,7 @@ export function Shell() {
           <span /><span /><span />
         </NavLink>
         <span className="lockup" aria-hidden="true">
-          <img className="marklogo" src="/logo-mark.png" alt="" />Growth Terminal
+          <img className="marklogo" src="/logo-mark-60.png" srcSet="/logo-mark-60.png 2x, /logo-mark-90.png 3x" alt="" />Growth Terminal
         </span>
         <button className="mbtn r" aria-label="Share">
           <svg viewBox="0 0 20 20"><path d="M10 13V3M10 3L6.5 6.5M10 3l3.5 3.5" /><path d="M4 12v3.5A1.5 1.5 0 005.5 17h9a1.5 1.5 0 001.5-1.5V12" /></svg>
@@ -115,7 +115,7 @@ export function Shell() {
       <div className="shell">
         <aside className="side">
           <span className="mark">
-            <img className="marklogo" src="/logo-mark.png" alt="" />Growth Terminal
+            <img className="marklogo" src="/logo-mark-60.png" srcSet="/logo-mark-60.png 2x, /logo-mark-90.png 3x" alt="" />Growth Terminal
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             <div className="chip"><i />{calibrationLabel(cal)}</div>
