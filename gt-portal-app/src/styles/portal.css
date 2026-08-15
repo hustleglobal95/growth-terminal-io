@@ -2544,3 +2544,12 @@ body::before{background-size:70px 70px}
 /* Focus has to be visible on a rail that is now entirely links. */
 .railnote:focus-visible,.railmore:focus-visible{outline:2px solid var(--text);
   outline-offset:2px;border-radius:8px}
+
+/* The last fifteen pixels of the same problem.
+   With every screen holding one column width, the only thing still moving
+   between pages was the scrollbar: Overview runs about six pixels past the
+   fold and summons one, Analyses does not, and the whole layout slid 15px
+   sideways on the way between them. Reserving the gutter whether or not it is
+   used costs nothing on a page that scrolls and fixes the page that does not.
+   Browsers without support ignore it and behave exactly as before. */
+html{scrollbar-gutter:stable}
