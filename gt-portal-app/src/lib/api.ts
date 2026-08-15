@@ -1,4 +1,4 @@
-import { DEMO, API_BASE, PORTAL_API, CHECKOUT_START_PATH, CHECKOUT_SUCCESS_PATH, CHECKOUT_CANCEL_PATH } from '../config'
+import { DEMO, API_BASE, PORTAL_API, CHECKOUT_CREDITS_PATH, CHECKOUT_PRODUCT_PATH, CHECKOUT_SUCCESS_PATH, CHECKOUT_CANCEL_PATH } from '../config'
 import { getClerkToken } from './clerkBridge'
 import { stripDashes } from './sanitize'
 import demo from '../data/demo.json'
@@ -422,30 +422,44 @@ export interface Credits {
 
 /** Whether the portal has a confirmed way to start a purchase. */
 export function checkoutConfigured(): boolean {
-  return !DEMO && CHECKOUT_START_PATH.length > 0
+  return !DEMO && CHECKOUT_CREDITS_PATH.length > 0
 }
+
+/** What the portal knows how to buy. Each one is a different route on the
+ *  engine with a different body, which is why this is a union and not a
+ *  string: there is no single "sku" field shared between them. */
+export type Purchase =
+  | { kind: 'credits'; bundle: number }
+  | { kind: 'product'; productId: string }
 
 /** Ask the engine for a checkout session and hand back the URL to send the
  *  browser to.
  *
- *  Everything about this is deliberately suspicious of a 200. The host that
- *  serves this app answers every unknown path with the app shell at status
- *  200, so "the request succeeded" proves nothing on its own; only a JSON body
- *  carrying a URL on Stripe's domain does. Getting that wrong would produce a
- *  Top up button that appears to work, navigates nowhere useful, and takes no
- *  money, which is worse than one that plainly refuses. */
-export async function startCheckout(sku?: string): Promise<string> {
-  if (!checkoutConfigured()) {
-    throw new Error('Checkout is not configured yet.')
-  }
+ *  Everything here is deliberately suspicious of a 200. The host that serves
+ *  this app answers every unknown path with the app shell at status 200, so
+ *  "the request succeeded" proves nothing on its own; only a JSON body
+ *  carrying a URL on Stripe's own domain does. Getting that wrong would give
+ *  us a button that appears to work, navigates nowhere useful and takes no
+ *  money, which is worse than one that plainly refuses.
+ *
+ *  The return URLs are sent on every request. The engine hardcodes its own
+ *  today and may ignore these; sending them costs nothing and means the day it
+ *  starts honouring them, this side is already correct. */
+export async function startCheckout(p: Purchase): Promise<string> {
+  if (!checkoutConfigured()) throw new Error('Checkout is not configured yet.')
+
   const origin = window.location.origin
-  const body = await liveRoot<{ url?: string }>(CHECKOUT_START_PATH, {
+  const returns = {
+    successUrl: origin + CHECKOUT_SUCCESS_PATH,
+    cancelUrl: origin + CHECKOUT_CANCEL_PATH
+  }
+  const [path, payload] = p.kind === 'credits'
+    ? [CHECKOUT_CREDITS_PATH, { bundle: p.bundle, ...returns }]
+    : [CHECKOUT_PRODUCT_PATH, { productId: p.productId, ...returns }]
+
+  const body = await liveRoot<{ url?: string }>(path as string, {
     method: 'POST',
-    body: JSON.stringify({
-      sku: sku || undefined,
-      successUrl: origin + CHECKOUT_SUCCESS_PATH,
-      cancelUrl: origin + CHECKOUT_CANCEL_PATH
-    })
+    body: JSON.stringify(payload)
   })
   const url = body && typeof body.url === 'string' ? body.url : ''
   if (!/^https:\/\/(checkout\.stripe\.com|billing\.stripe\.com)\//.test(url)) {
