@@ -107,3 +107,17 @@ export const SHEET_PRODUCTS: SheetProduct[] = [
     blurb: 'The workbook the engine reads. Drop your numbers in and run an analysis against it.'
   }
 ]
+
+/** The voice agent.
+ *
+ *  This is the public agent id from the ElevenLabs embed snippet, not an API
+ *  key. ElevenLabs widgets are embedded on public marketing pages by design:
+ *  the credential stays with them, and nothing secret enters this bundle.
+ *
+ *  Never put an API key here. This file ships to the browser and anyone can
+ *  read it.
+ *
+ *  Empty means the Agents screen says it is not switched on yet, rather than
+ *  rendering a call button that does nothing.
+ */
+export const VOICE_AGENT_ID = ''

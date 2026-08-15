@@ -5,6 +5,7 @@ import { Shell } from './components/Shell'
 import { WorkspaceGate } from './components/WorkspaceGate'
 import { Overview, Analyses, Businesses, ApiKeys, Stub } from './screens/simple'
 import { CheckoutSuccess, CheckoutCancel, SubscriptionReturn, CreditsReturn } from './screens/Billing'
+import { Agents } from './screens/Agents'
 import { Teams } from './screens/Teams'
 import { Content } from './screens/Content'
 import { ContentSetup } from './screens/ContentSetup'
@@ -49,6 +50,7 @@ const router = createBrowserRouter([
       { path: '/businesses', element: <Businesses /> },
       { path: '/api-keys', element: <ApiKeys /> },
       { path: '/teams', element: <Teams /> },
+      { path: '/agents', element: <Agents /> },
       { path: '/more', element: <More /> },
       /* Stripe sends the browser back to these two. They are ordinary routes
          and not special cases: the success screen confirms against the engine
