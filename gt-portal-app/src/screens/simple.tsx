@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DEMO } from '../config'
-import { api, data, AnalysisRow, ApiKeyRow, ADDON_SCOPES, SCOPE_HELP, secretOf } from '../lib/api'
+import { api, data, AnalysisRow, ApiKeyRow, ADDON_SCOPES, SCOPE_HELP, secretOf, startCheckout, checkoutConfigured } from '../lib/api'
+import { rememberBalanceBeforeCheckout } from './Billing'
 import { useMe, useAnalyses, useOverview, useBusinesses, useAccounts, useCredits, accountName, businessLabel, firstName } from '../lib/liveData'
 import { toast, noCredits } from '../lib/bus'
 import { BLOG_POSTS, BLOG_URL } from '../lib/blogPosts'
@@ -500,6 +501,38 @@ function KeyPrefix({ value }: { value: string }) {
  *  prefix. The interface says that plainly instead of implying a key can be
  *  recovered later.
  */
+/** The only way to buy anything from inside the portal.
+ *
+ *  It sits next to the balance and the per run costs, because that is the one
+ *  place in the product where somebody already has the two numbers in front of
+ *  them that make buying make sense.
+ *
+ *  When no checkout route is configured the button is not rendered at all,
+ *  rather than rendered and broken. A button that posts to a guessed path
+ *  would get this app's own HTML shell back at status 200 and look like it had
+ *  worked, which is the same class of failure that makes this host the wrong
+ *  place for the Stripe webhook. */
+function TopUp({ balance }: { balance: number | null }) {
+  const [busy, setBusy] = useState(false)
+  if (!checkoutConfigured()) return null
+  const go = async () => {
+    setBusy(true)
+    /* Recorded before leaving, so the screen we come back to can tell an
+       arrived purchase apart from an unchanged balance. */
+    rememberBalanceBeforeCheckout(balance)
+    try {
+      window.location.assign(await startCheckout())
+    } catch (e) {
+      setBusy(false)
+      toast(e instanceof Error ? e.message : 'Could not open checkout.')
+    }
+  }
+  return (
+    <button className="btn p" style={{ marginLeft: 10 }} disabled={busy}
+      onClick={() => void go()}>{busy ? 'Opening checkout' : 'Top up'}</button>
+  )
+}
+
 export function ApiKeys() {
   const [rows, setRows] = useState<ApiKeyRow[] | null>(null)
   const [failed, setFailed] = useState(false)
@@ -650,6 +683,7 @@ export function ApiKeys() {
             <div className="shead" style={{ marginTop: 26 }}>
               <h2>What each run costs</h2>
               <span className="hint">{credits.balance} credits left</span>
+              <TopUp balance={credits.balance} />
             </div>
             <div className="tbl">
               {Object.keys(credits.costs).map(k => (
