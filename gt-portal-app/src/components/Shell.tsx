@@ -4,7 +4,6 @@ import { Palette } from './Palette'
 import { onToast } from '../lib/bus'
 import { useMe, useCalibration, useCredits, useBilling, calibrationLabel, creditsLabel, planLabel, trialDaysLeft, workspaceLabel, initials } from '../lib/liveData'
 import { clearWorkspace } from '../lib/api'
-import { VOICE_AGENT_ID } from '../config'
 
 const ICONS: Record<string, string> = {
   Overview: '<rect x="2" y="2" width="5.5" height="5.5" rx="1.2"/><rect x="10.5" y="2" width="5.5" height="5.5" rx="1.2"/><rect x="2" y="10.5" width="5.5" height="5.5" rx="1.2"/><rect x="10.5" y="10.5" width="5.5" height="5.5" rx="1.2"/>',
@@ -24,15 +23,18 @@ const ICONS: Record<string, string> = {
 /* Customer navigation only. Clients, Editor and Agent OS were founder tooling
    living in the customer product; they belong to the back office at /portal and
    were removed from here rather than duplicated. */
-/* Agents only appears once there is an agent to talk to. An empty
-   VOICE_AGENT_ID means nobody has configured one, and a navigation item
-   leading to a screen that says "not switched on" is a worse experience than
-   no item at all. Same rule the buy panel follows on the key screen. */
-export const NAV: [string, string][] = ([
+/* Agents is always listed, whether or not one is configured yet.
+   It was hidden until configured, on the reasoning that a nav item leading to
+   "not switched on" is worse than no item. That was wrong for this feature:
+   the screen is where you find out the agent exists and what it will answer,
+   and hiding it means the only people who know it is coming are the ones who
+   already knew. The screen states its own status honestly, which is the right
+   place for that information. */
+export const NAV: [string, string][] = [
   ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'],
   ['Businesses', '/businesses'], ['Agents', '/agents'], ['API', '/api-keys'],
   ['Teams', '/teams']
-] as [string, string][]).filter(([label]) => label !== 'Agents' || VOICE_AGENT_ID.length > 0)
+]
 export const TABS: [string, string][] = [
   ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'], ['Businesses', '/businesses']
 ]
