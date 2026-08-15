@@ -63,8 +63,13 @@ function LatestNotes() {
 /** Quick actions: the same shortcuts already reachable from the sidebar and
  *  each screen's own header, surfaced as a rail so they are one click away
  *  without opening the nav. Every entry calls the exact same handler the
- *  primary UI already uses; nothing here is new functionality. */
-function QuickActions({ onNew, live }: { onNew: () => void; live?: { running: number } }) {
+ *  primary UI already uses; nothing here is new functionality.
+ *
+ *  Exported because Teams mounts it too. A screen that does not own the new
+ *  analysis dialog passes no handler and the entry navigates to the screen
+ *  that does, rather than being hidden: a shortcut list that changes length
+ *  from page to page is harder to use than one that does not move. */
+export function QuickActions({ onNew, live }: { onNew?: () => void; live?: { running: number } }) {
   const nav = useNavigate()
   return (
     <aside className="rail">
@@ -78,7 +83,7 @@ function QuickActions({ onNew, live }: { onNew: () => void; live?: { running: nu
       <div className="blk">
         <div className="rt">Quick actions</div>
         <nav className="jump">
-          <a href="#" onClick={e => { e.preventDefault(); onNew() }}><i />New analysis</a>
+          <a href="#" onClick={e => { e.preventDefault(); if (onNew) onNew(); else nav('/analyses') }}><i />New analysis</a>
           <a href="#" onClick={e => { e.preventDefault(); nav('/businesses') }}><i />Businesses</a>
           <a href="#" onClick={e => { e.preventDefault(); nav('/teams') }}><i />Teams</a>
           <a href="#" onClick={e => { e.preventDefault(); nav('/api-keys') }}><i />API</a>
@@ -93,12 +98,21 @@ const daypart = () => {
   return h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening'
 }
 
-/** A date for the activity feed. Anything unparseable prints nothing rather
- *  than "Invalid Date", which is the kind of string that makes a whole screen
- *  look untrustworthy. */
+/** A date for the activity feed and the blog rows. Anything unparseable prints
+ *  nothing rather than "Invalid Date", which is the kind of string that makes
+ *  a whole screen look untrustworthy.
+ *
+ *  The two inputs are not the same kind of value. An activity record carries a
+ *  full instant, and converting that to the reader's zone is correct. A blog
+ *  post carries a bare calendar date, and Date reads a bare date as midnight
+ *  UTC: render that anywhere behind UTC and it prints the day before, which is
+ *  how a post published on the 14th came out as "13 Aug". So a bare date is
+ *  built in local time, and only a real timestamp is converted. */
+const BARE_DATE = /^(\d{4})-(\d{2})-(\d{2})$/
 const when = (s: string | null | undefined) => {
   if (!s) return ''
-  const d = new Date(s)
+  const bare = BARE_DATE.exec(s)
+  const d = bare ? new Date(+bare[1], +bare[2] - 1, +bare[3]) : new Date(s)
   return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 

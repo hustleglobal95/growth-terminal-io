@@ -18,7 +18,7 @@
  *  Adding the columns brings them straight back.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Header } from './simple'
+import { Header, QuickActions } from './simple'
 import { DEMO } from '../config'
 import { toast } from '../lib/bus'
 import { useAccounts, useBusinesses, useMe } from '../lib/liveData'
@@ -529,7 +529,13 @@ export function Teams() {
         {(tab === 'Tickets' || tab === 'Today') && <button className="btn p" onClick={() => setNewTicket(true)}>New ticket</button>}
         {tab === 'Team' && perms.manageTeam && <button className="btn p" onClick={() => setInvite(true)}>Invite member</button>}
       </Header>
-      <div className="canvas" style={{ gridTemplateColumns: 'minmax(0,1fr)' }}>
+      {/* The rail, same as Overview and Analyses.
+          Every screen in the portal now holds its content to one column width,
+          which left this one with an empty strip down the right on a wide
+          display, because it was the only dense screen with nothing in that
+          column. It gets the rail rather than the extra width: the page fills
+          edge to edge and the cards still line up with every other screen. */}
+      <div className="canvas">
         <div className="wrap">
           <div className="tmtabs">
             {TABS.map(t => (
@@ -551,6 +557,7 @@ export function Teams() {
           {tab === 'Collaboration' && <CollabTab />}
           {tab === 'Approvals' && <ApprovalsTab />}
         </div>
+        <QuickActions />
       </div>
 
       {open && <TicketDrawer t={open} canComment={perms.comment} busy={busy}
