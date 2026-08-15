@@ -2049,3 +2049,41 @@ h1,h2,h3,.shead h2{letter-spacing:-.028em}
 .side .usercard .av{background:rgba(255,255,255,.08);color:var(--on-dark)}
 .side .usercard a,.side .usercard button{color:var(--on-dark-2)}
 .side .usercard a:hover,.side .usercard button:hover{color:var(--on-dark)}
+
+/* ---------------------------------------------------------------------------
+   Amber ambient wash.
+
+   Painted into the body background rather than a stacked pseudo-element, so it
+   cannot end up behind the page colour, and fixed so it never scrolls. A wash
+   that moves with the content reads as a graphic; one that stays put reads as
+   the light in the room.
+
+   Two anchors. The strong one sits top left, behind the dark sidebar, so the
+   warmth appears to spill off the chrome instead of arriving from nowhere. The
+   weak one sits bottom right purely so the page is not lit from one corner.
+
+   Kept at 5.5% and 3%. The useful side effect of tinting the page is that white
+   cards stop being the same colour as the surface they sit on: card separation
+   goes from almost nothing to something the eye can find without leaning on the
+   border. Text is unaffected, because it is black on both.
+   --------------------------------------------------------------------------- */
+body{
+  background:
+    radial-gradient(1100px 680px at 6% -4%, rgba(249,115,22,.055), transparent 62%),
+    radial-gradient(880px 560px at 102% 104%, rgba(249,115,22,.03), transparent 60%),
+    var(--page);
+  background-attachment:fixed;
+}
+
+/* Cards stay pure white so they lift off the warmed page. */
+.card,.tile,.lvpanel,.tmstat,.bizcard{background:#FFFFFF}
+
+/* The sidebar carries the same warmth from the inside, at the point the wash is
+   strongest, so the dark panel does not read as a cut-out sitting on top. */
+.side{
+  background:
+    radial-gradient(420px 320px at 0% 0%, rgba(249,115,22,.07), transparent 70%),
+    var(--chrome);
+}
+
+@media(prefers-reduced-motion:reduce){ body{background-attachment:scroll} }
