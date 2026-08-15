@@ -2377,3 +2377,33 @@ body{
 .tmkcol .tmtile{background:#FFFFFF}
 
 @media(prefers-reduced-motion:reduce){ .tmtab{transition:none} }
+
+/* ---------------------------------------------------------------------------
+   Technical grid.
+
+   Added into the same background stack as the amber wash rather than as a new
+   layer, so there is one painted surface and one fixed attachment governing
+   all of it. Order matters: the grid sits under the amber, so the warm corner
+   tints the ruling instead of the ruling sitting on top of the light.
+
+   28px, which is the portal's base spacing step, so the ruling agrees with the
+   layout instead of cutting across it.
+
+   Cards are opaque, so the grid is only ever visible in the gutters and the
+   margins. That is the intent: it reads as the surface the cards are resting
+   on, and it disappears the moment there is content to read.
+   --------------------------------------------------------------------------- */
+body{
+  background:
+    radial-gradient(1100px 680px at 6% -4%, rgba(249,115,22,.055), transparent 62%),
+    radial-gradient(880px 560px at 102% 104%, rgba(249,115,22,.03), transparent 60%),
+    linear-gradient(rgba(15,15,14,.032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15,15,14,.032) 1px, transparent 1px),
+    var(--page);
+  background-size:auto, auto, 28px 28px, 28px 28px, auto;
+  background-attachment:fixed;
+}
+
+/* The film grain and the grid are both surface texture, and together they read
+   as noise. The grain drops back now that the ruling carries the texture. */
+body::before{opacity:.018}
