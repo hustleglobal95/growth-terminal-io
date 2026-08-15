@@ -74,7 +74,8 @@ const CLERK_LOOK = {
 function Wordmark({ className }: { className: string }) {
   return (
     <span className={className}>
-      <img src="/logo-mark.png" alt="" width={64} height={64} />
+      <img src="/logo-mark-128.png" srcSet="/logo-mark-128.png 2x, /logo-mark-192.png 3x"
+        alt="" width={64} height={64} />
       <b>www.growthterminal.io</b>
     </span>
   )
