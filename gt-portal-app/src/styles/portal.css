@@ -2466,3 +2466,41 @@ svg polyline,svg path,svg circle{shape-rendering:geometricPrecision}
    blotches rather than grain. Halving the tile puts one cell on one device
    pixel where it belongs. */
 body::before{background-size:70px 70px}
+
+/* ---------------------------------------------------------------------------
+   One measure, and a top for the sparse screens.
+   --------------------------------------------------------------------------- */
+
+/* The content column was two different widths depending on whether a screen
+   mounted an inspector rail. Overview and Analyses laid out at 1190 + 296;
+   Businesses, Content, Teams and the key screen laid out at 1486. Moving
+   between them shifted every card edge by 296px, which reads as the page
+   redrawing itself rather than as navigation. The rail is the part that
+   varies, so the column beside it is pinned instead: one measure everywhere,
+   and the rail takes room that was already spoken for. */
+.wrap{max-width:1190px}
+
+/* Overview's activity feed is the only list on that screen now, so it takes
+   the whole measure rather than 1.12 of two columns. */
+.ovgrid.one{grid-template-columns:minmax(0,1fr)}
+
+/* A date on each activity row. Tabular, so the right edge of the column is
+   straight, and set in the mono face because it is a figure and not prose. */
+.actd{flex:none;min-width:50px;text-align:right;font-family:var(--mono);
+  font-size:11px;font-variant-numeric:tabular-nums;color:var(--faint)}
+
+/* The empty screens.
+   Left aligned on the same axis as every other first element on a page. A
+   block centred in the viewport would sit somewhere no other content in the
+   product ever appears, which is why so many empty states read as a different
+   application than the one they interrupt. */
+.emptypage{margin:2px 0 0;padding:32px 30px 34px;background:var(--card);
+  border-radius:var(--r2);box-shadow:var(--lift-1),var(--lift-edge);max-width:620px}
+.emptypage .lbl{display:block;margin-bottom:13px}
+.emptypage h2{margin:0;font-size:19px;font-weight:600;line-height:1.3;color:var(--text)}
+.emptypage p{margin:9px 0 0;font-size:13px;line-height:1.62;color:var(--muted);max-width:54ch}
+.emptypage .act{margin-top:20px}
+
+/* One line of orientation under a header: the same shape the key screen
+   already opens with, so a screen holding a single row still has a top. */
+.pgintro{margin:16px 0 14px;color:var(--muted);font-size:12.5px;line-height:1.6;max-width:70ch}
