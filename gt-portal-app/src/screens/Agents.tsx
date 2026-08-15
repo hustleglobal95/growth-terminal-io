@@ -187,7 +187,7 @@ function YourAgents() {
       </div>
 
       {phase === 'sent' ? (
-        <div className="emptypage">
+        <div className="emptypage wide">
           <span className="lbl">Request logged</span>
           <h2>It is on your board.</h2>
           <p>The request was written to Teams as a ticket, so everyone on the account can see it
@@ -198,7 +198,7 @@ function YourAgents() {
           </div>
         </div>
       ) : (
-        <div className="emptypage">
+        <div className="emptypage wide">
           <span className="lbl">None yet</span>
           <h2>You have not set up an agent of your own.</h2>
           <p>Yours is briefed on one of your businesses and on the analyses run against it, so the
