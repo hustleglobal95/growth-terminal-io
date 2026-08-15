@@ -2102,6 +2102,13 @@ body{
    0 and O stop being ambiguous in an id or a code. */
 body,.card,.tile,.lvpanel,.tmstat,table,.pill,.lbl,.fig,.v,.sc,.i,
 .stat,.tbl,.bizcard,.planlegend,.dgstat,.whybody{
+  font-variant-numeric:tabular-nums;
+}
+/* Slashed zero earns its place in an id, a key or a code, where 0 and O sit
+   next to each other and have to be told apart. On a large display figure it
+   just looks like the number is broken, so it stays out of the general rule
+   and applies only where ambiguity is actually possible. */
+code,kbd,samp,.k,.mono,.apikey,.idcell,.hashcell{
   font-variant-numeric:tabular-nums slashed-zero;
 }
 /* Headlines are set for shape, not for comparison, so they keep proportional
