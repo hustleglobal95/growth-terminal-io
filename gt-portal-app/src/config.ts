@@ -121,3 +121,22 @@ export const SHEET_PRODUCTS: SheetProduct[] = [
  *  rendering a call button that does nothing.
  */
 export const VOICE_AGENT_ID = 'agent_4701m0394vswfk0tk8dsx0gzg7fq'
+
+/** Where a customer's own agent gets created, once the engine can create one.
+ *
+ *  Empty today, and that is not a placeholder waiting to be filled in with a
+ *  guess. There is no agent route on the engine: every prefix answers
+ *  "Cannot GET". The one that looked promising, /api/portal/agents, returns
+ *  401 to an anonymous caller and 404 to an authenticated one, which means
+ *  the auth middleware runs before the router and the 401 says nothing about
+ *  the route existing.
+ *
+ *  The portal cannot fill the gap itself. This bundle is static and public;
+ *  creating an ElevenLabs agent needs a convai_write key, and a key that
+ *  ships to the browser is a key anyone can read and spend. So the create
+ *  flow raises a ticket instead, and the ticket is real.
+ *
+ *  Set this to the path the day the endpoint lands and the same form starts
+ *  posting to it. Nothing else on the screen changes. See AGENT_ENDPOINT.md.
+ */
+export const AGENT_CREATE_PATH = ''
