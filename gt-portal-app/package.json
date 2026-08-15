@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/check-dashes.mjs && tsc -b && vite build",
+    "build": "node scripts/fetch-blog.mjs && node scripts/check-dashes.mjs && tsc -b && vite build",
     "check:dashes": "node scripts/check-dashes.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "fetch:blog": "node scripts/fetch-blog.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.61.9",
