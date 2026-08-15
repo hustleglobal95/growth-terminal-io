@@ -19,10 +19,22 @@
  *  bundle. If anyone ever proposes putting an API key in here to make a
  *  different kind of assistant work, the answer is no: this bundle is readable
  *  by anyone who opens devtools.
+ *
+ *  The second half of this screen is the customer's own agent. It cannot be
+ *  created from here yet, because the engine has no route for it and this
+ *  bundle must not hold a write scoped key. So the form raises a real ticket
+ *  on the real Teams board rather than showing a button that does nothing.
+ *  The day AGENT_CREATE_PATH is set, the same form posts to the engine and
+ *  the ticket path retires. Nothing else about the screen changes.
  */
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Header, QuickActions } from './simple'
 import { VOICE_AGENT_ID } from '../config'
+import { AgentSpec, agentCreateConfigured, createAgent, getWorkspaceId } from '../lib/api'
+import { useAccounts, useBusinesses, useMe } from '../lib/liveData'
+import { teamApi } from '../lib/teamLive'
+import { toast } from '../lib/bus'
 
 const SCRIPT = 'https://unpkg.com/@elevenlabs/convai-widget-embed'
 const SCRIPT_ID = 'gt-convai-embed'
@@ -74,9 +86,13 @@ export function Agents() {
       <Header title="Agents" />
       <div className="canvas">
         <div className="wrap">
-          <p className="pgintro">A voice agent that answers questions about Growth Terminal and
-            about this portal. It is here so you can ask out loud rather than read, which is
-            usually faster when the question is what does this screen mean.</p>
+          <p className="pgintro">Two kinds of agent live here. The Growth Terminal guide, which
+            answers questions about the product and about this portal, and your own, which is
+            briefed on one of your businesses and the analyses run against it.</p>
+
+          <div className="shead">
+            <h2>The Growth Terminal guide</h2>
+          </div>
 
           {!configured && (
             <div className="emptypage">
@@ -128,8 +144,214 @@ export function Agents() {
                 will say it cannot see that, which is the truthful answer.</p>
             </>
           )}
+
+          <YourAgents />
         </div>
         <QuickActions />
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------ your agents */
+
+/** What the customer's own agent would be able to do. Written as capabilities
+ *  rather than promises: every line is something the analysis record already
+ *  holds, so none of it depends on work that has not been done. */
+const OWN_AGENT_CAN = [
+  'Talk through the constraint named for a business, in plain language',
+  'Explain the severity and confidence on that call, and what separates them',
+  'Walk the ninety day plan phase by phase, including what each gate asks',
+  'Say what the evidence against the call was, not only the evidence for it'
+]
+
+type Phase = 'idle' | 'form' | 'sending' | 'sent'
+
+function YourAgents() {
+  const nav = useNavigate()
+  const accs = useAccounts()
+  const businesses = useBusinesses()
+  const me = useMe()
+  const [phase, setPhase] = useState<Phase>('idle')
+
+  const acc = accs && accs.length ? accs[0] : null
+  const biz = businesses || []
+  /* No account means the workspace has not resolved yet. Opening a form that
+     cannot be submitted is worse than saying so and waiting. */
+  const ready = Boolean(acc) || agentCreateConfigured()
+
+  return (
+    <>
+      <div className="shead" style={{ marginTop: 30 }}>
+        <h2>Your agents</h2>
+      </div>
+
+      {phase === 'sent' ? (
+        <div className="emptypage">
+          <span className="lbl">Request logged</span>
+          <h2>It is on your board.</h2>
+          <p>The request was written to Teams as a ticket, so everyone on the account can see it
+            and it moves through the same stages as any other work. The agent appears on this
+            screen once it has been built and switched on.</p>
+          <div className="act">
+            <button className="btn p" onClick={() => nav('/teams')}>Open Teams</button>
+          </div>
+        </div>
+      ) : (
+        <div className="emptypage">
+          <span className="lbl">None yet</span>
+          <h2>You have not set up an agent of your own.</h2>
+          <p>Yours is briefed on one of your businesses and on the analyses run against it, so the
+            people who need to understand a verdict can ask it out loud instead of reading the
+            whole report. You say which business it may speak for, who is allowed to talk to it,
+            and what it must never say.</p>
+          {!ready && (
+            <p style={{ marginTop: 10 }}>Your workspace is still loading. Give it a moment and the
+              button turns on.</p>
+          )}
+          <div className="act">
+            <button className="btn p" disabled={!ready} onClick={() => setPhase('form')}>
+              Create your first agent
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="tbl" style={{ marginTop: 14 }}>
+        {OWN_AGENT_CAN.map(a => (
+          <div key={a} className="agentrow"><span>{a}</span></div>
+        ))}
+      </div>
+
+      <p className="sfine" style={{ marginTop: 16 }}>
+        {agentCreateConfigured()
+          ? 'It is built against the business you pick and nothing else in your workspace.'
+          : 'Agents are built by hand today rather than generated on the spot, which is why this raises a ticket instead of finishing in one click. That is the honest state of it. The engine has no route for creating one yet, and the credential that would let this browser create one itself is a credential anyone could read straight out of the page.'}
+      </p>
+
+      {(phase === 'form' || phase === 'sending') && (
+        <RequestModal
+          busy={phase === 'sending'}
+          businesses={biz.map(b => ({ slug: b.slug, name: b.name || b.slug }))}
+          onClose={() => setPhase('idle')}
+          onSubmit={async spec => {
+            setPhase('sending')
+            try {
+              if (agentCreateConfigured()) {
+                await createAgent(spec)
+                toast('Agent created.')
+                setPhase('sent')
+                return
+              }
+              if (!acc) throw new Error('Your workspace has not finished loading.')
+              await teamApi.createTicket(acc.id, {
+                projectSlug: spec.businessSlug || 'general',
+                title: 'Agent for ' + (spec.businessName || spec.businessSlug || 'this workspace'),
+                description: ticketBody(spec),
+                assignee: '',
+                creatorName: (me && me.name) || 'Workspace owner'
+              })
+              setPhase('sent')
+            } catch (e) {
+              toast(e instanceof Error ? e.message : 'That did not go through.')
+              setPhase('form')
+            }
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+/** The ticket body. Headed sections rather than a paragraph, because whoever
+ *  picks this up is building an agent from it and the guardrail has to be
+ *  impossible to skim past. The workspace id rides along so the build does not
+ *  open with someone asking which account this was. */
+function ticketBody(s: AgentSpec): string {
+  const ws = getWorkspaceId() || 'unknown'
+  return [
+    'AGENT REQUEST',
+    '',
+    'Business it speaks for: ' + (s.businessName || s.businessSlug || 'not specified'),
+    'Business slug: ' + (s.businessSlug || 'not specified'),
+    'Workspace: ' + ws,
+    'Who talks to it: ' + (s.audience === 'client' ? 'The client, directly' : 'The internal team'),
+    '',
+    'WHAT IT IS FOR',
+    s.purpose.trim() || 'Not specified.',
+    '',
+    'WHAT IT MUST NEVER SAY',
+    s.mustNotSay.trim() || 'Nothing specified. Confirm with the requester before building.',
+    '',
+    'STANDING RULES FOR EVERY AGENT',
+    'Never state an accuracy percentage for the engine forecasts.',
+    'Never give financial or investment advice.',
+    'Say so plainly when it does not know, rather than guessing.'
+  ].join('\n')
+}
+
+function RequestModal({ businesses, onClose, onSubmit, busy }: {
+  businesses: { slug: string; name: string }[]
+  onClose: () => void
+  onSubmit: (s: AgentSpec) => void
+  busy: boolean
+}) {
+  const [slug, setSlug] = useState(businesses.length ? businesses[0].slug : '')
+  const [audience, setAudience] = useState<'team' | 'client'>('team')
+  const [purpose, setPurpose] = useState('')
+  const [mustNot, setMustNot] = useState('')
+  const picked = businesses.find(b => b.slug === slug)
+
+  return (
+    <div className="tmoverlay" onClick={busy ? undefined : onClose}>
+      <div className="tmmodal" onClick={e => e.stopPropagation()}>
+        <div className="tmhead">
+          <span className="nm" style={{ fontSize: 15 }}>Create an agent</span>
+          <span className="sp" />
+          <button className="ract" onClick={onClose} disabled={busy}>Close</button>
+        </div>
+
+        <label className="rl">Business it speaks for
+          <select className="tmsel" value={slug} onChange={e => setSlug(e.target.value)} disabled={busy}>
+            {businesses.map(b => <option key={b.slug} value={b.slug}>{b.name}</option>)}
+            {businesses.length === 0 && <option value="">No businesses analysed yet</option>}
+          </select>
+        </label>
+
+        <label className="rl">Who talks to it
+          <select className="tmsel" value={audience} disabled={busy}
+            onChange={e => setAudience(e.target.value as 'team' | 'client')}>
+            <option value="team">My team, internally</option>
+            <option value="client">The client, directly</option>
+          </select>
+        </label>
+
+        <label className="rl">What it is for
+          <textarea className="tminput tmarea" value={purpose} disabled={busy}
+            onChange={e => setPurpose(e.target.value)}
+            placeholder="Who asks it questions, and what they need answered" />
+        </label>
+
+        <label className="rl">What it must never say
+          <textarea className="tminput tmarea" value={mustNot} disabled={busy}
+            onChange={e => setMustNot(e.target.value)}
+            placeholder="Figures, names or subjects that are off limits" />
+        </label>
+
+        <p className="tmnote">{audience === 'client'
+          ? 'A client facing agent can repeat anything in the analysis out loud, including the severity and the revenue impact. Whatever should not reach them belongs in the box above.'
+          : 'An internal agent still speaks the numbers out loud. Anything that should stay written down belongs in the box above.'}</p>
+
+        <button className="btn p" disabled={busy || !slug || !purpose.trim()}
+          onClick={() => onSubmit({
+            businessSlug: slug,
+            businessName: (picked && picked.name) || '',
+            audience,
+            purpose,
+            mustNotSay: mustNot
+          })}>
+          {busy ? 'Sending' : agentCreateConfigured() ? 'Create agent' : 'Send request'}
+        </button>
       </div>
     </div>
   )
