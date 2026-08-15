@@ -4,7 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { Shell } from './components/Shell'
 import { WorkspaceGate } from './components/WorkspaceGate'
 import { Overview, Analyses, Businesses, ApiKeys, Stub } from './screens/simple'
-import { CheckoutSuccess, CheckoutCancel } from './screens/Billing'
+import { CheckoutSuccess, CheckoutCancel, SubscriptionReturn, CreditsReturn } from './screens/Billing'
 import { Teams } from './screens/Teams'
 import { Content } from './screens/Content'
 import { ContentSetup } from './screens/ContentSetup'
@@ -55,6 +55,11 @@ const router = createBrowserRouter([
          rather than trusting the redirect that brought it here. */
       { path: '/billing/success', element: <CheckoutSuccess /> },
       { path: '/billing/cancel', element: <CheckoutCancel /> },
+      /* The addresses the engine hardcodes today. A buyer lands on one of
+         these, not on /billing/success, until the server is changed to honour
+         the return URLs the portal sends it. Both were rendering the 404. */
+      { path: '/checkout', element: <SubscriptionReturn /> },
+      { path: '/settings/credits', element: <CreditsReturn /> },
       { path: '/:id', element: <Stub /> },
       /* Everything else, at any depth. Without this, a two segment address
          matched no route at all and React Router printed "Unexpected
