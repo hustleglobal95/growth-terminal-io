@@ -105,7 +105,9 @@ export function Agents() {
               <div className="agentcard">
                 <span className="lbl">Talk to it</span>
                 <p className="agentnote">Press the control below to start a call. It listens,
-                  answers, and stops when you do. Nothing is recorded into your workspace.</p>
+                  answers, and stops when you do. The call runs on ElevenLabs, who ask you to
+                  accept their recording terms before it connects; nothing from it is written
+                  into your workspace.</p>
                 <div className="agentmount">
                   <elevenlabs-convai agent-id={VOICE_AGENT_ID} />
                 </div>
