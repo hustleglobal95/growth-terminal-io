@@ -120,4 +120,4 @@ export const SHEET_PRODUCTS: SheetProduct[] = [
  *  Empty means the Agents screen says it is not switched on yet, rather than
  *  rendering a call button that does nothing.
  */
-export const VOICE_AGENT_ID = ''
+export const VOICE_AGENT_ID = 'agent_4701m0394vswfk0tk8dsx0gzg7fq'
