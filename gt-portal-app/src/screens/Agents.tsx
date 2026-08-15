@@ -32,7 +32,7 @@ import { useNavigate } from 'react-router-dom'
 import { Header, QuickActions } from './simple'
 import { VOICE_AGENT_ID } from '../config'
 import { AgentSpec, agentCreateConfigured, createAgent, getWorkspaceId } from '../lib/api'
-import { useAccounts, useBusinesses, useMe } from '../lib/liveData'
+import { businessLabel, useAccounts, useBusinesses, useMe } from '../lib/liveData'
 import { teamApi } from '../lib/teamLive'
 import { toast } from '../lib/bus'
 
@@ -232,7 +232,11 @@ function YourAgents() {
       {(phase === 'form' || phase === 'sending') && (
         <RequestModal
           busy={phase === 'sending'}
-          businesses={biz.map(b => ({ slug: b.slug, name: b.name || b.slug }))}
+          /* businessLabel, not b.name. An auto created business row carries the
+             account identifier as its name, so printing it raw puts
+             "acct-9d7211d5-4be0-428f-a8bf-4b273b13955c" in a customer facing
+             picker. The helper falls back to the account name. */
+          businesses={biz.map(b => ({ slug: b.slug, name: businessLabel(b.name, accs) }))}
           onClose={() => setPhase('idle')}
           onSubmit={async spec => {
             setPhase('sending')
