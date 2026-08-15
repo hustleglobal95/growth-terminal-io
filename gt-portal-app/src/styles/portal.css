@@ -2407,3 +2407,32 @@ body{
 /* The film grain and the grid are both surface texture, and together they read
    as noise. The grain drops back now that the ruling carries the texture. */
 body::before{opacity:.018}
+
+/* ---------------------------------------------------------------------------
+   The lava.
+
+   Sits with the grain, behind every piece of content, so it can only ever be
+   seen through the gaps. Sized and positioned entirely by the module; this
+   only describes what it looks like.
+
+   No filter. The softness is in the gradient, which composites on the GPU,
+   where a blur of this radius would repaint several hundred thousand pixels a
+   frame and cost the scroll.
+   --------------------------------------------------------------------------- */
+.lava{
+  position:fixed;top:0;left:0;z-index:-1;
+  width:900px;height:900px;pointer-events:none;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 50%,
+      rgba(249,115,22,.22) 0%,
+      rgba(249,115,22,.13) 26%,
+      rgba(249,115,22,.05) 48%,
+      transparent 66%);
+  will-change:transform;
+  contain:strict;
+}
+/* Never on a touch device, and never for somebody who asked for less motion.
+   The module already refuses to start in both cases; this is the belt to that
+   pair of braces, so a stale element can never be left visible. */
+@media (prefers-reduced-motion:reduce),(pointer:coarse){ .lava{display:none} }
