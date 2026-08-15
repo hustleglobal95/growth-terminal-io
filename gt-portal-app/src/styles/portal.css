@@ -2336,3 +2336,44 @@ body{
   #verdict{padding:18px}
   #verdict .lvbody{font-size:15px}
 }
+
+/* ---------------------------------------------------------------------------
+   Teams: the section switcher speaks the same language as the filters.
+
+   The Teams tabs and the Analyses filters are the same kind of control, one
+   selected from a row, and they were saying so in two different voices: mono
+   uppercase with an ink fill on one screen, sentence-case Inter with a grey
+   fill on the other. A grey fill is also a weak way to say "selected" when the
+   page behind it is already warm grey.
+   --------------------------------------------------------------------------- */
+.tmtab{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  letter-spacing:.07em;text-transform:uppercase;
+  border-radius:6px;padding:7px 11px;
+  border-color:var(--border);
+  transition:color .18s var(--ease),background .18s var(--ease),border-color .18s var(--ease);
+}
+.tmtab:hover{background:var(--s2);border-color:var(--border2)}
+.tmtab.on{background:var(--text);color:#FFFFFF;border-color:var(--text);font-weight:600}
+.tmtab.on:hover{background:var(--text)}
+
+/* Stat labels under the big figures were the last sentence-case labels left on
+   the screen. */
+.tmstat span{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.10em;
+  text-transform:uppercase;color:var(--faint);margin-top:4px;
+}
+
+/* Column heads on the board are labels, not headings. */
+.tmkhead .lbl{font-size:9.5px}
+.tmkhead .tmnum{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;
+  font-variant-numeric:tabular-nums;
+}
+
+/* The board columns are containers for work, so they recess like the evidence
+   panels rather than floating like statements. */
+.tmkcol{background:var(--recess);border-radius:var(--r2);padding:10px;box-shadow:none}
+.tmkcol .tmtile{background:#FFFFFF}
+
+@media(prefers-reduced-motion:reduce){ .tmtab{transition:none} }
