@@ -1,4 +1,4 @@
-import { DEMO, API_BASE, PORTAL_API, CHECKOUT_CREDITS_PATH, CHECKOUT_PRODUCT_PATH, CHECKOUT_SUCCESS_PATH, CHECKOUT_CANCEL_PATH } from '../config'
+import { DEMO, API_BASE, PORTAL_API, CHECKOUT_CREDITS_PATH, CHECKOUT_PRODUCT_PATH, CHECKOUT_SUCCESS_PATH, CHECKOUT_CANCEL_PATH, AGENT_CREATE_PATH } from '../config'
 import { getClerkToken } from './clerkBridge'
 import { stripDashes } from './sanitize'
 import demo from '../data/demo.json'
@@ -532,4 +532,51 @@ export const api = {
       raw: r
     }
   }
+}
+
+/* ------------------------------------------------------- customer agents */
+
+/** What a customer says they want their agent to do.
+ *
+ *  Two of these four fields exist because of what the agent would be able to
+ *  reach. An agent briefed on a workspace's analyses can speak a severity
+ *  score, a revenue impact and a ninety day plan out loud, so it matters
+ *  which business it is allowed to speak for and whether the listener is the
+ *  team or the client. The third field, mustNotSay, is not decoration: it is
+ *  the line the person commissioning the agent gets to draw before anyone
+ *  else hears it.
+ */
+export interface AgentSpec {
+  businessSlug: string
+  businessName: string
+  audience: 'team' | 'client'
+  purpose: string
+  mustNotSay: string
+}
+
+/** True once the engine can create an agent. False today, and the create
+ *  flow raises a ticket instead of pretending. */
+export function agentCreateConfigured(): boolean {
+  return AGENT_CREATE_PATH.length > 0
+}
+
+/** Create the agent server side and hand back its public id.
+ *
+ *  The validation is deliberate and it is the same lesson three other things
+ *  in this app learned the hard way: a 200 proves a response arrived, not
+ *  that it is the response you asked for. An agent id has a shape. If what
+ *  comes back is not that shape, this throws rather than storing a string
+ *  that will render a dead widget later.
+ */
+export async function createAgent(spec: AgentSpec): Promise<string> {
+  if (!agentCreateConfigured()) throw new Error('Agent creation is not switched on for this workspace.')
+  const r = await liveRoot<{ agentId?: string; agent_id?: string }>(AGENT_CREATE_PATH, {
+    method: 'POST',
+    body: JSON.stringify(spec)
+  })
+  const id = String((r && (r.agentId || r.agent_id)) || '')
+  if (!/^agent_[A-Za-z0-9]{8,}$/.test(id)) {
+    throw new Error('The server did not return an agent id.')
+  }
+  return id
 }
