@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { DEMO } from '../config'
-import { api, data, AnalysisRow, ApiKeyRow, ADDON_SCOPES, SCOPE_HELP, secretOf, startCheckout, checkoutConfigured } from '../lib/api'
+import { DEMO, CREDIT_BUNDLES, SHEET_PRODUCTS } from '../config'
+import { api, data, AnalysisRow, ApiKeyRow, ADDON_SCOPES, SCOPE_HELP, secretOf, startCheckout, checkoutConfigured, Purchase } from '../lib/api'
 import { rememberBalanceBeforeCheckout } from './Billing'
 import { useMe, useAnalyses, useOverview, useBusinesses, useAccounts, useCredits, accountName, businessLabel, firstName } from '../lib/liveData'
 import { toast, noCredits } from '../lib/bus'
@@ -501,35 +501,77 @@ function KeyPrefix({ value }: { value: string }) {
  *  prefix. The interface says that plainly instead of implying a key can be
  *  recovered later.
  */
-/** The only way to buy anything from inside the portal.
+/** Buying, from inside the portal.
  *
- *  It sits next to the balance and the per run costs, because that is the one
+ *  It lives under the balance and the per run costs because that is the only
  *  place in the product where somebody already has the two numbers in front of
- *  them that make buying make sense.
+ *  them that make the decision: what they hold, and what a run costs.
  *
- *  When no checkout route is configured the button is not rendered at all,
- *  rather than rendered and broken. A button that posts to a guessed path
- *  would get this app's own HTML shell back at status 200 and look like it had
- *  worked, which is the same class of failure that makes this host the wrong
- *  place for the Stripe webhook. */
-function TopUp({ balance }: { balance: number | null }) {
-  const [busy, setBusy] = useState(false)
+ *  The bundles are shown with a per credit rate rather than only a total. A
+ *  column of four prices asks the reader to do the division; showing it is the
+ *  difference between a price list and a decision.
+ *
+ *  When no checkout route is configured none of this renders, rather than
+ *  rendering and failing. A button that posts to a guessed path would get this
+ *  app's own HTML shell back at status 200 and look like it had worked. */
+function BuyPanel({ balance }: { balance: number | null }) {
+  const [busy, setBusy] = useState<string | null>(null)
   if (!checkoutConfigured()) return null
-  const go = async () => {
-    setBusy(true)
+
+  const go = async (id: string, p: Purchase) => {
+    setBusy(id)
     /* Recorded before leaving, so the screen we come back to can tell an
        arrived purchase apart from an unchanged balance. */
     rememberBalanceBeforeCheckout(balance)
     try {
-      window.location.assign(await startCheckout())
+      window.location.assign(await startCheckout(p))
     } catch (e) {
-      setBusy(false)
+      setBusy(null)
       toast(e instanceof Error ? e.message : 'Could not open checkout.')
     }
   }
+
   return (
-    <button className="btn p" style={{ marginLeft: 10 }} disabled={busy}
-      onClick={() => void go()}>{busy ? 'Opening checkout' : 'Top up'}</button>
+    <>
+      <div className="shead" style={{ marginTop: 26 }}>
+        <h2>Add credits</h2>
+      </div>
+      <div className="buygrid">
+        {CREDIT_BUNDLES.map(b => (
+          <div key={b.bundle} className="buycard">
+            <span className="lbl">{b.bundle} credits</span>
+            <span className="fig">{b.price}</span>
+            <span className="cap">{b.each}</span>
+            <button className="btn p" disabled={busy !== null}
+              onClick={() => void go('c' + b.bundle, { kind: 'credits', bundle: b.bundle })}>
+              {busy === 'c' + b.bundle ? 'Opening checkout' : 'Buy'}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {SHEET_PRODUCTS.length > 0 && (
+        <>
+          <div className="shead" style={{ marginTop: 26 }}>
+            <h2>Workbooks</h2>
+            <span className="hint">One time purchase</span>
+          </div>
+          <div className="tbl">
+            {SHEET_PRODUCTS.map(pr => (
+              <div key={pr.productId} className="buyrow">
+                <span className="nm">{pr.name}</span>
+                <span className="mut">{pr.blurb}</span>
+                <span className="pr">{pr.price}</span>
+                <button className="btn g" disabled={busy !== null}
+                  onClick={() => void go(pr.productId, { kind: 'product', productId: pr.productId })}>
+                  {busy === pr.productId ? 'Opening checkout' : 'Buy'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </>
   )
 }
 
@@ -683,7 +725,6 @@ export function ApiKeys() {
             <div className="shead" style={{ marginTop: 26 }}>
               <h2>What each run costs</h2>
               <span className="hint">{credits.balance} credits left</span>
-              <TopUp balance={credits.balance} />
             </div>
             <div className="tbl">
               {Object.keys(credits.costs).map(k => (
@@ -695,6 +736,8 @@ export function ApiKeys() {
             </div>
           </>
         )}
+
+        <BuyPanel balance={credits ? credits.balance : null} />
       </Canvas>
     </div>
   )
