@@ -4,6 +4,7 @@ import { Palette } from './Palette'
 import { onToast } from '../lib/bus'
 import { useMe, useCalibration, useCredits, useBilling, calibrationLabel, creditsLabel, planLabel, trialDaysLeft, workspaceLabel, initials } from '../lib/liveData'
 import { clearWorkspace } from '../lib/api'
+import { VOICE_AGENT_ID } from '../config'
 
 const ICONS: Record<string, string> = {
   Overview: '<rect x="2" y="2" width="5.5" height="5.5" rx="1.2"/><rect x="10.5" y="2" width="5.5" height="5.5" rx="1.2"/><rect x="2" y="10.5" width="5.5" height="5.5" rx="1.2"/><rect x="10.5" y="10.5" width="5.5" height="5.5" rx="1.2"/>',
@@ -11,6 +12,9 @@ const ICONS: Record<string, string> = {
   Content: '<rect x="2" y="4.5" width="11" height="11" rx="1.6"/><path d="M5 2h11v11"/><path d="M2 12l3.4-3.4 2.6 2.6 2.4-2.4 2.6 2.7"/>',
   Businesses: '<path d="M2.5 15.5v-11l6-3v14"/><path d="M8.5 15.5v-8l6 2v6"/><path d="M1 15.5h16"/>',
   API: '<circle cx="5.5" cy="6.5" r="3.5"/><path d="M8 9l6.5 6.5"/><path d="M12 12.5l2 2"/>',
+  /* A microphone, drawn to the same 18 unit grid as the rest: same stroke
+     weight, round joins, no fill. */
+  Agents: '<rect x="6.6" y="2" width="4.8" height="8.4" rx="2.4"/><path d="M3.8 8.6a5.2 5.2 0 0010.4 0"/><path d="M9 13.8V16"/>',
   Teams: '<circle cx="6.5" cy="5.5" r="2.8"/><path d="M1.5 15.5c0-2.8 2.2-5 5-5s5 2.2 5 5"/><path d="M12 3.2a2.8 2.8 0 010 5.4"/><path d="M13.5 10.9c1.7.6 3 2.2 3 4.6"/>',
   Clients: '<circle cx="9" cy="5.5" r="3"/><path d="M3 15.5c0-3.3 2.7-6 6-6s6 2.7 6 6"/>',
   Editor: '<path d="M11.5 2.5l4 4L6 16H2v-4z"/><path d="M10 4l4 4"/>',
@@ -20,10 +24,15 @@ const ICONS: Record<string, string> = {
 /* Customer navigation only. Clients, Editor and Agent OS were founder tooling
    living in the customer product; they belong to the back office at /portal and
    were removed from here rather than duplicated. */
-export const NAV: [string, string][] = [
+/* Agents only appears once there is an agent to talk to. An empty
+   VOICE_AGENT_ID means nobody has configured one, and a navigation item
+   leading to a screen that says "not switched on" is a worse experience than
+   no item at all. Same rule the buy panel follows on the key screen. */
+export const NAV: [string, string][] = ([
   ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'],
-  ['Businesses', '/businesses'], ['API', '/api-keys'], ['Teams', '/teams']
-]
+  ['Businesses', '/businesses'], ['Agents', '/agents'], ['API', '/api-keys'],
+  ['Teams', '/teams']
+] as [string, string][]).filter(([label]) => label !== 'Agents' || VOICE_AGENT_ID.length > 0)
 export const TABS: [string, string][] = [
   ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'], ['Businesses', '/businesses']
 ]
