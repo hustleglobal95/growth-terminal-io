@@ -2026,3 +2026,26 @@ h1,h2,h3,.shead h2{letter-spacing:-.028em}
   .side{width:250px;flex:0 0 250px;padding:24px}
   .stick{left:0}
 }
+
+/* The two light-surface components that live inside the sidebar. Once the
+   sidebar went dark these kept their pale backgrounds and read as cards
+   dropped onto the chrome. They are chrome now, so they take chrome colours. */
+.side .searchpill{
+  background:rgba(255,255,255,.03);color:var(--on-dark-3);
+  box-shadow:0 0 0 1px var(--dark-line) inset;
+}
+.side .searchpill:hover{background:rgba(255,255,255,.06);color:var(--on-dark-2)}
+.side .searchpill .k{
+  background:rgba(255,255,255,.06);color:var(--on-dark-3);
+  box-shadow:none;font-family:var(--mono);letter-spacing:.06em;
+}
+.side .usercard{
+  background:rgba(255,255,255,.03);
+  border-color:var(--dark-line);
+  box-shadow:0 0 0 1px var(--dark-line) inset;
+}
+.side .usercard .nm{color:var(--on-dark)}
+.side .usercard .ucmeta,.side .usercard .ucmeta *{color:var(--on-dark-3)}
+.side .usercard .av{background:rgba(255,255,255,.08);color:var(--on-dark)}
+.side .usercard a,.side .usercard button{color:var(--on-dark-2)}
+.side .usercard a:hover,.side .usercard button:hover{color:var(--on-dark)}
