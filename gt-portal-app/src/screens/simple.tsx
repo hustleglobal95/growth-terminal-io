@@ -26,8 +26,15 @@ const Canvas = ({ children, rail }: { children: React.ReactNode; rail?: React.Re
 /** Quick actions: the same shortcuts already reachable from the sidebar and
  *  each screen's own header, surfaced as a rail so they are one click away
  *  without opening the nav. Every entry calls the exact same handler the
- *  primary UI already uses; nothing here is new functionality. */
-function QuickActions({ onNew, live }: { onNew: () => void; live?: { running: number; rows: AnalysisRow[] } }) {
+ *  primary UI already uses; nothing here is new functionality.
+ *
+ *  This used to carry a "Latest" block too. It was removed because on both
+ *  screens that mount this rail, that block listed the same records the main
+ *  column was already showing: on Overview the workspace's six analyses were
+ *  rendered fifteen times between the feed, the card beside it and this. A
+ *  rail earns its width by holding what the page does not, so what is left is
+ *  the one live number and the shortcuts. */
+function QuickActions({ onNew, live }: { onNew: () => void; live?: { running: number } }) {
   const nav = useNavigate()
   return (
     <aside className="rail">
@@ -35,19 +42,6 @@ function QuickActions({ onNew, live }: { onNew: () => void; live?: { running: nu
         <div className="blk">
           <div className="rt">Running now</div>
           <div className="sevbig"><b>{live.running}</b><span>in the engine</span></div>
-        </div>
-      )}
-      {live && live.rows.length > 0 && (
-        <div className="blk">
-          <div className="rt">Latest</div>
-          <div className="railrecent">
-            {live.rows.slice(0, 4).map((a, i) => (
-              <div key={i} className="railrow">
-                <span className="t">{a.c || a.b}</span>
-                <span className={statCls(a.st)}><i />{a.st}</span>
-              </div>
-            ))}
-          </div>
         </div>
       )}
       <div className="blk">
@@ -68,15 +62,20 @@ const daypart = () => {
   return h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening'
 }
 
+/** A date for the activity feed. Anything unparseable prints nothing rather
+ *  than "Invalid Date", which is the kind of string that makes a whole screen
+ *  look untrustworthy. */
+const when = (s: string | null | undefined) => {
+  if (!s) return ''
+  const d = new Date(s)
+  return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+}
+
 export function Overview() {
-  const nav = useNavigate()
   const me = useMe()
   const an = useAnalyses()
   const ov = useOverview()
-  const accs = useAccounts()
-  const acct = accountName(accs)
   const [na, setNa] = useState(false)
-  const recent = an.st === 'ready' ? an.rows.slice(0, 5) : []
   const fn = firstName(me)
   const s = ov ? ov.stats : null
   const subline = DEMO
@@ -90,7 +89,7 @@ export function Overview() {
       <Header title="Overview">
         <button className="btn p" onClick={() => setNa(true)}>New analysis</button>
       </Header>
-      <Canvas rail={<QuickActions onNew={() => setNa(true)} live={{ running: s ? s.runningAnalyses : 0, rows: recent }} />}>
+      <Canvas rail={<QuickActions onNew={() => setNa(true)} live={{ running: s ? s.runningAnalyses : 0 }} />}>
         <div className="greet">
           <h1>{'Good ' + daypart() + (fn ? ', ' + fn : '') + '.'}</h1>
           {subline && <p>{subline}</p>}
@@ -116,7 +115,14 @@ export function Overview() {
             </>
           )}
         </div>
-        <div className="ovgrid">
+        {/* One list, full width.
+            There were two here, side by side. The left one read the overview
+            endpoint's activity feed and the right one read the analyses
+            endpoint, and on a real workspace those are the same records: the
+            feed is a superset, since it carries data snapshots as well. Two
+            half-width columns of the same six rows is not twice the
+            information, it is the same information at half the measure. */}
+        <div className="ovgrid one">
           <div className="chartcard">
             {DEMO ? (
               <>
@@ -129,42 +135,37 @@ export function Overview() {
                 <div className="ct">Latest activity</div>
                 <div className="cs">Analyses and data snapshots, newest first, straight from the workspace.</div>
                 <ul className="actfeed">
-                  {(ov ? ov.recentActivity.slice(0, 6) : []).map(a => (
+                  {(ov ? ov.recentActivity.slice(0, 8) : []).map(a => (
                     <li key={a.id}>
                       <span className="pfchip">{a.type === 'snapshot' ? 'Snapshot' : 'Analysis'}</span>
                       <span className="actt">{a.type === 'snapshot' ? 'Workbook data received' : a.title}</span>
+                      <span className="actd">{when(a.createdAt)}</span>
                       <span className={'stat' + ((a.status || '').toLowerCase() === 'complete' || (a.status || '').toLowerCase() === 'confirmed' ? ' ok' : '')}>
                         <i />{a.status}</span>
                     </li>
                   ))}
-                  {!ov && <li><span className="skel" style={{ width: '60%' }} /></li>}
+                  {!ov && [0, 1, 2, 3].map(i => (
+                    <li key={'sk' + i} className="skelrow" aria-hidden="true">
+                      <span className="skel" style={{ width: '14%' }} />
+                      <span className="skel" style={{ width: '46%' }} />
+                    </li>
+                  ))}
+                  {/* The empty state used to live in the card that has just
+                      been removed, so it moves here rather than disappearing
+                      with it. */}
+                  {ov && ov.recentActivity.length === 0 && (
+                    <li className="emptycell">
+                      <b>Nothing has run yet.</b>
+                      <span>Open the Google Sheets{'™'} add-on in a workbook with your numbers and press
+                        Analyze. Runs and the data behind them land here.</span>
+                    </li>
+                  )}
+                  {an.st === 'error' && ov && ov.recentActivity.length === 0 && (
+                    <li><span className="c">Could not load analyses. Reload to retry.</span></li>
+                  )}
                 </ul>
               </>
             )}
-          </div>
-          <div className="card">
-            <div style={{ padding: '14px 15px 4px' }}><span className="lbl">Recent analyses</span></div>
-            <ul className="minirows">
-              {recent.map((a, i) => (
-                <li key={i} tabIndex={0} onClick={() => nav('/analyses')}
-                  onKeyDown={e => { if (e.key === 'Enter') nav('/analyses') }}>
-                  <span className="b">{a.c || a.b || acct}</span><span className="c">{a.st}</span><span className="d">{a.d}</span>
-                </li>
-              ))}
-              {an.st === 'loading' && [0, 1, 2, 3, 4].map(i => (
-                <li key={'sk' + i} className="skelrow" aria-hidden="true">
-                  <span className="skel" style={{ width: '42%' }} />
-                  <span className="skel" style={{ width: '18%' }} />
-                </li>
-              ))}
-              {an.st === 'error' && <li><span className="c">Could not load analyses. Reload to retry.</span></li>}
-              {an.st === 'ready' && recent.length === 0 && (
-                <li className="emptycell">
-                  <b>No analyses yet.</b>
-                  <span>Open the Google Sheets{'™'} add-on in a workbook with your numbers and press Analyze. The verdict lands here.</span>
-                </li>
-              )}
-            </ul>
           </div>
         </div>
       </Canvas>
@@ -200,7 +201,7 @@ export function Analyses() {
       <Header title="Analyses">
         <button className="btn p" onClick={() => setNa(true)}>New analysis</button>
       </Header>
-      <Canvas rail={<QuickActions onNew={() => setNa(true)} live={{ running: all.filter(a => a.st === 'Running').length, rows: rows.slice(0, 4) }} />}>
+      <Canvas rail={<QuickActions onNew={() => setNa(true)} live={{ running: all.filter(a => a.st === 'Running').length }} />}>
         <div className="toolrow">
           <div className="searchin">
             <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>
@@ -278,6 +279,29 @@ function CardGrid({ items }: { items: typeof data.BIZ }) {
   )
 }
 
+/** An empty screen that says something.
+ *
+ *  A screen with one row on it, or none, was rendering as a thin strip of card
+ *  on top of a very large backdrop, and a backdrop is only a backdrop while
+ *  something is standing on it. This gives the sparse states a top: a label, a
+ *  sentence that says what fills the screen, and where that comes from.
+ *
+ *  Deliberately no illustration and no big centred icon. This is a working
+ *  tool, and the thing a person needs on an empty screen is the instruction,
+ *  not a drawing of an empty box. */
+function Empty({ label, head, body, action }: {
+  label: string; head: string; body: React.ReactNode; action?: React.ReactNode
+}) {
+  return (
+    <div className="emptypage">
+      <span className="lbl">{label}</span>
+      <h2>{head}</h2>
+      <p>{body}</p>
+      {action && <div className="act">{action}</div>}
+    </div>
+  )
+}
+
 /** Businesses, from the businesses table.
  *
  *  That table holds an id, a slug, a name and timestamps. It has no category
@@ -326,6 +350,10 @@ export function Businesses() {
         <button className="btn g" onClick={() => toast('Businesses are created when their first analysis runs.')}>Add business</button>
       </Header>
       <Canvas>
+        {/* The same one-line orientation the API screen already opens with, so
+            a screen holding a single row still has a top to it. */}
+        <p className="pgintro">Every business you have ever analysed, with the most recent verdict
+          against each. Businesses are created by the engine on their first run, not added here.</p>
         {rows === null && (
           <div className="tbl">{[0, 1, 2].map(i => (
             <div key={i} className="bizrowi skelrow" aria-hidden="true">
@@ -337,11 +365,11 @@ export function Businesses() {
           ))}</div>
         )}
         {rows !== null && rows.length === 0 && (
-          <div className="intempty" style={{ marginTop: 18 }}>
-            <b>No businesses yet.</b>
-            <span>A business is created the first time an analysis runs against it.
-              Run one from the Google Sheets{'\u2122'} add-on and it appears here.</span>
-          </div>
+          <Empty label="No businesses yet"
+            head="A business appears the first time you analyse one."
+            body={<>You do not create businesses here. Open the Google Sheets{'\u2122'} add-on in a
+              workbook with a company's numbers and press Analyze; the business is created from
+              that run and everything after it is filed against the same record.</>} />
         )}
         {rows !== null && rows.length > 0 && (
           <div className="tbl">
@@ -610,10 +638,23 @@ export const Teams = () => {
   )
 }
 
+/** Anything that is not a route.
+ *
+ *  This used to render a demo fixture: any unrecognised URL on the live app,
+ *  including a typo, came back as a page titled "Admin" listing a workspace
+ *  name, a domain, a retention period and a plan. None of those were read from
+ *  the API. They were sample values from the bundled demo data, presented on
+ *  the real product, under the signed in user's own sidebar, as if they were
+ *  that account's settings.
+ *
+ *  A wrong address should say so. In demo mode the sample pages still resolve,
+ *  because that is what they are for. */
 export function Stub() {
   const { id } = useParams()
-  const st = data.STUBS['stub-' + (id || 'admin')] || data.STUBS['stub-admin']
-  return (
+  const nav = useNavigate()
+  const st = DEMO ? data.STUBS['stub-' + (id || 'admin')] : undefined
+
+  if (st) return (
     <div className="scr on">
       <Header title={st[0]} />
       <Canvas>
@@ -624,6 +665,19 @@ export function Stub() {
             </div>
           ))}
         </div>
+      </Canvas>
+    </div>
+  )
+
+  return (
+    <div className="scr on">
+      <Header title="Not found" />
+      <Canvas>
+        <Empty label="404"
+          head="There is no page at this address."
+          body={<>The link may be out of date, or the address may have a typo in it. Nothing has
+            been lost: everything in this workspace is reachable from the sidebar.</>}
+          action={<button className="btn p" onClick={() => nav('/')}>Back to overview</button>} />
       </Canvas>
     </div>
   )
