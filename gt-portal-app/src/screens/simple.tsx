@@ -4,6 +4,7 @@ import { DEMO } from '../config'
 import { api, data, AnalysisRow, ApiKeyRow, ADDON_SCOPES, SCOPE_HELP, secretOf } from '../lib/api'
 import { useMe, useAnalyses, useOverview, useBusinesses, useAccounts, useCredits, accountName, businessLabel, firstName } from '../lib/liveData'
 import { toast, noCredits } from '../lib/bus'
+import { BLOG_POSTS, BLOG_URL } from '../lib/blogPosts'
 import { NewAnalysis } from '../components/NewAnalysis'
 import { OvBars, Spark } from '../components/charts'
 
@@ -23,17 +24,46 @@ const Canvas = ({ children, rail }: { children: React.ReactNode; rail?: React.Re
   </div>
 )
 
+/** The newest field notes, in the slot the rail's "Latest" block used to
+ *  occupy.
+ *
+ *  That block used to list this workspace's own analyses, which is what the
+ *  screen underneath it was already showing: on Overview the same six records
+ *  were rendered fifteen times between the feed, the card beside it and the
+ *  rail. A rail earns its width by holding what the page does not, and the
+ *  blog is the one thing in the product that is genuinely new every day and
+ *  reachable from nowhere else in the portal.
+ *
+ *  These open in a new tab on purpose. Somebody reading an analysis has work
+ *  in progress on the screen behind them, and a link that navigates away from
+ *  it is a link nobody clicks twice. */
+function LatestNotes() {
+  if (!BLOG_POSTS.length) return null
+  return (
+    <div className="blk">
+      <div className="rt">Latest from the blog</div>
+      <div className="railrecent">
+        {BLOG_POSTS.map(p => (
+          <a key={p.url} className="railnote" href={p.url} target="_blank" rel="noopener noreferrer">
+            <span className="t">{p.title}</span>
+            <span className="m">
+              {p.category && <span className="cat">{p.category}</span>}
+              <span className="d">{when(p.date)}</span>
+            </span>
+          </a>
+        ))}
+      </div>
+      <a className="railmore" href={BLOG_URL} target="_blank" rel="noopener noreferrer">
+        All field notes
+      </a>
+    </div>
+  )
+}
+
 /** Quick actions: the same shortcuts already reachable from the sidebar and
  *  each screen's own header, surfaced as a rail so they are one click away
  *  without opening the nav. Every entry calls the exact same handler the
- *  primary UI already uses; nothing here is new functionality.
- *
- *  This used to carry a "Latest" block too. It was removed because on both
- *  screens that mount this rail, that block listed the same records the main
- *  column was already showing: on Overview the workspace's six analyses were
- *  rendered fifteen times between the feed, the card beside it and this. A
- *  rail earns its width by holding what the page does not, so what is left is
- *  the one live number and the shortcuts. */
+ *  primary UI already uses; nothing here is new functionality. */
 function QuickActions({ onNew, live }: { onNew: () => void; live?: { running: number } }) {
   const nav = useNavigate()
   return (
@@ -44,6 +74,7 @@ function QuickActions({ onNew, live }: { onNew: () => void; live?: { running: nu
           <div className="sevbig"><b>{live.running}</b><span>in the engine</span></div>
         </div>
       )}
+      <LatestNotes />
       <div className="blk">
         <div className="rt">Quick actions</div>
         <nav className="jump">
