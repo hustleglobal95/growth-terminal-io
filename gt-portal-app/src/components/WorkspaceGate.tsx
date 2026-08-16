@@ -143,27 +143,42 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
   }
 
   if (state === 'unknown') {
+    /* A five hundred is not evidence that this account has no workspace. It is
+       evidence that we could not ask. Telling somebody with a paid, populated
+       account that they are not in a workspace, because our own server threw,
+       is both wrong and alarming: it reads as data loss. When the trace shows
+       the engine failed rather than answered, say that instead. */
+    const serverFault = workspaceResolveTrace().some(r => /\(5\d\d\)/.test(r))
     return (
       <div className="scr on">
         <div className="wsgate">
-          <b>{reason === 'no-subscription'
-            ? 'There is no active subscription on this account.'
-            : 'This account is not in a workspace yet.'}</b>
+          <b>{serverFault
+            ? 'We could not open your workspace.'
+            : reason === 'no-subscription'
+              ? 'There is no active subscription on this account.'
+              : 'This account is not in a workspace yet.'}</b>
           <span className="wsgatemut">
-            {reason === 'checking' && 'You are signed in. Checking what this account has.'}
-            {reason === 'no-subscription' && (
+            {serverFault && (
+              <>This is a fault on our side, not a problem with your account. Your workspace,
+                your analyses and your team are all still there and nothing has been lost or
+                changed. The request that asks which workspace you belong to is failing, and
+                until it answers we will not guess. Reloading is worth a try; if it keeps
+                happening it is ours to fix, not yours.</>
+            )}
+            {!serverFault && reason === 'checking' && 'You are signed in. Checking what this account has.'}
+            {!serverFault && reason === 'no-subscription' && (
               <>You are signed in, but the engine has no plan against this account, so there
                 is no workspace to open. If you have just paid, the subscription can take a
                 moment to appear: reload in a minute. If you paid with a different email
                 address than the one you signed in with, that is the usual cause, and we can
                 move it across.</>
             )}
-            {reason === 'subscribed' && (
+            {!serverFault && reason === 'subscribed' && (
               <>Your subscription is active, but this account is not attached to a workspace
                 yet. That normally means an invitation is waiting to be accepted, or the
                 workspace is still being set up. Reloading in a minute usually resolves it.</>
             )}
-            {reason === 'unsaid' && (
+            {!serverFault && reason === 'unsaid' && (
               <>You are signed in, but the engine did not answer when asked what this account
                 has, so we cannot tell you whether this is a subscription problem or a fault
                 on our side. Reloading is worth one try.</>
