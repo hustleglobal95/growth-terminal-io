@@ -22,6 +22,7 @@ import { Header, QuickActions } from './simple'
 import { DEMO } from '../config'
 import { toast } from '../lib/bus'
 import { useAccounts, useBusinesses, useMe } from '../lib/liveData'
+import { api } from '../lib/api'
 import { TodayView, BoardView, BoardHandlers } from './TeamsBoard'
 import { UpdatesPanel, UpdatesPill, useLiveUpdates } from './TeamsUpdates'
 import { DelegateView, DelegateHandlers } from './TeamsDelegate'
@@ -68,6 +69,15 @@ export function Teams() {
   const [now] = useState(() => Date.now())
   const [d, setD] = useState<TeamData | null>(null)
   const [failed, setFailed] = useState(false)
+  /* Whether the workspace itself could not be read, which is a different
+     failure from the team routes not answering and used to be invisible.
+     useAccounts swallows its rejection and stays null, and refresh below
+     returns early while there is no account, so a five hundred on the
+     accounts endpoint left this screen sitting on a loading skeleton with
+     nothing ever arriving. A backend outage looked exactly like a slow
+     network, forever. This asks the same question once and keeps the
+     answer. */
+  const [accFailed, setAccFailed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [tab, setTab] = useState<Tab>('Today')
   const [openId, setOpenId] = useState<string | null>(null)
@@ -82,6 +92,15 @@ export function Teams() {
   const shownOnce = React.useRef(false)
 
   const acc = accs && accs.length ? accs[0] : null
+
+  useEffect(() => {
+    if (DEMO) return
+    let alive = true
+    api.accounts()
+      .then(() => { if (alive) setAccFailed(false) })
+      .catch(() => { if (alive) setAccFailed(true) })
+    return () => { alive = false }
+  }, [])
 
   const refresh = useCallback(async () => {
     if (!acc) return
@@ -164,6 +183,24 @@ export function Teams() {
           <b>Could not reach the team.</b>
           <span>The workspace loaded but its team routes did not answer.
             <button className="ract" style={{ marginLeft: 8 }} onClick={() => void refresh()}>Try again</button></span>
+        </div></div>
+      </div>
+    </div>
+  )
+
+  /* The workspace never arrived. Say that, rather than showing a skeleton
+     that will never resolve into anything. */
+  if (!acc && accFailed) return (
+    <div className="scr on">
+      <Header title="Teams" />
+      <div className="canvas" style={{ gridTemplateColumns: 'minmax(0,1fr)' }}>
+        <div className="wrap"><div className="emptyblock">
+          <b>Could not load your workspace.</b>
+          <span>Teams needs your workspace before it can show members, tickets or approvals,
+            and the request for it did not come back. Nothing has been lost and nothing on the
+            board has changed. This is on our side, not yours.
+            <button className="ract" style={{ marginLeft: 8 }}
+              onClick={() => window.location.reload()}>Try again</button></span>
         </div></div>
       </div>
     </div>
