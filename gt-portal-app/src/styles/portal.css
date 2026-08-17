@@ -2608,3 +2608,55 @@ html{scrollbar-gutter:stable}
    stacked blocks with different right edges and no reason for the difference
    read as a broken card rather than a considered one. */
 .emptypage.wide{max-width:none}
+
+/* ---------------------------------------------------------------------------
+   Application chrome.
+
+   The sidebar was already an object: inset 14px, 16px radius, its own surface.
+   The content area was not. It had no background, no border, and it ran to the
+   viewport edge on the right and the bottom, so the product read as a page with
+   a panel stuck to the left of it rather than as one application. An outline is
+   the whole difference: give the workspace an edge and the eye stops treating
+   the browser window as the container.
+
+   Three things, and the second is a bug fix hiding inside a visual change.
+
+   The pane is not white. Cards in this product are #FFFFFF on a warmer page,
+   and that contrast is what makes them read as cards. A white pane would have
+   flattened every card on every screen into its own background. It sits one
+   step off the page instead, so the cards still lift and the frame still reads.
+
+   The header was pinned at left:278px. The content column starts at 224px: the
+   sidebar's 14px margin plus its 210px width. That 54px discrepancy is why the
+   rule under the header began part way across and left a notch above the first
+   card. It predates the sidebar being narrowed and nothing moved it. It is now
+   238px, which is the pane's left edge, so the rule spans exactly the pane.
+
+   The strip above the pane is masked. The header is fixed 14px down, so without
+   a mask the rows of a scrolling table slide through the gap between the
+   viewport edge and the header, which looks like the window is leaking. It
+   starts at the sidebar's right edge so it never covers the sidebar.
+
+   Desktop only. Under 760px the sidebar becomes a drawer over a scrim and the
+   layout is a phone app, where a floating framed pane would be wrong.
+   --------------------------------------------------------------------------- */
+@media(min-width:761px){
+  main{
+    margin:14px;
+    background:#FDFDFC;
+    border:1px solid rgba(0,0,0,.13);
+    border-radius:16px;
+    min-height:calc(100vh - 28px);
+    position:relative;
+  }
+  .apphdr{
+    left:238px;right:14px;top:14px;
+    border-radius:15px 15px 0 0;
+    border-bottom:1px solid rgba(0,0,0,.13);
+    background:rgba(253,253,252,.92);
+  }
+  body::after{
+    content:"";position:fixed;top:0;left:224px;right:0;height:15px;
+    background:var(--page);z-index:44;pointer-events:none;
+  }
+}
