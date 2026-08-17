@@ -2660,3 +2660,34 @@ html{scrollbar-gutter:stable}
     background:var(--page);z-index:44;pointer-events:none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   The analyses table, on a console that watches one business.
+
+   Six columns, and two of them were constants. Across twenty rows "Business"
+   held one distinct value and "Source" held one, which together took 401 of
+   the table's 991 pixels: forty percent of the widest list in the product
+   spent restating what the sidebar already says. The constraint, which is the
+   only sentence anybody reads, had 215px and wrapped onto two lines inside it.
+
+   The columns collapse when they carry a single value and come back when they
+   do not, so this is a rule about information rather than a hardcode about
+   this particular workspace. The width goes to the constraint and to severity,
+   which is the number the row is actually judged on.
+   --------------------------------------------------------------------------- */
+.tbl.an.nobiz .trow{grid-template-columns:2.3fr .75fr .8fr .75fr .7fr}
+.tbl.an.nosrc .trow{grid-template-columns:1.35fr 1.95fr .75fr .75fr .7fr}
+.tbl.an.nobiz.nosrc .trow{grid-template-columns:2.9fr .8fr .8fr .7fr}
+
+/* The constraint is prose now that it has room, so it gets the text colour
+   rather than the muted one it wore when it was a cramped label. */
+.trow .cns{color:var(--text);overflow:hidden;text-overflow:ellipsis}
+/* A failed run's row is history, not a finding. It stays legible and stops
+   competing with the rows that carry an answer. */
+.trow .faint{color:var(--faint)}
+
+@media(max-width:760px){
+  .tbl.an.nobiz .trow,.tbl.an.nosrc .trow,.tbl.an.nobiz.nosrc .trow{
+    grid-template-columns:1.4fr .9fr .8fr;
+  }
+}
