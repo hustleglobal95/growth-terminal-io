@@ -2691,3 +2691,61 @@ html{scrollbar-gutter:stable}
     grid-template-columns:1.4fr .9fr .8fr;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   The window.
+
+   The previous pass gave the workspace an edge. This one makes the two halves
+   read as a single object rather than as two panels that happen to sit near
+   each other: the sidebar and the content pane now meet flush, share one
+   rounded outline, and cast one shadow, which is what a desktop window does.
+
+   The separation is earned with shadow, not with colour. Darkening the page
+   behind the window would have read more strongly and would also have meant
+   repainting a brand token to get a lighting effect, which is the wrong trade.
+   The palette is untouched: --page is the same #F9F9F7 it has always been, and
+   the window lifts off it because of the shadow under it.
+
+   The lights are the one skeuomorphic thing in the product and they earn it,
+   because they are what the eye uses to decide it is looking at a window
+   rather than at a page. They sit at the window's top left, which on macOS is
+   the sidebar's corner in every application built this way. They are inert:
+   decoration in a pseudo element, nothing to click, nothing announced to a
+   screen reader.
+
+   The header is pinned to 228px, which is the pane's left edge: the sidebar's
+   18px margin plus its 210px width. It was 242px, which put a fourteen pixel
+   notch between the pane's corner and the start of the rule, the same class of
+   misalignment the 278px value caused before it.
+   --------------------------------------------------------------------------- */
+@media(min-width:761px){
+  .side{
+    margin:18px 0 18px 18px;
+    border-radius:12px 0 0 12px;
+    padding-top:46px;
+    box-shadow:
+      -1px 0 0 rgba(0,0,0,.10),
+      0 26px 60px -26px rgba(30,26,20,.40),
+      0 2px 6px rgba(30,26,20,.07);
+  }
+  /* Three lights from one element: the first is the background, the other two
+     are shadows of it offset along the same baseline. */
+  .side::after{
+    content:"";position:absolute;top:17px;left:17px;
+    width:11px;height:11px;border-radius:50%;
+    background:#FF5F57;
+    box-shadow:18px 0 0 #FEBC2E, 36px 0 0 #28C840;
+    pointer-events:none;
+  }
+  main{
+    margin:18px 18px 18px 0;
+    border-left:0;
+    border-radius:0 12px 12px 0;
+    min-height:calc(100vh - 36px);
+    box-shadow:
+      0 26px 60px -26px rgba(30,26,20,.40),
+      0 2px 6px rgba(30,26,20,.07);
+  }
+  .apphdr{left:228px;right:18px;top:18px;border-radius:0 11px 0 0}
+  body::after{left:228px;right:18px;top:0;height:19px}
+}
