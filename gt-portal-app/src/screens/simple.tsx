@@ -221,6 +221,34 @@ export function Overview() {
 
 const statCls = (st: string) => 'stat ' + (st === 'Complete' ? 'ok' : st === 'Running' ? 'run' : st === 'Failed' ? 'fail' : '')
 
+/** Severity as language, not as a fraction.
+ *
+ *  The design system is explicit that readouts are sentences: "Severity 8 of
+ *  10", never "8/10". The engine sends "7/10" and this column printed it
+ *  verbatim, which is the one place in the product where a score is rendered
+ *  as arithmetic. An empty cell stays a middle dot rather than a zero,
+ *  because no severity and a severity of nothing are different facts. */
+function severityCell(sev: string | undefined): string {
+  const raw = (sev || '').trim()
+  if (!raw) return '\u00b7'
+  const m = /^(\d+(?:\.\d+)?)\s*\/\s*(\d+)$/.exec(raw)
+  return m ? m[1] + ' of ' + m[2] : raw
+}
+
+/** What to print in the constraint column.
+ *
+ *  A failed run has no constraint, but the engine leaves its placeholder text
+ *  in the field, so the table was printing "Analysis in progress" on a row
+ *  whose status said Failed. Two statements, side by side, contradicting each
+ *  other. The row already says what happened; the constraint column should
+ *  not argue with it. */
+const PLACEHOLDER = /^(analysis in progress|in progress|pending|processing)$/i
+function constraintCell(a: AnalysisRow): string {
+  const c = (a.c || '').trim()
+  if (a.st === 'Failed' && (!c || PLACEHOLDER.test(c))) return 'No constraint determined'
+  return c || 'Untitled'
+}
+
 export function Analyses() {
   const nav = useNavigate()
   const [q, setQ] = useState('')
@@ -234,6 +262,20 @@ export function Analyses() {
     (f === 'all' || a.st === f) &&
     (!q || (a.b + ' ' + a.c + ' ' + a.cat).toLowerCase().includes(q.toLowerCase()))
   ), [all, q, f])
+  /* A column whose every cell says the same thing is not a column, it is a
+     caption repeated once per row. On a single business console "Business"
+     reads "This workspace" twenty times in the widest column of the table,
+     and "Source" reads "API", while the constraint, which is the sentence
+     somebody actually came to read, wraps inside a third of the width.
+     This is measured rather than assumed, so a workspace that really does
+     have two businesses or a second ingest route gets both columns back
+     without anybody changing a setting. */
+  const showBiz = useMemo(
+    () => new Set(all.map(a => (a.b || acct || 'This workspace'))).size > 1, [all, acct])
+  const showSrc = useMemo(
+    () => new Set(all.map(a => a.src).filter(Boolean)).size > 1, [all])
+  const tblCls = 'tbl an' + (showBiz ? '' : ' nobiz') + (showSrc ? '' : ' nosrc')
+
   const openRow = (a: AnalysisRow) => {
     if (a.open) nav('/analyses/northlane')
     else if (a.id) nav('/analyses/' + a.id)
@@ -259,17 +301,23 @@ export function Analyses() {
             </button>
           ))}
         </div>
-        <div className="tbl">
-          <div className="trow h"><span>Business</span><span>Constraint</span><span className="hidem">Severity</span><span className="hidem">Source</span><span>Status</span><span className="hidem">Date</span></div>
+        <div className={tblCls}>
+          <div className="trow h">
+            {showBiz && <span>Business</span>}
+            <span>Constraint</span>
+            <span className="hidem">Severity</span>
+            {showSrc && <span className="hidem">Source</span>}
+            <span>Status</span><span className="hidem">Date</span>
+          </div>
           {rows.map((a, i) => (
             <div key={i} className="trow" role="button" tabIndex={0}
               aria-label={'Open analysis: ' + (a.c || 'analysis')}
               onClick={() => openRow(a)}
               onKeyDown={e => { if (e.key === 'Enter') openRow(a) }}>
-              <span className="b">{a.b || acct || 'This workspace'}</span>
-              <span className="mut">{a.c}</span>
-              <span className="num hidem">{a.sev || '·'}</span>
-              <span className="mut hidem">{a.src}</span>
+              {showBiz && <span className="b">{a.b || acct || 'This workspace'}</span>}
+              <span className={a.st === 'Failed' ? 'faint' : 'cns'}>{constraintCell(a)}</span>
+              <span className="num hidem">{severityCell(a.sev)}</span>
+              {showSrc && <span className="mut hidem">{a.src}</span>}
               <span className={statCls(a.st)}><i />{a.st}</span>
               <span className="mut num hidem rowend">
                 <span className="dt">{a.d}</span>
@@ -286,10 +334,10 @@ export function Analyses() {
           ))}
           {an.st === 'loading' && [0, 1, 2, 3, 4, 5].map(i => (
             <div key={'sk' + i} className="trow skeltrow" aria-hidden="true">
-              <span className="skel" style={{ width: '70%' }} />
+              {showBiz && <span className="skel" style={{ width: '70%' }} />}
               <span className="skel" style={{ width: '85%' }} />
               <span className="skel hidem" style={{ width: '40%' }} />
-              <span className="skel hidem" style={{ width: '60%' }} />
+              {showSrc && <span className="skel hidem" style={{ width: '60%' }} />}
               <span className="skel" style={{ width: '55%' }} />
               <span className="skel hidem" style={{ width: '50%' }} />
             </div>
