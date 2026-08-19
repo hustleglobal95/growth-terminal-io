@@ -3151,3 +3151,35 @@ h1{font-weight:700;letter-spacing:-.032em}
     transition:background .18s var(--ease);
   }
 }
+
+/* ---------------------------------------------------------------------------
+   The phone chrome.
+
+   The dark pass rebuilt the desktop window and scoped that work to the 761px
+   breakpoint, which is correct for the frame, the pane and the toolbar. It also
+   meant the three bars that only exist on a phone were never reached, so they
+   kept their light theme backgrounds: a near white top bar, a near white tab
+   bar, and the header strip between them. On a dark page the lockup, which is
+   cream, was rendering on white and disappearing.
+
+   They take the chrome colour with the same blur they already had. The edges
+   drop from a 2px boxline to the same hairline the rest of the product uses,
+   so the phone reads as the same object as the desktop rather than a heavier
+   relative of it.
+   --------------------------------------------------------------------------- */
+@media(max-width:760px){
+  .mbar{
+    background:rgba(10,9,8,.86);
+    border-bottom:1px solid var(--edge);
+  }
+  .apphdr{
+    background:rgba(11,10,9,.9);
+    border-bottom:1px solid var(--edge);
+  }
+  .tabbar{
+    background:rgba(10,9,8,.92);
+    border-top:1px solid var(--edge);
+  }
+  /* The drawer is chrome, not a card, and its edge matches the bars. */
+  .side{border-right:1px solid var(--edge)}
+}
