@@ -28,10 +28,11 @@
  *  the ticket path retires. Nothing else about the screen changes.
  */
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Header, QuickActions } from './simple'
 import { VOICE_AGENT_ID } from '../config'
 import { AgentSpec, agentCreateConfigured, createAgent, getWorkspaceId } from '../lib/api'
+import { brandConfigured } from '../lib/brandApi'
 import { businessLabel, useAccounts, useBusinesses, useMe } from '../lib/liveData'
 import { teamApi } from '../lib/teamLive'
 import { toast } from '../lib/bus'
@@ -90,7 +91,9 @@ export function Agents() {
             answers questions about the product and about this portal, and your own, which is
             briefed on one of your businesses and the analyses run against it.</p>
 
-          <div className="shead">
+          <BrandFirst />
+
+          <div className="shead" style={{ marginTop: 30 }}>
             <h2>The Growth Terminal guide</h2>
           </div>
 
@@ -149,6 +152,52 @@ export function Agents() {
         </div>
         <QuickActions />
       </div>
+    </div>
+  )
+}
+
+/** The brand agent, put first because the order is the product.
+ *
+ *  Every assistant after this one is briefed from the brand record: what the
+ *  business is, who it is for, how it sounds, what it must never say. Building
+ *  a lead response assistant before that record exists means asking the
+ *  customer the same seven questions again, and then again for the next one,
+ *  and getting a slightly different answer each time. One record, read by all
+ *  of them, is the whole point.
+ *
+ *  So this sits above the guide rather than below it, and it says what it is
+ *  for rather than only what it is.
+ */
+function BrandFirst() {
+  return (
+    <div className="agentcard">
+      <span className="lbl">Start here</span>
+      <h2 style={{ margin: '6px 0 0', fontSize: 18, fontWeight: 600, letterSpacing: '-.02em' }}>
+        The brand agent
+      </h2>
+      <p className="agentnote">It reads your website and drafts a record of what your business
+        is, who it is for, how it sounds and what it must never say. You correct it line by
+        line, next to the sentence each line was read from. Nothing it drafts counts until you
+        confirm it.</p>
+      <p className="agentnote">Every assistant you build after this one is briefed from that
+        record, so it is the only time you have to answer these questions.</p>
+      {/* The card does not invite a click into a wall. With no brand route on
+          the engine the screen behind this one can only explain itself, so
+          this says that here rather than letting the customer find out by
+          pressing a primary button. */}
+      {brandConfigured() ? (
+        <div className="act">
+          <Link className="btn p" to="/agents/brand">Set up the brand agent</Link>
+        </div>
+      ) : (
+        <>
+          <p className="agentnote">It is not switched on for this workspace yet. Reading a site
+            happens on the engine, and the engine does not have that route today.</p>
+          <div className="act">
+            <Link className="btn g" to="/agents/brand">See what it will do</Link>
+          </div>
+        </>
+      )}
     </div>
   )
 }
