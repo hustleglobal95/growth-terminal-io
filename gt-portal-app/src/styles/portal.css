@@ -3184,20 +3184,36 @@ h1{font-weight:700;letter-spacing:-.032em}
   .side{border-right:1px solid var(--edge)}
 }
 
-/* The mark on the phone was 22px inside a 56px bar, which left it reading as a
-   favicon beside the wordmark rather than as the brand. It goes to 40px, which
-   leaves 8px of air above and below inside the fixed 56px bar, so the bar keeps
-   its height and nothing below it moves. The corner scales with
-   it so the silhouette stays the same shape. */
+/* THE PHONE LOCKUP.
+   Two passes at this inside the old 56px bar were not enough: at 40px the mark
+   still read as a favicon, because the bar itself set the ceiling. The bar is
+   the thing that has to give, so it goes to 72px. That is the one measurement
+   in the phone chrome that moves; everything pinned to the old 56 is restated
+   below against the new number so nothing drifts out of place.
+
+   Mark 52px, wordmark 21px, which is as large as the lockup can be while
+   clearing the menu and share buttons on a 390px phone. Under 380px there is
+   not enough room between those buttons, so the lockup steps down rather than
+   colliding, and under 340px it steps down again. */
 @media(max-width:760px){
-  .mbar .marklogo{width:40px;height:40px;border-radius:10px}
+  .mbar{height:72px}
+  .mbar .marklogo{width:52px;height:52px;border-radius:13px}
+  .mbar .lockup{font-size:21px;letter-spacing:-.016em;white-space:nowrap;gap:9px}
+  .apphdr{top:72px}
+  main{padding-top:calc(72px + 50px)}
+  .stick{top:72px}
 }
 
-/* The wordmark stayed at 13.5px while the mark grew, so the lockup read as a
-   big icon next to small type. It goes to 18px, which is the largest that
-   still clears the menu and share buttons on a 320px phone: 40px mark plus
-   7px gap plus the wordmark has to fit the 228px between them. Nowrap keeps
-   it on one line rather than breaking and pushing the bar taller. */
-@media(max-width:760px){
-  .mbar .lockup{font-size:18px;letter-spacing:-.012em;white-space:nowrap}
+@media(max-width:380px){
+  .mbar{height:64px}
+  .mbar .marklogo{width:44px;height:44px;border-radius:11px}
+  .mbar .lockup{font-size:18px}
+  .apphdr{top:64px}
+  main{padding-top:calc(64px + 50px)}
+  .stick{top:64px}
+}
+
+@media(max-width:340px){
+  .mbar .marklogo{width:40px;height:40px;border-radius:10px}
+  .mbar .lockup{font-size:16px}
 }
