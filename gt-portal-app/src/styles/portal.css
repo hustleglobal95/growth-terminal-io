@@ -2964,3 +2964,190 @@ h1{font-weight:700;letter-spacing:-.032em}
 .stat.fail i{background:var(--muted)}
 .tmstat.bad b,.dgstat.bad b{color:var(--muted)}
 .tmbar i.bad{background:var(--muted)}
+
+
+/* ---------------------------------------------------------------------------
+   The window becomes a browser.
+
+   The frame was right and the costume was wrong. What the product wants is to
+   read as a thing you are inside of, which is why the floating window earns
+   its place, but a generic macOS window says desktop application and this is
+   not one. It is a portal you open in a browser.
+
+   So the same window keeps its margin, its corner and its shadow, and gains a
+   toolbar across the top with the address in it. Three lights sit at the left
+   of that toolbar where a browser puts them rather than floating loose in the
+   sidebar's corner. The sidebar and the content hang below it, which is what
+   turns two panels sharing an outline into one window with chrome on top.
+
+   The address is the point. It says growthterminal.io, so the surface names
+   itself in the one place a person already looks to find out where they are,
+   and every screenshot of the product carries the domain without a watermark.
+   --------------------------------------------------------------------------- */
+@media(min-width:761px){
+  /* Room for the toolbar, taken off the top of both panels. */
+  .side{margin-top:56px;border-radius:0 0 0 12px;padding-top:22px}
+  main{margin-top:56px;border-radius:0 12px 12px 0;min-height:calc(100vh - 74px)}
+  .apphdr{top:56px;border-radius:0}
+
+  /* The lights move into the toolbar. */
+  .side::after{content:none}
+
+  /* The toolbar itself. Fixed to the window's own edges, which are known: an
+     18px margin on both sides and 18px from the top. */
+  .shell::before{
+    content:"";position:fixed;z-index:60;
+    top:18px;left:18px;right:18px;height:38px;
+    background:var(--chrome);
+    border-radius:12px 12px 0 0;
+    box-shadow:inset 0 -1px 0 var(--edge);
+    pointer-events:none;
+  }
+  /* Three lights from one element, as before: the first is the background,
+     the other two are shadows of it along the same baseline. */
+  /* The address field, centred the way a browser centres it. It lives on
+     .shell rather than on .apphdr because .apphdr carries a backdrop-filter,
+     which creates a containing block, so a fixed pseudo-element inside it
+     resolves against the header instead of the viewport and lands in the
+     wrong row. */
+  .shell::after{
+    content:"growthterminal.io";
+    position:fixed;z-index:61;
+    top:25px;left:50%;transform:translateX(-50%);
+    min-width:260px;height:24px;
+    display:flex;align-items:center;justify-content:center;
+    padding:0 14px;border-radius:7px;
+    background:var(--page);
+    box-shadow:inset 0 0 0 1px var(--edge);
+    font-family:var(--sans);font-size:11.5px;font-weight:500;
+    letter-spacing:normal;text-transform:none;color:var(--muted);
+    pointer-events:none;
+  }
+  /* Three lights from one element: the first is the background, the other two
+     are shadows of it along the same baseline. This was the strip that masked
+     the gap above the header, which the toolbar now covers. */
+  body::after{
+    content:"";position:fixed;z-index:61;
+    top:32px;left:34px;right:auto;width:11px;height:11px;border-radius:50%;
+    background:#FF5F57;
+    box-shadow:18px 0 0 #FEBC2E, 36px 0 0 #28C840;
+    pointer-events:none;
+  }
+  /* The address field. Centred, the way a browser centres it. */
+}
+
+/* The window corner. Twelve was a macOS application radius. A browser window
+   on current macOS is rounder than that, and the larger radius is most of what
+   separates a window that looks drawn from one that looks rendered by the
+   system. The three surfaces that form the outline take the same value so the
+   corner reads as one curve rather than three that nearly agree. */
+@media(min-width:761px){
+  .shell::before{border-radius:20px 20px 0 0}
+  .side{border-radius:0 0 0 20px}
+  main{border-radius:0 20px 20px 0}
+}
+
+/* ---------------------------------------------------------------------------
+   A containment box, the way Safari builds one.
+
+   Rounding the outer corners was not enough, and the reason is structural. The
+   window grew with its content, so on every screen taller than the viewport it
+   ran off the bottom and never closed. A box with no bottom edge is not a box.
+   The corners were round and the thing still read as a page.
+
+   Safari's answer is two surfaces, not one. There is a window ground carrying
+   the toolbar, and floating on it there is a content pane, inset on every side
+   and rounded on all four corners, with the scrolling happening inside that
+   pane rather than on the page. The sidebar is not a panel with a border down
+   its right edge; it is transparent, sitting directly on the window ground, so
+   the only object with an outline is the content.
+
+   So: the window is pinned to the viewport and the page stops scrolling. The
+   ground is one element with the toolbar seam drawn into it as a background
+   line. The pane floats with an eight pixel gutter and scrolls internally,
+   which is what finally closes the box on all four sides.
+   --------------------------------------------------------------------------- */
+@media(min-width:761px){
+  /* The page no longer scrolls. The pane does. */
+  html,body{height:100%;overflow:hidden}
+  .shell{height:100vh;overflow:hidden}
+
+  /* One element is the whole window: ground, corner, shadow, and the toolbar
+     seam as a one pixel background line at 38px. */
+  .shell::before{
+    top:18px;left:18px;right:18px;bottom:18px;height:auto;
+    background:
+      linear-gradient(var(--edge),var(--edge)) 0 38px/100% 1px no-repeat,
+      radial-gradient(560px 380px at 4% 6%, rgba(252,88,2,.07), transparent 66%),
+      var(--chrome);
+    border-radius:20px;
+    box-shadow:0 30px 70px -28px rgba(0,0,0,.75), 0 2px 8px rgba(0,0,0,.5);
+    /* It was a 38px strip above the content at z-index 60. Now it is the whole
+       window, so it has to sit under the content instead of over it. */
+    z-index:0;
+  }
+  .side,main{position:relative;z-index:1}
+
+  /* The sidebar sits on the ground. No panel, no border, no corner of its own. */
+  .side{
+    margin:56px 0 18px 18px;
+    width:210px;flex:0 0 210px;
+    height:calc(100vh - 74px);
+    background:none;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+    padding-top:22px;
+  }
+
+  /* The content pane. Inset on every side, rounded on all four, scrolling
+     inside itself. This is the containment. */
+  main{
+    margin:64px 26px 26px 8px;
+    height:calc(100vh - 90px);
+    min-height:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    background:var(--pane);
+    border:1px solid var(--edge);
+    border-radius:14px;
+    box-shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+  /* The bloom belongs to the window now, not to the pane, so it does not
+     travel with the pane's scroll. */
+  main::before{content:none}
+
+  /* The header caps the pane rather than the viewport. */
+  .apphdr{
+    top:64px;left:236px;right:26px;
+    border-radius:14px 14px 0 0;
+    border-bottom:1px solid var(--edge);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The address field.
+
+   Two changes. It reads the route rather than stating the domain, so moving
+   between screens moves the address the way it does in a browser, which is
+   most of what sells the frame as a window onto something rather than a
+   picture of one. Shell writes the path to a data attribute and this reads it.
+
+   And it is no longer whispering. It sat on the page colour, which on this
+   chrome meant a black field on a near black bar, at muted weight. Raised onto
+   the control surface with the text at full strength it becomes the thing in
+   the toolbar you actually look at, which is the job an address bar has.
+   --------------------------------------------------------------------------- */
+@media(min-width:761px){
+  .shell::after{
+    content:attr(data-url);
+    top:23px;
+    min-width:340px;max-width:min(560px,52vw);height:28px;
+    padding:0 16px;border-radius:8px;
+    background:var(--s2);
+    box-shadow:inset 0 0 0 1px var(--edge), inset 0 1px 0 rgba(255,255,255,.04);
+    font-size:12.5px;font-weight:500;color:var(--text);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    transition:background .18s var(--ease);
+  }
+}
