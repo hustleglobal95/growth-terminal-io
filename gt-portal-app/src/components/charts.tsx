@@ -1,7 +1,14 @@
 import React from 'react'
 import { data } from '../lib/api'
 
-const AMBER = '#000000', SURF = '#FFFFFF', MUTED = '#3F3E3B', TEXT = '#000000'
+/* Chart palette. These were literals for the light theme, where the accent
+   was ink and the surface was white. On black the accent goes back to Signal
+   Amber and the neutrals invert, so an unlit bar stays visible against the
+   card instead of disappearing into it. */
+const AMBER = '#FC5802', SURF = '#131110', MUTED = '#9A938B', TEXT = '#F5F1EA'
+const NEUTRAL = 'rgba(255,255,255,.16)'   /* unlit bars */
+const REFLINE = 'rgba(255,255,255,.30)'   /* reference line, a neutral annotation */
+const HAIRLINE = 'rgba(255,255,255,.22)'
 
 export function Spark({ series }: { series: number[] }) {
   const W = 240, H = 34, n = series.length
@@ -44,7 +51,7 @@ export function GapChart() {
       <path d={band} fill={AMBER} fillOpacity={0.1} />
       <path d={area} fill={AMBER} fillOpacity={0.1} />
       <path d={line(produced)} fill="none" stroke={AMBER} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-      <path d={line(required)} fill="none" stroke="rgba(0,0,0,.30)" strokeWidth={1.5} />
+      <path d={line(required)} fill="none" stroke={REFLINE} strokeWidth={1.5} />
       <circle cx={x(n - 1)} cy={y(produced[n - 1])} r={4.5} fill={AMBER} stroke={SURF} strokeWidth={2} />
       <text x={x(n - 1) + 10} y={y(produced[n - 1]) + 4} className="axis" fill={TEXT}>{produced[n - 1].toLocaleString()}</text>
       <text x={x(n - 1) + 10} y={y(required[n - 1]) + 4} className="axis">{required[n - 1].toLocaleString()}</text>
@@ -78,7 +85,7 @@ export function OvBars() {
         return (
           <g key={i}>
             <path d={`M${xx},${T + ih} L${xx},${yy + 4} Q${xx},${yy} ${xx + 4},${yy} L${xx + bw - 4},${yy} Q${xx + bw},${yy} ${xx + bw},${yy + 4} L${xx + bw},${T + ih} Z`}
-              fill={i === vals.length - 1 ? AMBER : 'rgba(0,0,0,.13)'} />
+              fill={i === vals.length - 1 ? AMBER : NEUTRAL} />
             <text x={xx + bw / 2} y={H - 8} className="axis" textAnchor="middle">{mo[i]}</text>
           </g>
         )
@@ -111,7 +118,7 @@ export function Gantt({ open }: { open: number }) {
         return (
           <g key={b[0]}>
             <rect x={x0} y={yTop} width={Math.max(6, x1 - x0)} height={barH} rx={4}
-              fill={on ? AMBER : 'rgba(0,0,0,.13)'} />
+              fill={on ? AMBER : NEUTRAL} />
             <text x={x0 + 10} y={yTop + barH + 13} className="axis" fill={on ? TEXT : MUTED}>{b[0]}. {b[3]}</text>
           </g>
         )
@@ -119,7 +126,7 @@ export function Gantt({ open }: { open: number }) {
       {[[3, 'Gate 1'], [5, 'Gate 2'], [11, 'Gate 3']].map(([w, lb]) => (
         <g key={lb as string}>
           <line x1={wk(w as number)} x2={wk(w as number)} y1={T - 6} y2={T + 6 * rowH - 6}
-            stroke="rgba(0,0,0,.28)" strokeWidth={1} />
+            stroke={HAIRLINE} strokeWidth={1} />
           <circle cx={wk(w as number)} cy={T - 6} r={3.5} fill={AMBER} stroke={SURF} strokeWidth={2} />
           <text x={wk(w as number) + 6} y={T + 6 * rowH + 6} className="axis" fill={MUTED}>{lb}</text>
         </g>
