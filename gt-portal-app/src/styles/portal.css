@@ -3185,10 +3185,10 @@ h1{font-weight:700;letter-spacing:-.032em}
 }
 
 /* The mark on the phone was 22px inside a 56px bar, which left it reading as a
-   favicon beside the wordmark rather than as the brand. It goes to 32px, which
-   is the largest it can be while keeping 12px of air above and below, so the
-   bar keeps its 56px height and nothing below it moves. The corner scales with
+   favicon beside the wordmark rather than as the brand. It goes to 40px, which
+   leaves 8px of air above and below inside the fixed 56px bar, so the bar keeps
+   its height and nothing below it moves. The corner scales with
    it so the silhouette stays the same shape. */
 @media(max-width:760px){
-  .mbar .marklogo{width:32px;height:32px;border-radius:8px}
+  .mbar .marklogo{width:40px;height:40px;border-radius:10px}
 }
