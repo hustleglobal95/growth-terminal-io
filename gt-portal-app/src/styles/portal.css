@@ -2946,3 +2946,21 @@ h1{font-weight:700;letter-spacing:-.032em}
       radial-gradient(520px 340px at 96% 100%, rgba(252,88,2,.04), transparent 62%);
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Status colour, corrected.
+
+   In the light theme --amber was #000000, so a complete run rendered as black
+   ink and a failed one, on --alert, was the only orange thing on the screen.
+   The two were told apart by colour. Setting both tokens to Signal Amber for
+   dark collapsed them: complete, confirmed and failed all came out identical.
+
+   The design system's rule is complete in amber, and running, queued and
+   failed neutral, with no red. So failure states go neutral and amber keeps
+   meaning the one live thing. A failed run is still legible as failure from
+   the word next to the dot, which is where that information belongs.
+   --------------------------------------------------------------------------- */
+.stat.fail{color:var(--muted)}
+.stat.fail i{background:var(--muted)}
+.tmstat.bad b,.dgstat.bad b{color:var(--muted)}
+.tmbar i.bad{background:var(--muted)}
