@@ -108,7 +108,10 @@ export function Shell() {
           <span /><span /><span />
         </NavLink>
         <span className="lockup" aria-hidden="true">
-          <img className="marklogo" src="/logo-mark-60.png" srcSet="/logo-mark-60.png 2x, /logo-mark-90.png 3x" alt="" />Growth Terminal
+          {/* The phone mark is a 40px box, so the retina candidates are the 128
+              and 192 assets. The 60 and 90 files are only enough for the 30px
+              sidebar mark and would render soft here. */}
+          <img className="marklogo" src="/logo-mark-90.png" srcSet="/logo-mark-128.png 2x, /logo-mark-192.png 3x" alt="" />Growth Terminal
         </span>
         <button className="mbtn r" aria-label="Share">
           <svg viewBox="0 0 20 20"><path d="M10 13V3M10 3L6.5 6.5M10 3l3.5 3.5" /><path d="M4 12v3.5A1.5 1.5 0 005.5 17h9a1.5 1.5 0 001.5-1.5V12" /></svg>
