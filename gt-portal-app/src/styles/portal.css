@@ -3192,3 +3192,12 @@ h1{font-weight:700;letter-spacing:-.032em}
 @media(max-width:760px){
   .mbar .marklogo{width:40px;height:40px;border-radius:10px}
 }
+
+/* The wordmark stayed at 13.5px while the mark grew, so the lockup read as a
+   big icon next to small type. It goes to 18px, which is the largest that
+   still clears the menu and share buttons on a 320px phone: 40px mark plus
+   7px gap plus the wordmark has to fit the 228px between them. Nowrap keeps
+   it on one line rather than breaking and pushing the bar taller. */
+@media(max-width:760px){
+  .mbar .lockup{font-size:18px;letter-spacing:-.012em;white-space:nowrap}
+}
