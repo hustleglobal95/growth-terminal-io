@@ -140,3 +140,18 @@ export const VOICE_AGENT_ID = 'agent_4701m0394vswfk0tk8dsx0gzg7fq'
  *  posting to it. Nothing else on the screen changes. See AGENT_ENDPOINT.md.
  */
 export const AGENT_CREATE_PATH = ''
+
+/** Where the brand record lives on the engine.
+ *
+ *  The brand record is the first thing a customer builds and the thing every
+ *  later assistant reads: what the business is, who it is for, how it sounds,
+ *  and what it must never say. One record per business.
+ *
+ *  Empty until the engine has the routes. The brand screen then explains what
+ *  the flow will do and does not render a paste box that throws. Set this to
+ *  '/v1/portal/brand' the day brandIngest.js is mounted, and nothing else in
+ *  the portal changes.
+ *
+ *  Note the value is the path after /api, because liveRoot prepends that.
+ */
+export const BRAND_PATH = ''
