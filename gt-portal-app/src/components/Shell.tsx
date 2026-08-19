@@ -127,7 +127,12 @@ export function Shell() {
         </NavLink>
       </nav>
 
-      <div className="shell">
+      {/* The address in the window toolbar tracks the route, the way a browser
+          address bar does. It is written to a data attribute rather than
+          rendered as text because the toolbar is drawn in CSS, and this keeps
+          it one line here instead of a component that has to be positioned
+          against a frame it does not own. */}
+      <div className="shell" data-url={'growthterminal.io' + (loc.pathname === '/' ? '' : loc.pathname)}>
         <aside className="side">
           <span className="mark">
             <img className="marklogo" src="/logo-mark-60.png" srcSet="/logo-mark-60.png 2x, /logo-mark-90.png 3x" alt="" />Growth Terminal
