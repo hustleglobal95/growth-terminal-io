@@ -154,4 +154,4 @@ export const AGENT_CREATE_PATH = ''
  *
  *  Note the value is the path after /api, because liveRoot prepends that.
  */
-export const BRAND_PATH = ''
+export const BRAND_PATH = '/v1/portal/brand'
