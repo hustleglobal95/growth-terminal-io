@@ -2749,3 +2749,200 @@ html{scrollbar-gutter:stable}
   .apphdr{left:228px;right:18px;top:18px;border-radius:0 11px 0 0}
   body::after{left:228px;right:18px;top:0;height:19px}
 }
+
+/* ===========================================================================
+   Dark theme.
+
+   The portal was built light and is almost entirely token driven, so most of
+   this is a redefinition of the custom properties. What follows the tokens is
+   the cleanup: every place a colour was written as a literal rather than a
+   token, which in the light theme was harmless because ink was #000000 and
+   every surface was #FFFFFF.
+
+   Those literals fall into three groups:
+     ink        #000000 used as text or as a solid fill
+     accent     #000000 used to mark the one live thing
+     surface    #FFFFFF used as a card, drawer, modal, rail or palette ground
+   The third breaks loudest if missed, because a white panel on a black page is
+   not a subtle error, and because an opaque white parent makes every
+   semi-transparent override above it composite against white.
+
+   Signal Amber returns as the accent. The light theme had set --amber to
+   #000000, since on white the strongest available mark is ink. On black that
+   is not available, so the accent goes back to marking one thing per view.
+
+   The proportions here are taken from the ad creative: a stated warm card edge
+   rather than a translucent white one, real depth under the cards, and a warm
+   bloom on the pane so a dark ground does not read as flat black paper.
+   =========================================================================== */
+
+:root{
+  --page:#000000;
+  --pane:#0B0A09;              /* the framed workspace window */
+  --card:#131110;
+  --recess:#1A1714;
+  --elev:#1B1815;
+  --s1:#131110;
+  --s2:#1D1A15;
+  --s3:#26221C;
+  --hi:rgba(255,255,255,.035);
+
+  --text:#F5F1EA;
+  --muted:#9A938B;
+  --faint:#6E6862;
+
+  /* A stated warm edge, not a lighter version of whatever sits behind it. A
+     translucent white edge on a warm dark ground reads cool and slightly
+     dirty; this reads deliberate. */
+  --edge:#2E2720;
+  --border:rgba(255,255,255,.08);
+  --border2:rgba(255,255,255,.15);
+  --line:rgba(255,255,255,.08);
+  --line2:rgba(255,255,255,.14);
+  --boxline:rgba(255,255,255,.16);
+
+  --amber:#FC5802;
+  --tint:rgba(252,88,2,.10);
+  --aborder:rgba(252,88,2,.24);
+  --signal:#FC5802;
+  --alert:#FC5802;
+
+  --chrome:#0A0908;
+  --chrome-deep:#000000;
+
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 30px -12px rgba(0,0,0,.7);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.5);
+  --lift-1:0 2px 4px rgba(0,0,0,.45), 0 18px 36px -14px rgba(0,0,0,.62);
+  --lift-2:0 2px 6px rgba(0,0,0,.5), 0 34px 70px -20px rgba(0,0,0,.72);
+  --lift-edge:inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+/* Only body carried the page colour, so content shorter than the viewport
+   exposed the browser default white below the fold. */
+html{background:var(--page)}
+
+/* The page wash, in the correct Signal Amber, with the ruling flipped from
+   dark lines on light to light on dark. */
+body{
+  background:
+    radial-gradient(1100px 680px at 6% -4%, rgba(252,88,2,.075), transparent 62%),
+    radial-gradient(880px 560px at 102% 104%, rgba(252,88,2,.04), transparent 60%),
+    linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px),
+    var(--page);
+  background-size:auto, auto, 28px 28px, 28px 28px, auto;
+  background-attachment:fixed;
+}
+body::before{opacity:.02}
+.side{
+  background:
+    radial-gradient(420px 320px at 0% 0%, rgba(252,88,2,.09), transparent 70%),
+    var(--chrome);
+}
+
+/* ---- surfaces written as a literal white ------------------------------- */
+.card,.tile,.lvpanel,.tmstat,.bizcard{background:var(--card)}
+.pal,.tmcard,.tmdrawer,.tmmodal,.tmthread,.tmkcol .tmtile{background:var(--card)}
+.rail{background:var(--pane)}
+
+/* main is the framed window the app sits in, and it was a literal near white.
+   It takes its own step in the ramp rather than sharing the card colour, so
+   the stack reads page, pane, card, control from black upward. That is the
+   structure the ad creative uses: a dark ground with a lifted window on it. */
+@media(min-width:761px){
+  main{background:var(--pane)}
+  .apphdr{background:rgba(11,10,9,.92)}
+}
+
+/* The edge, stated once, everywhere it applies. */
+.card,.tile,.lvpanel,.tmstat,.bizcard,.chartcard,.tbl,.dgcard,.pal,
+.tmcard,.tmdrawer,.tmmodal,.tmthread,.tmkcol .tmtile{border-color:var(--edge)}
+.tilegrid .tile{border:1px solid var(--edge)}
+main{border-color:var(--edge)}
+.rail{border-left:1px solid var(--edge)}
+.apphdr{border-bottom:1px solid var(--edge)}
+.pal{border:1px solid var(--edge)}
+
+/* ---- ink: black used as text or as a neutral fill ---------------------- */
+.lvcat b,.lvfig,.actt,.tmtitle,.tmctext,.tmcheck,.setupstep.on .stepnum,
+.setupstep.done .stepnum,.tmtab:hover,.tmstep:hover,.tmpick.on{color:var(--text)}
+.tmsel,.tminput{background:var(--s2);border-color:var(--border);color:var(--text)}
+.tmstep.cur{background:var(--text);border-color:var(--text);color:var(--page)}
+.tmcheck input,.keyscope input{accent-color:var(--amber)}
+.tmcard:hover{border-color:var(--border2)}
+.setupstep.on .stepnum{border-color:var(--aborder)}
+.setupstep.done .stepnum{background:var(--tint);border-color:var(--aborder)}
+
+/* ---- accent: the one live mark per view -------------------------------- */
+.lvsev i.on,.lvpulse,.tmdot.on,.tmprio.hi,.tmprog i,.fmtfill{background:var(--amber)}
+.ctlegend .dotA{background:var(--amber)}
+.lvweek{color:var(--amber);background:var(--tint)}
+.tmbadge{background:var(--amber);color:var(--page)}
+.why.on,#verdict .why.on{
+  background:var(--amber);border-color:var(--amber);color:var(--page);
+  box-shadow:0 0 0 1px var(--amber) inset;
+}
+.btn.p,.seg button.on{background:var(--amber);color:var(--page)}
+.cell.ink .sc{color:var(--page)}
+
+/* Selected chips and segments were written as "invert to ink": background
+   var(--text) with white text, which on a light page produced a solid black
+   pill. Inverted, both sides went light and the label vanished into its own
+   background. They take the accent, which is what the selected segment does in
+   the ad creative, and the label drops to the page colour so it reads punched
+   out. */
+.fchip.on,.tmtab.on,.tmtab.on:hover,.ract.on,.tmmove:hover,.updpill{
+  background:var(--amber);color:var(--page);border-color:var(--amber);
+}
+.updpill i{background:var(--page)}
+.tmtab.on{background:var(--amber)}
+
+/* Running out of credits is the one thing on that screen to act on. This row
+   was a dark wash on a light page; it needs to be opaque enough not to
+   composite against whatever sits behind it. */
+.warnrow{background:var(--tint);box-shadow:0 0 0 1px var(--aborder) inset;color:var(--text)}
+.warnrow b{color:var(--amber)}
+
+/* ---------------------------------------------------------------------------
+   Labels.
+
+   The portal set small labels in tracked uppercase monospace, defended above
+   as the change that makes the interface feel like a product. The reference
+   screens do not do this. Their labels are Inter, sentence case, no tracking:
+   "Running on your business". "Headline numbers". "Trained on". "Jump to".
+   Sentence case also carries more per pixel, which is why a label can be a
+   phrase rather than a word, and it stops the eye reading every label as a
+   heading of equal weight.
+
+   Monospace stays where the content is genuinely machine written: run ids,
+   keyboard hints, api keys, hashes. The reference does the same, rendering the
+   analysis id mono and everything around it not.
+   --------------------------------------------------------------------------- */
+.lbl,.shead .lbl,.tmstat .lbl,.dglead .lbl,
+.pill,.fchip,.eyebrow,.railnote .cat,.updkind{
+  font-family:var(--sans);
+  letter-spacing:normal;text-transform:none;
+}
+.lbl,.shead .lbl,.tmstat .lbl,.dglead .lbl{font-size:11px;font-weight:500;color:var(--muted)}
+.pill{font-size:11.5px;font-weight:500}
+.fchip{font-size:12px}
+.eyebrow,.railnote .cat,.updkind{font-size:11px;font-weight:500;color:var(--muted)}
+.k,.mono,.apikey,.idcell,.hashcell,.railnote .d,code,kbd,samp{font-family:var(--mono)}
+
+/* Display weight. The ads set headlines at 800; 700 is where a terminal sits
+   and 800 in a working interface starts shouting. */
+h1{font-weight:700;letter-spacing:-.032em}
+.tile .fig,.evc .fig,.lvhead{font-weight:700;letter-spacing:-.032em}
+
+/* The bloom, on the pane so it moves with the workspace rather than sitting on
+   the page behind it. */
+@media(min-width:761px){
+  main{position:relative;isolation:isolate}
+  main::before{
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:-1;
+    border-radius:inherit;
+    background:
+      radial-gradient(680px 420px at 8% 0%, rgba(252,88,2,.085), transparent 64%),
+      radial-gradient(520px 340px at 96% 100%, rgba(252,88,2,.04), transparent 62%);
+  }
+}
