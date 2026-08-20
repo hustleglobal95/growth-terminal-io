@@ -16,6 +16,8 @@ const ICONS: Record<string, string> = {
   Agents: '<rect x="6.6" y="2" width="4.8" height="8.4" rx="2.4"/><path d="M3.8 8.6a5.2 5.2 0 0010.4 0"/><path d="M9 13.8V16"/>',
   /* Two links of a chain, same 18 unit grid and stroke weight as the rest.
      A plug or a lightning bolt would read as power rather than permission. */
+  /* An arrow going into a tray: things go in here. */
+  Feed: '<path d="M9 1.5v8.5"/><path d="M5.6 7.2L9 10.5l3.4-3.3"/><path d="M2 11.5v3a1.6 1.6 0 001.6 1.6h10.8A1.6 1.6 0 0016 14.5v-3"/>',
   Connections: '<path d="M7.4 10.6a3.2 3.2 0 010-4.5l2.6-2.6a3.2 3.2 0 014.5 4.5l-1.3 1.3"/><path d="M10.6 7.4a3.2 3.2 0 010 4.5l-2.6 2.6a3.2 3.2 0 01-4.5-4.5l1.3-1.3"/>',
   Teams: '<circle cx="6.5" cy="5.5" r="2.8"/><path d="M1.5 15.5c0-2.8 2.2-5 5-5s5 2.2 5 5"/><path d="M12 3.2a2.8 2.8 0 010 5.4"/><path d="M13.5 10.9c1.7.6 3 2.2 3 4.6"/>',
   Clients: '<circle cx="9" cy="5.5" r="3"/><path d="M3 15.5c0-3.3 2.7-6 6-6s6 2.7 6 6"/>',
@@ -34,7 +36,7 @@ const ICONS: Record<string, string> = {
    already knew. The screen states its own status honestly, which is the right
    place for that information. */
 export const NAV: [string, string][] = [
-  ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'],
+  ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'], ['Feed', '/feed'],
   ['Businesses', '/businesses'], ['Agents', '/agents'], ['Connections', '/connections'],
   ['API', '/api-keys'], ['Teams', '/teams']
 ]
