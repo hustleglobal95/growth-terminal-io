@@ -1,33 +1,89 @@
+/* ===========================================================================
+   ONE TOKEN BLOCK.
 
+   This file previously carried six :root blocks, appended across six
+   successive re-skins. The last one won and every earlier one was dead weight
+   that still had to be read and overridden. That is why components from
+   different eras did not match.
+
+   There is now exactly one. Anything that needs a colour takes it from here.
+   A literal hex below this line is a bug.
+   =========================================================================== */
 :root{
-  --page:#FFFFFF;
-  --recess:#F5F4F2;             /* gates, the surface you read past */
-  --card:#FFFFFF;               /* standard report surface */
-  --elev:#F5F4F2;               /* raised, the two stakes */
-  --border:rgba(0,0,0,.09); --border2:rgba(0,0,0,.16);
-  --boxline:#000000;            /* solid ink border, the floating-panel edge */
-  --hi:rgba(0,0,0,.03);
-  --shadow:0 1px 2px rgba(0,0,0,.04), 0 10px 24px -10px rgba(0,0,0,.16);
-  --shadow-sm:0 1px 2px rgba(0,0,0,.05);
-  --text:#000000; --muted:#3B3B3B; --faint:#6E6E6E;
-  --amber:#000000; --tint:rgba(0,0,0,.05); --aborder:rgba(0,0,0,.22);
+  /* Ground. Warm white rather than pure white: white cards need an edge to
+     sit on, and #FFFFFF on #FFFFFF has none. */
+  --page:#F7F6F3;
+  --pane:#FFFFFF;
+  --card:#FFFFFF;
+  --recess:#F2F1ED;
+  --elev:#EFEEE9;
+  --s1:#FFFFFF;
+  --s2:#F2F1ED;
+  --s3:#E8E6E0;
+  --hi:rgba(15,15,14,.03);
+
+  /* Ink. Not black: #0F0F0E is Terminal Ink and it reads warmer against a
+     warm ground than pure black, which goes blue. */
+  --text:#0F0F0E;
+  --muted:#5A564F;
+  --faint:#8A857D;
+
+  --edge:#E3E1DA;
+  --border:rgba(15,15,14,.09);
+  --border2:rgba(15,15,14,.16);
+  --line:rgba(15,15,14,.08);
+  --line2:rgba(15,15,14,.14);
+  --boxline:rgba(15,15,14,.14);
+
+  /* Signal Amber. One accent, and it marks the one live thing per view. */
+  --amber:#F97316;
+  --tint:rgba(249,115,22,.09);
+  --aborder:rgba(249,115,22,.26);
+  --signal:#F97316;
+  --alert:#F97316;
+
+  --chrome:#FFFFFF;
+  --chrome-deep:#FFFFFF;
+  /* The sidebar was dark chrome, so its text tokens were named for a dark
+     ground. The chrome is now white, so they carry ink. The names are kept
+     because five files reference them and renaming buys nothing. */
+  --on-dark:var(--text);
+  --on-dark-2:var(--muted);
+  --on-dark-3:var(--faint);
+  --dark-line:var(--border);
+
   --green:#37D67A;
+
+  /* Depth is carried by one hairline plus a restrained lift. No glows. */
+  --shadow:0 1px 2px rgba(15,15,14,.04), 0 10px 24px -12px rgba(15,15,14,.14);
+  --shadow-sm:0 1px 2px rgba(15,15,14,.05);
+  --lift-1:0 1px 1px rgba(15,15,14,.04), 0 2px 4px -1px rgba(15,15,14,.05), 0 6px 14px -6px rgba(15,15,14,.08);
+  --lift-2:0 1px 1px rgba(15,15,14,.05), 0 3px 6px -2px rgba(15,15,14,.06), 0 12px 28px -10px rgba(15,15,14,.12);
+  --lift-edge:inset 0 1px 0 rgba(255,255,255,.9);
+
+  --hdr:56px;
+  --side:232px;
   --r:14px; --r2:12px; --r3:8px;
   --ease:cubic-bezier(.16,1,.3,1);
+  --spring:cubic-bezier(.34,1.3,.5,1);
   --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
   --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
 }
+
+html{background:var(--page)}
+
+
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--page);color:var(--text);font:14px/1.6 var(--sans);
   font-optical-sizing:auto;font-synthesis-weight:none;font-synthesis-style:none}
-body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.035;
+body::before{content:none;position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:0;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>")}
 .lbl{display:block;font-size:11px;font-weight:500;letter-spacing:.005em;color:var(--faint)}
 .lbl.am{color:var(--amber)}
 .shell{display:flex;min-height:100vh;position:relative}
 
 /* ---------- sidebar (unchanged from the live portal) ---------- */
-.side{width:250px;flex:0 0 250px;background:var(--card);border-right:1px solid var(--border);
+.side{width:var(--side);flex:0 0 var(--side);background:var(--card);border-right:1px solid var(--border);
   display:flex;flex-direction:column;padding:24px;gap:22px;position:sticky;top:0;height:100vh}
 .side .mark{display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:700;letter-spacing:-.012em;color:var(--text)}
 .side .marklogo{width:30px;height:30px;border-radius:8px;flex:0 0 auto;object-fit:cover}
@@ -473,10 +529,18 @@ ol.steps li::before{content:counter(s) ".";position:absolute;left:0;top:6px;
 .usercard{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;
   border:1px solid var(--line);background:var(--s1)}
 .usercard .av{width:28px;height:28px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;
-  justify-content:center;font-size:11px;font-weight:600;color:var(--amber);
-  background:rgba(0,0,0,.12);box-shadow:0 0 0 1px rgba(0,0,0,.24) inset}
-.usercard .nm{font-size:12.5px;font-weight:600;line-height:1.2}
-.usercard .ws{font-size:11px;color:var(--faint)}
+  justify-content:center;font-size:11px;font-weight:600;color:var(--muted);
+  background:var(--s2);box-shadow:0 0 0 1px var(--border) inset}
+/* The name and the workspace were wrapping onto two lines each inside a 210px
+   sidebar, which turned a four line card into an eight line one. They are
+   identifiers, so they truncate rather than wrap. */
+.usercard .ucmeta{min-width:0;flex:1}
+.usercard .nm,.usercard .ws{
+  display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
+}
+.usercard .nm{font-size:12.5px;font-weight:600;line-height:1.3}
+.usercard .ws{font-size:11px;color:var(--faint);line-height:1.3}
+.usercard .ucmeta br{display:none}
 
 /* overview */
 .greet{padding:22px 0 4px}
@@ -595,15 +659,6 @@ footer .v{display:block;margin-top:7px;color:var(--muted)}
    A workstation, not a document. Fixed chrome, a scrolling canvas, a sticky
    inspector. Dense type, precise hairlines, real controls.
    ========================================================================= */
-:root{
-  --s1:#FFFFFF;          /* card */
-  --s2:#F5F4F2;          /* control, chip */
-  --s3:#EEECE8;          /* hover */
-  --line:rgba(0,0,0,.08);
-  --line2:rgba(0,0,0,.14);
-  --hdr:56px;
-  --spring:cubic-bezier(.34,1.3,.5,1);
-}
 button{border:0;background:none;color:inherit;font-family:inherit;cursor:pointer}
 body{font-size:13.5px}
 body::before{opacity:.03}
@@ -739,10 +794,11 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
    the mobile drawer below keeps the full-height edge-to-edge treatment. */
 @media(min-width:761px){
   .side{
-    position:sticky;top:14px;height:auto;max-height:calc(100vh - 28px);
-    margin:14px 0 14px 14px;padding:18px 16px;
-    background:#FFFFFF;border:2px solid var(--boxline);border-radius:16px;
-    box-shadow:var(--shadow);
+    position:sticky;top:0;height:100vh;max-height:100vh;
+    width:232px;flex:0 0 232px;
+    margin:0;padding:20px 16px 14px;
+    background:var(--chrome);border:0;border-right:1px solid var(--border);
+    border-radius:0;box-shadow:none;
   }
 }
 .link{font-size:12.5px;font-weight:500}
@@ -1249,7 +1305,6 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 /* One alarm colour. Amber returns with a single meaning: something needs
    you. A failed run gets it; nothing else in the portal may use it. The
    credits bubble stays neutral by request. */
-:root{ --alert:#FC5802 }
 .stat.fail{color:var(--alert);font-weight:600}
 .stat.fail i{background:var(--alert)}
 
@@ -1915,29 +1970,12 @@ mark.edmk.und::selection{background:var(--s3)}
    surface-dependent rather than a single accent, and each surface gets the
    colour that actually reads on it.
    =========================================================================== */
-:root{
-  /* Warm off-white replaces pure white. The page stops glaring and white cards
-     sitting on it finally have an edge without needing a heavier border. */
-  --page:#F9F9F7;
-  --border:rgba(15,15,14,.08);
-  --border2:rgba(15,15,14,.16);
-
-  /* Dark surfaces. The sidebar and any header zone share these, so there is
-     one place to change the chrome. */
-  --chrome:#191917;
-  --chrome-deep:#0F0F0E;
-  --on-dark:rgba(255,255,255,.92);
-  --on-dark-2:rgba(255,255,255,.50);
-  --on-dark-3:rgba(255,255,255,.28);
-  --dark-line:rgba(255,255,255,.06);
-  --signal:rgba(249,115,22,1);      /* only ever used on dark */
-}
 
 /* ---------- the sidebar goes dark ---------- */
 .side{
   background:var(--chrome);
-  border-right:1px solid var(--dark-line);
-  width:210px;flex:0 0 210px;padding:22px 16px;
+  border-right:1px solid var(--border);
+  width:var(--side);flex:0 0 var(--side);padding:22px 16px;
 }
 .side .mark{color:var(--on-dark)}
 .side .chip{
@@ -2023,7 +2061,7 @@ h1,h2,h3,.shead h2{letter-spacing:-.028em}
 }
 
 @media(max-width:900px){
-  .side{width:250px;flex:0 0 250px;padding:24px}
+  .side{width:var(--side);flex:0 0 var(--side);padding:24px 16px}
   .stick{left:0}
 }
 
@@ -2080,11 +2118,7 @@ body{
 
 /* The sidebar carries the same warmth from the inside, at the point the wash is
    strongest, so the dark panel does not read as a cut-out sitting on top. */
-.side{
-  background:
-    radial-gradient(420px 320px at 0% 0%, rgba(249,115,22,.07), transparent 70%),
-    var(--chrome);
-}
+.side{background:var(--chrome)}
 
 @media(prefers-reduced-motion:reduce){ body{background-attachment:scroll} }
 
@@ -2120,18 +2154,6 @@ h1,.lvhead,.hero h1{font-variant-numeric:proportional-nums}
    shadow where the card meets the page, and a wide soft one for the ambient
    fill, plus a one-pixel inset highlight along the top edge so the card has a
    lit surface rather than just an outline. */
-:root{
-  --lift-1:
-    0 1px 1px rgba(15,15,14,.04),
-    0 2px 4px -1px rgba(15,15,14,.05),
-    0 6px 14px -6px rgba(15,15,14,.08);
-  --lift-2:
-    0 1px 1px rgba(15,15,14,.05),
-    0 3px 6px -2px rgba(15,15,14,.06),
-    0 12px 28px -10px rgba(15,15,14,.13),
-    0 24px 48px -24px rgba(15,15,14,.10);
-  --lift-edge:inset 0 1px 0 rgba(255,255,255,.9);
-}
 .card,.tile,.lvpanel,.tmstat,.bizcard,.tbl,.dgcard{
   box-shadow:var(--lift-edge),var(--lift-1);
   transition:box-shadow .28s var(--ease),transform .28s var(--ease);
@@ -2147,17 +2169,13 @@ h1,.lvhead,.hero h1{font-variant-numeric:proportional-nums}
 
 /* On the dark sidebar a white inset edge would glow, so it gets the opposite:
    a dark contact shadow and a faint light line. */
-.side{box-shadow:0 0 0 1px rgba(255,255,255,.03) inset, 24px 0 48px -32px rgba(15,15,14,.5)}
+.side{box-shadow:none}
 
 /* 3. Colour depth.
    sRGB clips Signal Amber. On a display that can show more, use the wider
    gamut version, which is the same colour with the saturation it was picked
    for. Everything falls back cleanly on screens that cannot. */
 @supports (color:color(display-p3 1 1 1)){
-  :root{
-    --signal:color(display-p3 .953 .451 .086);
-    --green:color(display-p3 .216 .839 .478);
-  }
 }
 
 /* 4. Vector crispness.
@@ -2230,8 +2248,8 @@ body{
    treatment. A column header is instrumentation, not prose.
    --------------------------------------------------------------------------- */
 .trow.h{
-  font-family:var(--mono);font-size:9.5px;font-weight:500;
-  letter-spacing:.10em;text-transform:uppercase;
+  font-family:var(--sans);font-size:11.5px;font-weight:500;
+  letter-spacing:normal;text-transform:none;color:var(--faint);
   border-bottom:1px solid var(--border);
 }
 
@@ -2239,18 +2257,19 @@ body{
    stated by weight and ink rather than by a grey fill that competes with the
    table underneath it. */
 .fchip{
-  font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;
-  border-radius:6px;padding:6px 11px;
-  background:transparent;border-color:var(--border);
+  font-family:var(--sans);font-size:12.5px;letter-spacing:normal;text-transform:none;
+  border-radius:8px;padding:6px 12px;
+  background:transparent;border-color:var(--border);color:var(--muted);
 }
-.fchip:hover{background:var(--s2)}
+.fchip:hover{background:var(--s2);color:var(--text)}
 .fchip.on{
-  background:var(--text);color:#FFFFFF;border-color:var(--text);font-weight:600;
+  background:var(--tint);color:var(--amber);
+  border-color:var(--aborder);font-weight:600;
 }
 
 /* Figures in the table are compared down the column, so they align and sit in
    the mono face rather than in body text. */
-.trow .num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12px}
+.trow .num{font-family:var(--sans);font-variant-numeric:tabular-nums;font-size:13px;color:var(--muted)}
 
 /* A row is a target. Give the whole row the hover, and let the left edge say
    which one, the same way the sidebar does. */
@@ -2393,16 +2412,7 @@ body{
    margins. That is the intent: it reads as the surface the cards are resting
    on, and it disappears the moment there is content to read.
    --------------------------------------------------------------------------- */
-body{
-  background:
-    radial-gradient(1100px 680px at 6% -4%, rgba(249,115,22,.055), transparent 62%),
-    radial-gradient(880px 560px at 102% 104%, rgba(249,115,22,.03), transparent 60%),
-    linear-gradient(rgba(15,15,14,.032) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(15,15,14,.032) 1px, transparent 1px),
-    var(--page);
-  background-size:auto, auto, 28px 28px, 28px 28px, auto;
-  background-attachment:fixed;
-}
+body{background:var(--page)}
 
 /* The film grain and the grid are both surface texture, and together they read
    as noise. The grain drops back now that the ruling carries the texture. */
@@ -2642,17 +2652,17 @@ html{scrollbar-gutter:stable}
    --------------------------------------------------------------------------- */
 @media(min-width:761px){
   main{
-    margin:14px;
-    background:#FDFDFC;
-    border:1px solid rgba(0,0,0,.13);
-    border-radius:16px;
-    min-height:calc(100vh - 28px);
+    margin:0;
+    background:var(--pane);
+    border:0;
+    border-radius:0;
+    min-height:100vh;
     position:relative;
   }
   .apphdr{
-    left:238px;right:14px;top:14px;
-    border-radius:15px 15px 0 0;
-    border-bottom:1px solid rgba(0,0,0,.13);
+    left:var(--side);right:0;top:0;
+    border-radius:0;
+    border-bottom:1px solid var(--border);
     background:rgba(253,253,252,.92);
   }
   body::after{
@@ -2692,217 +2702,8 @@ html{scrollbar-gutter:stable}
   }
 }
 
-/* ---------------------------------------------------------------------------
-   The window.
-
-   The previous pass gave the workspace an edge. This one makes the two halves
-   read as a single object rather than as two panels that happen to sit near
-   each other: the sidebar and the content pane now meet flush, share one
-   rounded outline, and cast one shadow, which is what a desktop window does.
-
-   The separation is earned with shadow, not with colour. Darkening the page
-   behind the window would have read more strongly and would also have meant
-   repainting a brand token to get a lighting effect, which is the wrong trade.
-   The palette is untouched: --page is the same #F9F9F7 it has always been, and
-   the window lifts off it because of the shadow under it.
-
-   The lights are the one skeuomorphic thing in the product and they earn it,
-   because they are what the eye uses to decide it is looking at a window
-   rather than at a page. They sit at the window's top left, which on macOS is
-   the sidebar's corner in every application built this way. They are inert:
-   decoration in a pseudo element, nothing to click, nothing announced to a
-   screen reader.
-
-   The header is pinned to 228px, which is the pane's left edge: the sidebar's
-   18px margin plus its 210px width. It was 242px, which put a fourteen pixel
-   notch between the pane's corner and the start of the rule, the same class of
-   misalignment the 278px value caused before it.
-   --------------------------------------------------------------------------- */
-@media(min-width:761px){
-  .side{
-    margin:18px 0 18px 18px;
-    border-radius:12px 0 0 12px;
-    padding-top:46px;
-    box-shadow:
-      -1px 0 0 rgba(0,0,0,.10),
-      0 26px 60px -26px rgba(30,26,20,.40),
-      0 2px 6px rgba(30,26,20,.07);
-  }
-  /* Three lights from one element: the first is the background, the other two
-     are shadows of it offset along the same baseline. */
-  .side::after{
-    content:"";position:absolute;top:17px;left:17px;
-    width:11px;height:11px;border-radius:50%;
-    background:#FF5F57;
-    box-shadow:18px 0 0 #FEBC2E, 36px 0 0 #28C840;
-    pointer-events:none;
-  }
-  main{
-    margin:18px 18px 18px 0;
-    border-left:0;
-    border-radius:0 12px 12px 0;
-    min-height:calc(100vh - 36px);
-    box-shadow:
-      0 26px 60px -26px rgba(30,26,20,.40),
-      0 2px 6px rgba(30,26,20,.07);
-  }
-  .apphdr{left:228px;right:18px;top:18px;border-radius:0 11px 0 0}
-  body::after{left:228px;right:18px;top:0;height:19px}
-}
-
-/* ===========================================================================
-   Dark theme.
-
-   The portal was built light and is almost entirely token driven, so most of
-   this is a redefinition of the custom properties. What follows the tokens is
-   the cleanup: every place a colour was written as a literal rather than a
-   token, which in the light theme was harmless because ink was #000000 and
-   every surface was #FFFFFF.
-
-   Those literals fall into three groups:
-     ink        #000000 used as text or as a solid fill
-     accent     #000000 used to mark the one live thing
-     surface    #FFFFFF used as a card, drawer, modal, rail or palette ground
-   The third breaks loudest if missed, because a white panel on a black page is
-   not a subtle error, and because an opaque white parent makes every
-   semi-transparent override above it composite against white.
-
-   Signal Amber returns as the accent. The light theme had set --amber to
-   #000000, since on white the strongest available mark is ink. On black that
-   is not available, so the accent goes back to marking one thing per view.
-
-   The proportions here are taken from the ad creative: a stated warm card edge
-   rather than a translucent white one, real depth under the cards, and a warm
-   bloom on the pane so a dark ground does not read as flat black paper.
-   =========================================================================== */
-
-:root{
-  --page:#000000;
-  --pane:#0B0A09;              /* the framed workspace window */
-  --card:#131110;
-  --recess:#1A1714;
-  --elev:#1B1815;
-  --s1:#131110;
-  --s2:#1D1A15;
-  --s3:#26221C;
-  --hi:rgba(255,255,255,.035);
-
-  --text:#F5F1EA;
-  --muted:#9A938B;
-  --faint:#6E6862;
-
-  /* A stated warm edge, not a lighter version of whatever sits behind it. A
-     translucent white edge on a warm dark ground reads cool and slightly
-     dirty; this reads deliberate. */
-  --edge:#2E2720;
-  --border:rgba(255,255,255,.08);
-  --border2:rgba(255,255,255,.15);
-  --line:rgba(255,255,255,.08);
-  --line2:rgba(255,255,255,.14);
-  --boxline:rgba(255,255,255,.16);
-
-  --amber:#FC5802;
-  --tint:rgba(252,88,2,.10);
-  --aborder:rgba(252,88,2,.24);
-  --signal:#FC5802;
-  --alert:#FC5802;
-
-  --chrome:#0A0908;
-  --chrome-deep:#000000;
-
-  --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 30px -12px rgba(0,0,0,.7);
-  --shadow-sm:0 1px 2px rgba(0,0,0,.5);
-  --lift-1:0 2px 4px rgba(0,0,0,.45), 0 18px 36px -14px rgba(0,0,0,.62);
-  --lift-2:0 2px 6px rgba(0,0,0,.5), 0 34px 70px -20px rgba(0,0,0,.72);
-  --lift-edge:inset 0 1px 0 rgba(255,255,255,.05);
-}
-
-/* Only body carried the page colour, so content shorter than the viewport
-   exposed the browser default white below the fold. */
-html{background:var(--page)}
-
-/* The page wash, in the correct Signal Amber, with the ruling flipped from
-   dark lines on light to light on dark. */
-body{
-  background:
-    radial-gradient(1100px 680px at 6% -4%, rgba(252,88,2,.075), transparent 62%),
-    radial-gradient(880px 560px at 102% 104%, rgba(252,88,2,.04), transparent 60%),
-    linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px),
-    var(--page);
-  background-size:auto, auto, 28px 28px, 28px 28px, auto;
-  background-attachment:fixed;
-}
-body::before{opacity:.02}
-.side{
-  background:
-    radial-gradient(420px 320px at 0% 0%, rgba(252,88,2,.09), transparent 70%),
-    var(--chrome);
-}
-
-/* ---- surfaces written as a literal white ------------------------------- */
-.card,.tile,.lvpanel,.tmstat,.bizcard{background:var(--card)}
-.pal,.tmcard,.tmdrawer,.tmmodal,.tmthread,.tmkcol .tmtile{background:var(--card)}
-.rail{background:var(--pane)}
-
-/* main is the framed window the app sits in, and it was a literal near white.
-   It takes its own step in the ramp rather than sharing the card colour, so
-   the stack reads page, pane, card, control from black upward. That is the
-   structure the ad creative uses: a dark ground with a lifted window on it. */
-@media(min-width:761px){
-  main{background:var(--pane)}
-  .apphdr{background:rgba(11,10,9,.92)}
-}
-
-/* The edge, stated once, everywhere it applies. */
-.card,.tile,.lvpanel,.tmstat,.bizcard,.chartcard,.tbl,.dgcard,.pal,
-.tmcard,.tmdrawer,.tmmodal,.tmthread,.tmkcol .tmtile{border-color:var(--edge)}
-.tilegrid .tile{border:1px solid var(--edge)}
-main{border-color:var(--edge)}
-.rail{border-left:1px solid var(--edge)}
-.apphdr{border-bottom:1px solid var(--edge)}
-.pal{border:1px solid var(--edge)}
-
-/* ---- ink: black used as text or as a neutral fill ---------------------- */
-.lvcat b,.lvfig,.actt,.tmtitle,.tmctext,.tmcheck,.setupstep.on .stepnum,
-.setupstep.done .stepnum,.tmtab:hover,.tmstep:hover,.tmpick.on{color:var(--text)}
-.tmsel,.tminput{background:var(--s2);border-color:var(--border);color:var(--text)}
-.tmstep.cur{background:var(--text);border-color:var(--text);color:var(--page)}
-.tmcheck input,.keyscope input{accent-color:var(--amber)}
-.tmcard:hover{border-color:var(--border2)}
-.setupstep.on .stepnum{border-color:var(--aborder)}
-.setupstep.done .stepnum{background:var(--tint);border-color:var(--aborder)}
-
-/* ---- accent: the one live mark per view -------------------------------- */
-.lvsev i.on,.lvpulse,.tmdot.on,.tmprio.hi,.tmprog i,.fmtfill{background:var(--amber)}
-.ctlegend .dotA{background:var(--amber)}
-.lvweek{color:var(--amber);background:var(--tint)}
-.tmbadge{background:var(--amber);color:var(--page)}
-.why.on,#verdict .why.on{
-  background:var(--amber);border-color:var(--amber);color:var(--page);
-  box-shadow:0 0 0 1px var(--amber) inset;
-}
-.btn.p,.seg button.on{background:var(--amber);color:var(--page)}
-.cell.ink .sc{color:var(--page)}
-
-/* Selected chips and segments were written as "invert to ink": background
-   var(--text) with white text, which on a light page produced a solid black
-   pill. Inverted, both sides went light and the label vanished into its own
-   background. They take the accent, which is what the selected segment does in
-   the ad creative, and the label drops to the page colour so it reads punched
-   out. */
-.fchip.on,.tmtab.on,.tmtab.on:hover,.ract.on,.tmmove:hover,.updpill{
-  background:var(--amber);color:var(--page);border-color:var(--amber);
-}
-.updpill i{background:var(--page)}
-.tmtab.on{background:var(--amber)}
-
-/* Running out of credits is the one thing on that screen to act on. This row
-   was a dark wash on a light page; it needs to be opaque enough not to
-   composite against whatever sits behind it. */
-.warnrow{background:var(--tint);box-shadow:0 0 0 1px var(--aborder) inset;color:var(--text)}
-.warnrow b{color:var(--amber)}
-
+/* removed: the fake desktop window and its traffic lights */
+/* removed: the dark theme pass, superseded by one light token block */
 /* ---------------------------------------------------------------------------
    Labels.
 
@@ -2927,7 +2728,10 @@ main{border-color:var(--edge)}
 .pill{font-size:11.5px;font-weight:500}
 .fchip{font-size:12px}
 .eyebrow,.railnote .cat,.updkind{font-size:11px;font-weight:500;color:var(--muted)}
-.k,.mono,.apikey,.idcell,.hashcell,.railnote .d,code,kbd,samp{font-family:var(--mono)}
+.k,.mono,.apikey,.idcell,.hashcell,code,kbd,samp{font-family:var(--mono)}
+/* Dates are read, not compared character by character. They take the body
+   face like every other word on the row. */
+.dt,.trow .dt,.railnote .d,.actd{font-family:var(--sans);font-variant-numeric:tabular-nums}
 
 /* Display weight. The ads set headlines at 800; 700 is where a terminal sits
    and 800 in a working interface starts shouting. */
@@ -2938,13 +2742,9 @@ h1{font-weight:700;letter-spacing:-.032em}
    the page behind it. */
 @media(min-width:761px){
   main{position:relative;isolation:isolate}
-  main::before{
-    content:"";position:absolute;inset:0;pointer-events:none;z-index:-1;
-    border-radius:inherit;
-    background:
-      radial-gradient(680px 420px at 8% 0%, rgba(252,88,2,.085), transparent 64%),
-      radial-gradient(520px 340px at 96% 100%, rgba(252,88,2,.04), transparent 62%);
-  }
+  /* The pane carried two amber radials. On a dark ground they read as warmth;
+     on warm white they read as a pink stain across the top of every screen. */
+  main::before{content:none}
 }
 
 /* ---------------------------------------------------------------------------
@@ -2966,192 +2766,9 @@ h1{font-weight:700;letter-spacing:-.032em}
 .tmbar i.bad{background:var(--muted)}
 
 
-/* ---------------------------------------------------------------------------
-   The window becomes a browser.
-
-   The frame was right and the costume was wrong. What the product wants is to
-   read as a thing you are inside of, which is why the floating window earns
-   its place, but a generic macOS window says desktop application and this is
-   not one. It is a portal you open in a browser.
-
-   So the same window keeps its margin, its corner and its shadow, and gains a
-   toolbar across the top with the address in it. Three lights sit at the left
-   of that toolbar where a browser puts them rather than floating loose in the
-   sidebar's corner. The sidebar and the content hang below it, which is what
-   turns two panels sharing an outline into one window with chrome on top.
-
-   The address is the point. It says growthterminal.io, so the surface names
-   itself in the one place a person already looks to find out where they are,
-   and every screenshot of the product carries the domain without a watermark.
-   --------------------------------------------------------------------------- */
-@media(min-width:761px){
-  /* Room for the toolbar, taken off the top of both panels. */
-  .side{margin-top:56px;border-radius:0 0 0 12px;padding-top:22px}
-  main{margin-top:56px;border-radius:0 12px 12px 0;min-height:calc(100vh - 74px)}
-  .apphdr{top:56px;border-radius:0}
-
-  /* The lights move into the toolbar. */
-  .side::after{content:none}
-
-  /* The toolbar itself. Fixed to the window's own edges, which are known: an
-     18px margin on both sides and 18px from the top. */
-  .shell::before{
-    content:"";position:fixed;z-index:60;
-    top:18px;left:18px;right:18px;height:38px;
-    background:var(--chrome);
-    border-radius:12px 12px 0 0;
-    box-shadow:inset 0 -1px 0 var(--edge);
-    pointer-events:none;
-  }
-  /* Three lights from one element, as before: the first is the background,
-     the other two are shadows of it along the same baseline. */
-  /* The address field, centred the way a browser centres it. It lives on
-     .shell rather than on .apphdr because .apphdr carries a backdrop-filter,
-     which creates a containing block, so a fixed pseudo-element inside it
-     resolves against the header instead of the viewport and lands in the
-     wrong row. */
-  .shell::after{
-    content:"growthterminal.io";
-    position:fixed;z-index:61;
-    top:25px;left:50%;transform:translateX(-50%);
-    min-width:260px;height:24px;
-    display:flex;align-items:center;justify-content:center;
-    padding:0 14px;border-radius:7px;
-    background:var(--page);
-    box-shadow:inset 0 0 0 1px var(--edge);
-    font-family:var(--sans);font-size:11.5px;font-weight:500;
-    letter-spacing:normal;text-transform:none;color:var(--muted);
-    pointer-events:none;
-  }
-  /* Three lights from one element: the first is the background, the other two
-     are shadows of it along the same baseline. This was the strip that masked
-     the gap above the header, which the toolbar now covers. */
-  body::after{
-    content:"";position:fixed;z-index:61;
-    top:32px;left:34px;right:auto;width:11px;height:11px;border-radius:50%;
-    background:#FF5F57;
-    box-shadow:18px 0 0 #FEBC2E, 36px 0 0 #28C840;
-    pointer-events:none;
-  }
-  /* The address field. Centred, the way a browser centres it. */
-}
-
-/* The window corner. Twelve was a macOS application radius. A browser window
-   on current macOS is rounder than that, and the larger radius is most of what
-   separates a window that looks drawn from one that looks rendered by the
-   system. The three surfaces that form the outline take the same value so the
-   corner reads as one curve rather than three that nearly agree. */
-@media(min-width:761px){
-  .shell::before{border-radius:20px 20px 0 0}
-  .side{border-radius:0 0 0 20px}
-  main{border-radius:0 20px 20px 0}
-}
-
-/* ---------------------------------------------------------------------------
-   A containment box, the way Safari builds one.
-
-   Rounding the outer corners was not enough, and the reason is structural. The
-   window grew with its content, so on every screen taller than the viewport it
-   ran off the bottom and never closed. A box with no bottom edge is not a box.
-   The corners were round and the thing still read as a page.
-
-   Safari's answer is two surfaces, not one. There is a window ground carrying
-   the toolbar, and floating on it there is a content pane, inset on every side
-   and rounded on all four corners, with the scrolling happening inside that
-   pane rather than on the page. The sidebar is not a panel with a border down
-   its right edge; it is transparent, sitting directly on the window ground, so
-   the only object with an outline is the content.
-
-   So: the window is pinned to the viewport and the page stops scrolling. The
-   ground is one element with the toolbar seam drawn into it as a background
-   line. The pane floats with an eight pixel gutter and scrolls internally,
-   which is what finally closes the box on all four sides.
-   --------------------------------------------------------------------------- */
-@media(min-width:761px){
-  /* The page no longer scrolls. The pane does. */
-  html,body{height:100%;overflow:hidden}
-  .shell{height:100vh;overflow:hidden}
-
-  /* One element is the whole window: ground, corner, shadow, and the toolbar
-     seam as a one pixel background line at 38px. */
-  .shell::before{
-    top:18px;left:18px;right:18px;bottom:18px;height:auto;
-    background:
-      linear-gradient(var(--edge),var(--edge)) 0 38px/100% 1px no-repeat,
-      radial-gradient(560px 380px at 4% 6%, rgba(252,88,2,.07), transparent 66%),
-      var(--chrome);
-    border-radius:20px;
-    box-shadow:0 30px 70px -28px rgba(0,0,0,.75), 0 2px 8px rgba(0,0,0,.5);
-    /* It was a 38px strip above the content at z-index 60. Now it is the whole
-       window, so it has to sit under the content instead of over it. */
-    z-index:0;
-  }
-  .side,main{position:relative;z-index:1}
-
-  /* The sidebar sits on the ground. No panel, no border, no corner of its own. */
-  .side{
-    margin:56px 0 18px 18px;
-    width:210px;flex:0 0 210px;
-    height:calc(100vh - 74px);
-    background:none;
-    border:0;
-    border-radius:0;
-    box-shadow:none;
-    padding-top:22px;
-  }
-
-  /* The content pane. Inset on every side, rounded on all four, scrolling
-     inside itself. This is the containment. */
-  main{
-    margin:64px 26px 26px 8px;
-    height:calc(100vh - 90px);
-    min-height:0;
-    overflow-y:auto;
-    overscroll-behavior:contain;
-    background:var(--pane);
-    border:1px solid var(--edge);
-    border-radius:14px;
-    box-shadow:0 1px 2px rgba(0,0,0,.4);
-  }
-  /* The bloom belongs to the window now, not to the pane, so it does not
-     travel with the pane's scroll. */
-  main::before{content:none}
-
-  /* The header caps the pane rather than the viewport. */
-  .apphdr{
-    top:64px;left:236px;right:26px;
-    border-radius:14px 14px 0 0;
-    border-bottom:1px solid var(--edge);
-  }
-}
-
-/* ---------------------------------------------------------------------------
-   The address field.
-
-   Two changes. It reads the route rather than stating the domain, so moving
-   between screens moves the address the way it does in a browser, which is
-   most of what sells the frame as a window onto something rather than a
-   picture of one. Shell writes the path to a data attribute and this reads it.
-
-   And it is no longer whispering. It sat on the page colour, which on this
-   chrome meant a black field on a near black bar, at muted weight. Raised onto
-   the control surface with the text at full strength it becomes the thing in
-   the toolbar you actually look at, which is the job an address bar has.
-   --------------------------------------------------------------------------- */
-@media(min-width:761px){
-  .shell::after{
-    content:attr(data-url);
-    top:23px;
-    min-width:340px;max-width:min(560px,52vw);height:28px;
-    padding:0 16px;border-radius:8px;
-    background:var(--s2);
-    box-shadow:inset 0 0 0 1px var(--edge), inset 0 1px 0 rgba(255,255,255,.04);
-    font-size:12.5px;font-weight:500;color:var(--text);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    transition:background .18s var(--ease);
-  }
-}
-
+/* removed: the window dressed as a browser */
+/* removed: the fake browser containment box */
+/* removed: the fake address bar */
 /* ---------------------------------------------------------------------------
    The phone chrome.
 
@@ -3169,15 +2786,15 @@ h1{font-weight:700;letter-spacing:-.032em}
    --------------------------------------------------------------------------- */
 @media(max-width:760px){
   .mbar{
-    background:rgba(10,9,8,.86);
+    background:rgba(255,255,255,.88);
     border-bottom:1px solid var(--edge);
   }
   .apphdr{
-    background:rgba(11,10,9,.9);
+    background:rgba(255,255,255,.92);
     border-bottom:1px solid var(--edge);
   }
   .tabbar{
-    background:rgba(10,9,8,.92);
+    background:rgba(255,255,255,.94);
     border-top:1px solid var(--edge);
   }
   /* The drawer is chrome, not a card, and its edge matches the bars. */
@@ -3333,3 +2950,382 @@ h1{font-weight:700;letter-spacing:-.032em}
 /* A suggestion, as the customer wrote it. Set larger than a label because it
    is the thing on the row worth reading. */
 .fline{margin:2px 0 0;font-size:15px;line-height:1.45;color:var(--text)}
+
+/* ===========================================================================
+   NAVIGATION: GROUPS, COLLAPSE, TOOLTIPS
+   ---------------------------------------------------------------------------
+   Nine flat destinations gave a new person no way to tell which of them is
+   the work and which is the plumbing. The labels are presentation only: the
+   same nine routes, in the same order, under three quiet headings.
+
+   Collapse is a real state rather than a narrower sidebar: the labels leave,
+   the icons centre, and the label returns as a tooltip so nothing becomes
+   unreachable or unnameable.
+   =========================================================================== */
+.navgroup{display:flex;flex-direction:column;gap:1px;margin-bottom:14px}
+.navgroup:last-child{margin-bottom:0}
+.navlbl{
+  font-size:10.5px;font-weight:500;color:var(--faint);
+  padding:0 10px 6px;letter-spacing:.01em;
+}
+
+.railtoggle{
+  position:absolute;top:18px;right:12px;
+  width:26px;height:26px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--faint);opacity:0;transition:opacity .15s var(--ease),background .15s var(--ease);
+}
+.railtoggle svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.4}
+.side:hover .railtoggle,.railtoggle:focus-visible{opacity:1}
+.railtoggle:hover{background:var(--s2);color:var(--text)}
+
+@media(min-width:761px){
+  .shell.railed .side{width:62px;flex:0 0 62px;padding-left:9px;padding-right:9px}
+  .shell.railed .apphdr{left:62px}
+
+  /* Everything that is words disappears; everything that is a target stays. */
+  .shell.railed .side .mark,
+  .shell.railed .side .chip,
+  .shell.railed .navlbl,
+  .shell.railed .navtxt,
+  .shell.railed .searchpill,
+  .shell.railed .usercard .ucmeta{display:none}
+  /* Nothing wide is left to spill, and clipping the rail would also clip the
+     tooltips, which sit outside it by design. */
+  /* main comes later in the document and paints over the rail, so a tooltip
+     that hangs outside the rail lands behind the canvas without this. */
+  .shell.railed .side{overflow:visible;z-index:40}
+  .shell.railed .side > div:first-of-type{display:none}
+
+  .shell.railed .nav a{justify-content:center;padding-left:0;padding-right:0}
+  .shell.railed .nav a svg{margin:0}
+  .shell.railed .navgroup{margin-bottom:10px;gap:2px}
+  .shell.railed .navgroup + .navgroup{border-top:1px solid var(--border);padding-top:10px}
+  /* The card was sized for a name it no longer shows, and the sign out button
+     pushed the avatar out through the rail. */
+  .shell.railed .usercard{justify-content:center;padding:8px 0;gap:0}
+  .shell.railed .usercard .signout{display:none}
+  .shell.railed .usercard .av{margin:0}
+  .shell.railed .railtoggle{right:50%;transform:translateX(50%);top:14px}
+
+  /* The label the collapse took away, given back on hover. Built from the
+     data attribute so there is one source for the name. */
+  .shell.railed .nav a{position:relative}
+  .shell.railed .nav a::after{
+    content:attr(data-tip);
+    position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);
+    background:var(--text);color:var(--pane);
+    font-size:12px;font-weight:500;white-space:nowrap;
+    padding:5px 9px;border-radius:6px;
+    opacity:0;pointer-events:none;transition:opacity .12s var(--ease);
+    z-index:80;box-shadow:var(--lift-1);
+  }
+  .shell.railed .nav a:hover::after,
+  .shell.railed .nav a:focus-visible::after{opacity:1}
+}
+
+/* ===========================================================================
+   BUTTON WEIGHT
+   ---------------------------------------------------------------------------
+   The controls were sized and coloured for a dark ground, where a fill of any
+   strength separates from the page on its own. On warm white they went thin:
+   12.5px at 36px tall with a hairline, which reads as a link in a box rather
+   than as something you press.
+
+   Weight comes from four things, none of them colour: a taller target, a
+   heavier face, a stated edge under the fill, and a press that actually
+   moves. Amber is untouched, because making the accent louder is the one
+   move that would cost the rest of the screen its hierarchy.
+   =========================================================================== */
+.btn{
+  min-height:38px;padding:10px 18px;
+  font-size:13.5px;font-weight:600;letter-spacing:-.008em;
+  border-radius:10px;
+  transition:background .16s var(--ease), box-shadow .16s var(--ease), transform .06s var(--ease);
+}
+
+/* Primary. The fill carries a darker edge and a lift, so it sits on the page
+   rather than being printed onto it. */
+.btn.p{
+  background:var(--amber);color:#FFFFFF;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    0 0 0 1px rgba(180,70,8,.55),
+    0 1px 2px rgba(15,15,14,.14),
+    0 2px 6px -2px rgba(180,70,8,.30);
+}
+.btn.p:hover{
+  background:#FB8232;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.26),
+    0 0 0 1px rgba(180,70,8,.6),
+    0 2px 4px rgba(15,15,14,.16),
+    0 5px 12px -4px rgba(180,70,8,.38);
+}
+
+/* Secondary. Quieter than primary, but still an object: a real surface and a
+   full strength border rather than a hairline that disappears at a glance. */
+.btn.g{
+  background:var(--s1);color:var(--text);
+  box-shadow:
+    0 0 0 1px var(--border2),
+    0 1px 2px rgba(15,15,14,.06);
+}
+.btn.g:hover{
+  background:var(--s2);
+  box-shadow:
+    0 0 0 1px rgba(15,15,14,.24),
+    0 1px 3px rgba(15,15,14,.10);
+}
+
+/* The press. Two pixels of travel is the whole difference between a control
+   that responds and one that only changes colour. */
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn.p:active:not(:disabled){
+  background:#E8620C;
+  box-shadow:inset 0 1px 3px rgba(120,45,4,.45), 0 0 0 1px rgba(180,70,8,.6);
+}
+.btn.g:active:not(:disabled){
+  background:var(--s3);
+  box-shadow:inset 0 1px 2px rgba(15,15,14,.10), 0 0 0 1px rgba(15,15,14,.24);
+}
+.btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+/* The header keeps its own scale so the bar does not grow, but it stops being
+   a different species of button. */
+.apphdr .btn{min-height:34px;padding:8px 16px;font-size:13px}
+.warnrow .btn{min-height:32px;padding:7px 14px;font-size:12.5px}
+.btn.p.mini{min-height:30px;padding:7px 13px;font-size:12.5px}
+
+/* Row actions were 11.5px on a hairline and vanished against the row. */
+.ract{
+  font-size:12px;font-weight:600;min-height:28px;padding:5px 11px;
+  border:0;background:var(--s1);
+  box-shadow:0 0 0 1px var(--border2), 0 1px 2px rgba(15,15,14,.06);
+  transition:background .15s var(--ease), box-shadow .15s var(--ease);
+}
+.ract:hover{background:var(--s2);box-shadow:0 0 0 1px rgba(15,15,14,.24), 0 1px 3px rgba(15,15,14,.10)}
+.ract:active{background:var(--s3);box-shadow:inset 0 1px 2px rgba(15,15,14,.10), 0 0 0 1px rgba(15,15,14,.24)}
+
+/* Icon buttons were an invisible target until hover. They get the same
+   surface treatment so a toolbar reads as a toolbar. */
+.iconbtn{
+  width:34px;height:34px;
+  background:var(--s1);
+  box-shadow:0 0 0 1px var(--border), 0 1px 2px rgba(15,15,14,.05);
+  transition:background .15s var(--ease), box-shadow .15s var(--ease), transform .06s var(--ease);
+}
+.iconbtn:hover{background:var(--s2);box-shadow:0 0 0 1px var(--border2), 0 1px 3px rgba(15,15,14,.09)}
+.iconbtn:active{transform:translateY(1px)}
+
+/* Filter chips are controls too, and sat two weights below everything else. */
+.fchip{min-height:32px;font-weight:500}
+.fchip.on{font-weight:600}
+
+@media(max-width:760px){
+  /* 44px minimum touch target. */
+  .btn{min-height:44px;padding:12px 18px;font-size:14px}
+  .apphdr .btn{min-height:40px;padding:10px 16px}
+  .iconbtn{width:40px;height:40px}
+  .ract{min-height:36px;padding:8px 13px;font-size:13px}
+  .fchip{min-height:38px}
+}
+
+/* A page header can carry three actions. A phone header cannot carry three
+   actions at 44px each, so they were wrapping to two lines apiece inside a
+   50px bar. They keep their labels and their targets, and the row scrolls
+   sideways instead. The primary stays reachable because it is last. */
+@media(max-width:760px){
+  .apphdr{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .apphdr::-webkit-scrollbar{display:none}
+  .apphdr .btn{white-space:nowrap;flex:0 0 auto}
+  .apphdr .ttl{flex:0 0 auto}
+}
+
+/* ===========================================================================
+   DEPTH, ON EVERY CONTROL
+   ---------------------------------------------------------------------------
+   The previous pass gave the buttons an edge. An edge is not depth: it says
+   where the object stops, not that the object stands off the page.
+
+   Depth here is built the way a physical key is: a light source above, so the
+   fill runs slightly lighter at the top than the bottom, a darker line along
+   the bottom edge doing the work a real bevel would, a contact shadow tight
+   under the object, and a wider ambient shadow further out. The press inverts
+   all four at once, which is the part that makes it read as travel rather
+   than as a colour change.
+
+   Applied to every control the app has: primary, secondary, row actions,
+   icon buttons, filter chips, segmented controls and the search pill. A
+   toolbar where one control has depth and its neighbour does not looks
+   broken, and that inconsistency was most of what was left.
+   =========================================================================== */
+
+/* ---- primary -------------------------------------------------------------
+   Two amber stops rather than a flat fill. The range is deliberately narrow:
+   wide enough to place the light, not so wide it reads as a gradient. */
+.btn.p{
+  background:linear-gradient(180deg,#FB8433 0%,var(--amber) 52%,#EE690D 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.34),
+    inset 0 -1px 0 rgba(150,58,6,.55),
+    0 0 0 1px rgba(168,66,7,.60),
+    0 1px 1px rgba(15,15,14,.10),
+    0 2px 3px rgba(15,15,14,.10),
+    0 6px 14px -4px rgba(168,66,7,.38);
+}
+.btn.p:hover{
+  background:linear-gradient(180deg,#FC9247 0%,#FA7C22 52%,#F1710F 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.40),
+    inset 0 -1px 0 rgba(150,58,6,.50),
+    0 0 0 1px rgba(168,66,7,.62),
+    0 2px 3px rgba(15,15,14,.12),
+    0 4px 8px rgba(15,15,14,.10),
+    0 10px 22px -6px rgba(168,66,7,.46);
+}
+.btn.p:active:not(:disabled){
+  background:linear-gradient(180deg,#DE5F09 0%,#E8680C 100%);
+  box-shadow:
+    inset 0 2px 5px rgba(110,40,3,.50),
+    inset 0 -1px 0 rgba(255,255,255,.08),
+    0 0 0 1px rgba(168,66,7,.62),
+    0 1px 1px rgba(15,15,14,.10);
+}
+
+/* ---- secondary ---------------------------------------------------------- */
+.btn.g{
+  background:linear-gradient(180deg,#FFFFFF 0%,#F7F6F3 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    inset 0 -1px 0 rgba(15,15,14,.07),
+    0 0 0 1px var(--border2),
+    0 1px 1px rgba(15,15,14,.05),
+    0 2px 4px rgba(15,15,14,.06),
+    0 5px 12px -6px rgba(15,15,14,.10);
+}
+.btn.g:hover{
+  background:linear-gradient(180deg,#FFFFFF 0%,#F2F1ED 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    inset 0 -1px 0 rgba(15,15,14,.09),
+    0 0 0 1px rgba(15,15,14,.22),
+    0 2px 3px rgba(15,15,14,.07),
+    0 6px 14px -6px rgba(15,15,14,.14);
+}
+.btn.g:active:not(:disabled){
+  background:var(--s3);
+  box-shadow:
+    inset 0 2px 4px rgba(15,15,14,.13),
+    0 0 0 1px rgba(15,15,14,.22);
+}
+
+/* Travel. Everything that can be pressed moves the same distance. */
+.btn:active:not(:disabled),
+.ract:active,.iconbtn:active,.fchip:active,.searchpill:active{transform:translateY(1px)}
+
+/* ---- row actions -------------------------------------------------------- */
+.ract{
+  background:linear-gradient(180deg,#FFFFFF 0%,#F7F6F3 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    inset 0 -1px 0 rgba(15,15,14,.06),
+    0 0 0 1px var(--border2),
+    0 1px 2px rgba(15,15,14,.07),
+    0 3px 6px -3px rgba(15,15,14,.10);
+  transition:background .15s var(--ease), box-shadow .15s var(--ease), transform .06s var(--ease);
+}
+.ract:hover{
+  background:linear-gradient(180deg,#FFFFFF 0%,#F2F1ED 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    0 0 0 1px rgba(15,15,14,.22),
+    0 2px 4px rgba(15,15,14,.09),
+    0 5px 10px -4px rgba(15,15,14,.12);
+}
+.ract:active{box-shadow:inset 0 2px 4px rgba(15,15,14,.13), 0 0 0 1px rgba(15,15,14,.22)}
+
+/* ---- icon buttons ------------------------------------------------------- */
+.iconbtn{
+  background:linear-gradient(180deg,#FFFFFF 0%,#F7F6F3 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    inset 0 -1px 0 rgba(15,15,14,.06),
+    0 0 0 1px var(--border),
+    0 1px 2px rgba(15,15,14,.06),
+    0 3px 6px -3px rgba(15,15,14,.09);
+}
+.iconbtn:hover{
+  background:linear-gradient(180deg,#FFFFFF 0%,#F2F1ED 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    0 0 0 1px var(--border2),
+    0 2px 4px rgba(15,15,14,.09),
+    0 5px 10px -4px rgba(15,15,14,.12);
+}
+.iconbtn:active{box-shadow:inset 0 2px 4px rgba(15,15,14,.13), 0 0 0 1px var(--border2)}
+
+/* ---- filter chips ------------------------------------------------------- */
+.fchip{
+  background:linear-gradient(180deg,#FFFFFF 0%,#F7F6F3 100%);
+  border:0;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    inset 0 -1px 0 rgba(15,15,14,.06),
+    0 0 0 1px var(--border),
+    0 1px 2px rgba(15,15,14,.05),
+    0 3px 6px -3px rgba(15,15,14,.08);
+  transition:background .15s var(--ease), box-shadow .15s var(--ease), transform .06s var(--ease);
+}
+.fchip:hover{
+  background:linear-gradient(180deg,#FFFFFF 0%,#F2F1ED 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    0 0 0 1px var(--border2),
+    0 2px 4px rgba(15,15,14,.08),
+    0 5px 10px -4px rgba(15,15,14,.11);
+}
+/* Selected is pressed in, not raised. A filter that is on is a switch that
+   has been thrown, and recessing it says so without a second colour. */
+.fchip.on{
+  background:var(--tint);color:var(--amber);
+  box-shadow:
+    inset 0 1px 3px rgba(168,66,7,.20),
+    0 0 0 1px var(--aborder);
+}
+
+/* ---- segmented control -------------------------------------------------- */
+.seg{
+  box-shadow:inset 0 1px 3px rgba(15,15,14,.09), 0 0 0 1px var(--border);
+}
+.seg button.on,.seg .thumb{
+  background:linear-gradient(180deg,#FFFFFF 0%,#F7F6F3 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    0 0 0 1px var(--border2),
+    0 1px 2px rgba(15,15,14,.10),
+    0 2px 5px -2px rgba(15,15,14,.12);
+}
+.seg button.on{color:var(--text)}
+
+/* ---- search pill -------------------------------------------------------- */
+.searchpill{
+  background:linear-gradient(180deg,#FFFFFF 0%,#F7F6F3 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    inset 0 -1px 0 rgba(15,15,14,.05),
+    0 0 0 1px var(--border),
+    0 1px 2px rgba(15,15,14,.05);
+  transition:background .15s var(--ease), box-shadow .15s var(--ease), transform .06s var(--ease);
+}
+.searchpill:hover{
+  background:linear-gradient(180deg,#FFFFFF 0%,#F2F1ED 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,1), 0 0 0 1px var(--border2), 0 2px 5px rgba(15,15,14,.08);
+}
+
+/* A disabled control is flat on the page. It cannot be pressed, so it must
+   not look like it is standing up waiting to be. */
+.btn:disabled{
+  box-shadow:0 0 0 1px var(--border) !important;
+  transform:none !important;
+}
