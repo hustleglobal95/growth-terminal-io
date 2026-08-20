@@ -3297,3 +3297,18 @@ h1{font-weight:700;letter-spacing:-.032em}
      rather than wrapping every four words. */
   .brev{padding:8px 0 0 10px}
 }
+
+/* The brand gate. A summary of what the engine is about to write from, set
+   as label and value pairs rather than prose, because the customer is
+   checking it rather than reading it. */
+.bgrows{margin-top:16px;border-top:1px solid var(--line)}
+.bgrow{display:flex;gap:16px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--line)}
+.bgrow .lbl{flex:0 0 132px}
+.bgrow b{font-weight:500;font-size:13.5px;line-height:1.45;color:var(--text)}
+
+@media(max-width:760px){
+  /* Stacked on a phone: a 132px label column leaves the value four words
+     wide, and every one of these values is a sentence. */
+  .bgrow{flex-direction:column;gap:4px}
+  .bgrow .lbl{flex:none}
+}
