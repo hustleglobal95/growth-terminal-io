@@ -8,6 +8,7 @@ import { CheckoutSuccess, CheckoutCancel, SubscriptionReturn, CreditsReturn } fr
 import { Agents } from './screens/Agents'
 import { Brand } from './screens/Brand'
 import { Connections } from './screens/Connections'
+import { Feed } from './screens/Feed'
 import { Teams } from './screens/Teams'
 import { Content } from './screens/Content'
 import { ContentSetup } from './screens/ContentSetup'
@@ -61,6 +62,10 @@ const router = createBrowserRouter([
          than a tab inside Content, because a customer revoking access should
          not have to walk through a content screen to find it. */
       { path: '/connections', element: <Connections /> },
+      /* Where suggestions go in. Beside Content rather than inside it,
+         because feeding the machine is a daily habit and burying it two
+         clicks deep is how the queue runs dry. */
+      { path: '/feed', element: <Feed /> },
       { path: '/more', element: <More /> },
       /* Stripe sends the browser back to these two. They are ordinary routes
          and not special cases: the success screen confirms against the engine

@@ -168,3 +168,13 @@ export const BRAND_PATH = '/v1/portal/brand'
  *  rather than rendering a Connect button that throws.
  */
 export const SOCIAL_PATH = ''
+
+/** Where suggestions and the queue live on the engine.
+ *
+ *  A suggestion is one thought the customer wants said. The engine turns
+ *  suggestions into posts, renders them against the brand kit, and holds them
+ *  in a queue until their slot. It does not invent the thoughts.
+ *
+ *  Empty until the engine has the routes.
+ */
+export const FEED_PATH = ''
