@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from '../lib/bus'
 import { Header } from './simple'
 import { Spark } from '../components/charts'
+import { BrandGate } from '../components/BrandGate'
+import { WORKSPACE_SLUG } from './Brand'
+import { useBusinesses } from '../lib/liveData'
 
 /** Content: the Automated Content Engine's console. An always-on system
  *  that builds on-brand posts from the creative bank, publishes across
@@ -56,6 +59,9 @@ const FORMATS = [
 export function Content() {
   const nav = useNavigate()
   const [paused, setPaused] = useState(false)
+  const businesses = useBusinesses()
+  const rows = (businesses || []).filter(b => b && b.slug)
+  const slug = rows.length ? rows[0].slug : WORKSPACE_SLUG
   return (
     <div className="scr on">
       <Header title="Content">
@@ -74,6 +80,12 @@ export function Content() {
             <h1>The engine posts every day. You feed the bank.</h1>
             <p>On-brand posts built from your creative bank, published across every platform on schedule. It tracks what performs, so the feed sharpens over time.</p>
           </div>
+
+          {/* On brand means something specific here, and this is where it is
+              defined. The gate sits above the numbers rather than buried in
+              setup, because the record is the thing a customer will want to
+              change once they see what the engine is writing. */}
+          <BrandGate businessSlug={slug} />
 
           <div className="tilegrid">
             <div className="tile"><span className="lbl">Engine</span>

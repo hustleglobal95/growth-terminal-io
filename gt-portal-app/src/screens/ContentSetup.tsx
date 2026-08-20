@@ -2,6 +2,9 @@ import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from '../lib/bus'
 import { Header } from './simple'
+import { BrandGate } from '../components/BrandGate'
+import { WORKSPACE_SLUG } from './Brand'
+import { businessLabel, useAccounts, useBusinesses } from '../lib/liveData'
 
 /** Content machine setup. Five steps take any account from nothing to a
  *  running engine: connect the platforms, seed the creative bank, set the
@@ -18,17 +21,22 @@ const START: Pf[] = [
   { n: 'TikTok', ph: '@yourbrand', on: false, h: '', slot: '20:30' }
 ]
 
-const STEPS = ['Platforms', 'Creative bank', 'Voice', 'Schedule', 'Launch']
+/* Voice became Brand: the step used to ask four questions and throw the
+   answers away. It now shows the brand record the engine actually writes
+   from, and sends the customer to build one when there is not one. */
+const STEPS = ['Platforms', 'Creative bank', 'Brand', 'Schedule', 'Launch']
 
 export function ContentSetup() {
   const nav = useNavigate()
   const [step, setStep] = useState(0)
   const [pfs, setPfs] = useState<Pf[]>(START)
   const [assets, setAssets] = useState(0)
-  const [brand, setBrand] = useState('')
-  const [line, setLine] = useState('')
-  const [topics, setTopics] = useState('')
-  const [never, setNever] = useState('')
+  const [brandReady, setBrandReady] = useState(false)
+  const accs = useAccounts()
+  const businesses = useBusinesses()
+  const rows = (businesses || []).filter(b => b && b.slug)
+  const slug = rows.length ? rows[0].slug : WORKSPACE_SLUG
+  const brand = rows.length ? businessLabel(rows[0].name, accs) : ''
   const [daily, setDaily] = useState(1)
   const [tz, setTz] = useState('America/New_York')
 
@@ -50,13 +58,13 @@ export function ContentSetup() {
   const canNext =
     step === 0 ? connected.length > 0 :
     step === 1 ? assets >= 10 :
-    step === 2 ? brand.trim().length > 1 && line.trim().length > 5 :
+    step === 2 ? brandReady :
     true
 
   const nextHint =
     step === 0 ? 'Connect at least one platform to continue.' :
     step === 1 ? 'Seed at least 10 assets so the first week has range. ' + assets + ' of 10.' :
-    step === 2 ? 'Brand name and the one line positioning are required.' : ''
+    step === 2 ? 'The engine needs a confirmed brand record before it can write anything.' : ''
 
   const launch = () => {
     toast('Engine is live. First post goes out at the next slot.')
@@ -118,18 +126,7 @@ export function ContentSetup() {
             )}
 
             {step === 2 && (
-              <div className="setupcard">
-                <h2>Teach it the voice.</h2>
-                <p className="ssub">Four answers keep every post on brand. The engine writes from these, then learns from what performs.</p>
-                <label className="lbl" htmlFor="sb">Brand name</label>
-                <input id="sb" value={brand} onChange={e => setBrand(e.target.value)} placeholder="Northlane Supply Co." autoComplete="off" />
-                <label className="lbl" htmlFor="sl">The one line: what you do, for whom</label>
-                <input id="sl" value={line} onChange={e => setLine(e.target.value)} placeholder="Restocking essentials for independent gyms, on subscription" autoComplete="off" />
-                <label className="lbl" htmlFor="st">Three topics you can own</label>
-                <input id="st" value={topics} onChange={e => setTopics(e.target.value)} placeholder="Retention, pricing, behind the scenes" autoComplete="off" />
-                <label className="lbl" htmlFor="sn">Things it must never say</label>
-                <input id="sn" value={never} onChange={e => setNever(e.target.value)} placeholder="Discounts, competitor names, guarantees" autoComplete="off" />
-              </div>
+              <BrandGate businessSlug={slug} onState={setBrandReady} />
             )}
 
             {step === 3 && (
@@ -175,7 +172,7 @@ export function ContentSetup() {
                   <div><span className="lbl">Creative bank</span><b>{assets} assets</b></div>
                   <div><span className="lbl">Brand</span><b>{brand || 'Not set'}</b></div>
                   <div><span className="lbl">Cadence</span><b>{daily} {daily === 1 ? 'post' : 'posts'} per platform, daily</b></div>
-                  <div><span className="lbl">Positioning</span><b>{line || 'Not set'}</b></div>
+                  <div><span className="lbl">Voice</span><b>From your brand record</b></div>
                   <div><span className="lbl">Timezone</span><b>{tz.split('/')[1]?.replace('_', ' ')}</b></div>
                 </div>
                 <p className="sfine">The first post publishes at the next open slot. Week one leans on your seeded bank; from week two the performance data starts steering formats and captions.</p>
