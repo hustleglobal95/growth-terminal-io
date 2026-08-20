@@ -40,6 +40,22 @@ export const NAV: [string, string][] = [
   ['Businesses', '/businesses'], ['Agents', '/agents'], ['Connections', '/connections'],
   ['API', '/api-keys'], ['Teams', '/teams']
 ]
+/* The same nine destinations as NAV, in the same order, wearing labels.
+   This is presentation only: no route changes, nothing is added, nothing is
+   removed. Nine flat items gave a new person no way to tell that Analyses and
+   Content are the work and API and Teams are the plumbing.
+
+   Derived from NAV rather than written out again, so a tab added to NAV
+   cannot silently fail to appear here. */
+const GROUPING: [string, string[]][] = [
+  ['Workspace', ['Overview', 'Analyses', 'Businesses']],
+  ['Content engine', ['Content', 'Feed', 'Connections']],
+  ['Setup', ['Agents', 'API', 'Teams']]
+]
+export const NAV_GROUPS: [string, [string, string][]][] = GROUPING.map(
+  ([g, names]) => [g, names.map(n => NAV.find(([l]) => l === n)).filter(Boolean) as [string, string][]]
+)
+
 export const TABS: [string, string][] = [
   ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'], ['Businesses', '/businesses']
 ]
@@ -83,6 +99,9 @@ export function Shell() {
      month could not see what they were paying for. */
   const bill = useBilling()
   const [pal, setPal] = useState(false)
+  /* Collapsed is a preference, so it outlives the tab. A failed read means
+     private mode, which is not an error worth surfacing. */
+  const [rail, setRail] = useState(() => { try { return localStorage.getItem('gt.rail') === '1' } catch (e) { return false } })
   const [msg, setMsg] = useState<string | null>(null)
   const loc = useLocation()
   const nav = useNavigate()
@@ -140,8 +159,12 @@ export function Shell() {
           rendered as text because the toolbar is drawn in CSS, and this keeps
           it one line here instead of a component that has to be positioned
           against a frame it does not own. */}
-      <div className="shell" data-url={'growthterminal.io' + (loc.pathname === '/' ? '' : loc.pathname)}>
+      <div className={'shell' + (rail ? ' railed' : '')}>
         <aside className="side">
+          <button className="railtoggle" onClick={() => { setRail(r => { try { localStorage.setItem('gt.rail', r ? '0' : '1') } catch (e) { /* private mode */ } return !r }) }}
+            aria-label={rail ? 'Expand sidebar' : 'Collapse sidebar'} title={rail ? 'Expand sidebar' : 'Collapse sidebar'}>
+            <svg viewBox="0 0 16 16"><rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M6 2.5v11"/></svg>
+          </button>
           <span className="mark">
             <img className="marklogo" src="/logo-mark-60.png" srcSet="/logo-mark-60.png 2x, /logo-mark-90.png 3x" alt="" />Growth Terminal
           </span>
@@ -158,12 +181,17 @@ export function Shell() {
             <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>
             Search<span className="k">Ctrl K</span>
           </div>
-          <nav className="nav">
-            {NAV.map(([label, to]) => (
-              <NavLink key={label} to={to} end={to === '/'}
-                className={({ isActive }) => (label === 'Analyses' ? analysesActive : isActive) ? 'on' : ''}>
-                <Icon name={label} />{label}
-              </NavLink>
+          <nav className="nav" aria-label="Sections">
+            {NAV_GROUPS.map(([group, items]) => (
+              <div className="navgroup" key={group}>
+                <span className="navlbl">{group}</span>
+                {items.map(([label, to]) => (
+                  <NavLink key={label} to={to} end={to === '/'} data-tip={label}
+                    className={({ isActive }) => (label === 'Analyses' ? analysesActive : isActive) ? 'on' : ''}>
+                    <Icon name={label} /><span className="navtxt">{label}</span>
+                  </NavLink>
+                ))}
+              </div>
             ))}
           </nav>
           <div className="sp" />
