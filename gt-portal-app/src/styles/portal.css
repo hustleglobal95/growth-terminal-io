@@ -3329,3 +3329,85 @@ h1{font-weight:700;letter-spacing:-.032em}
   box-shadow:0 0 0 1px var(--border) !important;
   transform:none !important;
 }
+
+/* ===========================================================================
+   THE CONTAINMENT BOX
+   ---------------------------------------------------------------------------
+   The app filled the viewport edge to edge. That is why the top could clip:
+   a fixed header pinned to y=0 has nothing above it to absorb a browser that
+   paints its own chrome over the first few pixels, and the product had no
+   outer edge of its own to say where it begins.
+
+   So the whole application now sits inside one framed pane, inset from the
+   page on all four sides, with a single border and a single shadow. The
+   sidebar and the canvas are both inside it; they are two halves of one
+   object rather than two objects that happen to be adjacent.
+
+   This is not the window costume that was removed earlier. There are no
+   traffic lights and no address bar. It is a containment edge, which is what
+   an application canvas has and what a page does not.
+
+   The scrolling moves inside the pane rather than on the page, so the frame
+   stays put and the header sticks to the top of the pane it belongs to.
+   =========================================================================== */
+@media(min-width:761px){
+  html,body{height:100%}
+  body{
+    padding:16px;
+    overflow:hidden;
+  }
+
+  .shell{
+    height:calc(100vh - 32px);
+    min-height:0;
+    border:1px solid var(--border2);
+    border-radius:16px;
+    background:var(--pane);
+    overflow:hidden;
+    box-shadow:
+      0 1px 2px rgba(15,15,14,.05),
+      0 6px 16px -8px rgba(15,15,14,.12),
+      0 24px 56px -28px rgba(15,15,14,.18);
+  }
+
+  /* Both halves are inside the frame, so neither carries a corner or a
+     shadow of its own. */
+  /* Overflow stays visible: overflow-y:auto would compute overflow-x to auto
+     as well, and the collapsed rail's tooltips hang outside the sidebar by
+     design. The nav is nine items and does not need to scroll. */
+  .side{
+    position:relative;top:auto;
+    height:100%;max-height:100%;
+    border-radius:0;
+    overflow:visible;
+  }
+
+  /* The pane scrolls, not the page. */
+  main{
+    height:100%;
+    min-height:0;
+    padding-top:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+
+  /* The header was fixed to the viewport, which is what let it sit outside
+     the frame. It belongs to the pane now, so it sticks to the pane. */
+  .apphdr{
+    position:sticky;
+    top:0;left:auto;right:auto;
+    width:auto;
+    border-radius:16px 0 0 0;
+  }
+
+  /* The rail measured itself against the viewport. It measures against the
+     pane now, or it runs past the bottom edge. */
+  .rail{
+    top:0;
+    height:calc(100vh - 32px - var(--hdr));
+  }
+
+  /* Both were masks for chrome that no longer exists. */
+  body::after{content:none}
+  .shell.railed .apphdr{left:auto}
+}
