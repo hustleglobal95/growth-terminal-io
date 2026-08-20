@@ -155,3 +155,16 @@ export const AGENT_CREATE_PATH = ''
  *  Note the value is the path after /api, because liveRoot prepends that.
  */
 export const BRAND_PATH = '/v1/portal/brand'
+
+/** Where connected social accounts live on the engine.
+ *
+ *  The whole OAuth exchange happens server side. This bundle is static and
+ *  public: an app secret in it is an app secret anyone can read, and a page
+ *  token in it posts to a customer's audience under their name. So the portal
+ *  asks the engine where to send the browser, and reads back only which
+ *  accounts are connected and whether they still work.
+ *
+ *  Empty until the engine has the routes, and the connections screen says so
+ *  rather than rendering a Connect button that throws.
+ */
+export const SOCIAL_PATH = ''

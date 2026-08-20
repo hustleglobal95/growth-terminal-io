@@ -7,6 +7,7 @@ import { Overview, Analyses, Businesses, ApiKeys, Stub } from './screens/simple'
 import { CheckoutSuccess, CheckoutCancel, SubscriptionReturn, CreditsReturn } from './screens/Billing'
 import { Agents } from './screens/Agents'
 import { Brand } from './screens/Brand'
+import { Connections } from './screens/Connections'
 import { Teams } from './screens/Teams'
 import { Content } from './screens/Content'
 import { ContentSetup } from './screens/ContentSetup'
@@ -56,6 +57,10 @@ const router = createBrowserRouter([
          first one a customer sets up, and the one every later assistant is
          briefed from. */
       { path: '/agents/brand', element: <Brand /> },
+      /* Where the engine is granted permission to post. Its own route rather
+         than a tab inside Content, because a customer revoking access should
+         not have to walk through a content screen to find it. */
+      { path: '/connections', element: <Connections /> },
       { path: '/more', element: <More /> },
       /* Stripe sends the browser back to these two. They are ordinary routes
          and not special cases: the success screen confirms against the engine
