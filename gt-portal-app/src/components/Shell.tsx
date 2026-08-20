@@ -14,6 +14,9 @@ const ICONS: Record<string, string> = {
   /* A microphone, drawn to the same 18 unit grid as the rest: same stroke
      weight, round joins, no fill. */
   Agents: '<rect x="6.6" y="2" width="4.8" height="8.4" rx="2.4"/><path d="M3.8 8.6a5.2 5.2 0 0010.4 0"/><path d="M9 13.8V16"/>',
+  /* Two links of a chain, same 18 unit grid and stroke weight as the rest.
+     A plug or a lightning bolt would read as power rather than permission. */
+  Connections: '<path d="M7.4 10.6a3.2 3.2 0 010-4.5l2.6-2.6a3.2 3.2 0 014.5 4.5l-1.3 1.3"/><path d="M10.6 7.4a3.2 3.2 0 010 4.5l-2.6 2.6a3.2 3.2 0 01-4.5-4.5l1.3-1.3"/>',
   Teams: '<circle cx="6.5" cy="5.5" r="2.8"/><path d="M1.5 15.5c0-2.8 2.2-5 5-5s5 2.2 5 5"/><path d="M12 3.2a2.8 2.8 0 010 5.4"/><path d="M13.5 10.9c1.7.6 3 2.2 3 4.6"/>',
   Clients: '<circle cx="9" cy="5.5" r="3"/><path d="M3 15.5c0-3.3 2.7-6 6-6s6 2.7 6 6"/>',
   Editor: '<path d="M11.5 2.5l4 4L6 16H2v-4z"/><path d="M10 4l4 4"/>',
@@ -32,8 +35,8 @@ const ICONS: Record<string, string> = {
    place for that information. */
 export const NAV: [string, string][] = [
   ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'],
-  ['Businesses', '/businesses'], ['Agents', '/agents'], ['API', '/api-keys'],
-  ['Teams', '/teams']
+  ['Businesses', '/businesses'], ['Agents', '/agents'], ['Connections', '/connections'],
+  ['API', '/api-keys'], ['Teams', '/teams']
 ]
 export const TABS: [string, string][] = [
   ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'], ['Businesses', '/businesses']
