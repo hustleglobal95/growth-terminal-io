@@ -30,9 +30,11 @@ function Rail() {
       <div className="blk">
         <div className="rt">Jump to</div>
         <nav className="jump">
-          {['Verdict', 'Why this call', 'What the data said', 'What would prove this wrong', 'The 90 day plan', 'Indicators'].map((t, i) => (
-            <a key={t} href={t === 'The 90 day plan' ? '#plan' : '#'} className={i === 0 ? 'on' : ''}
-              onClick={e => { if (t !== 'The 90 day plan') e.preventDefault() }}><i />{t}</a>
+          {/* Only sections that carry an id are listed. Five of these used to
+              be rendered against href="#" with the click cancelled, so they
+              looked like navigation and did nothing. */}
+          {[['The 90 day plan', '#plan']].map(([t, href]) => (
+            <a key={t} href={href} className="on"><i />{t}</a>
           ))}
         </nav>
       </div>
@@ -372,9 +374,6 @@ export function Detail() {
         </button>
         <button className="iconbtn" aria-label="Share" onClick={() => toast('Share links are workspace only.')}>
           <svg viewBox="0 0 16 16"><circle cx="12" cy="4" r="2" /><circle cx="4" cy="8" r="2" /><circle cx="12" cy="12" r="2" /><path d="M5.8 7L10.2 5M5.8 9l4.4 2" /></svg>
-        </button>
-        <button className="iconbtn" aria-label="More">
-          <svg viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="1.2" /><circle cx="8" cy="8" r="1.2" /><circle cx="12.5" cy="8" r="1.2" /></svg>
         </button>
       </div>
       <div className="canvas">

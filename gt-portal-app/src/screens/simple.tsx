@@ -325,7 +325,10 @@ export function Analyses() {
                   <button className="ract" onClick={e => { e.stopPropagation(); openRow(a) }}>Open</button>
                   <button className="ract" onClick={e => {
                     e.stopPropagation()
-                    navigator.clipboard?.writeText(window.location.origin + '/analyses')
+                    /* It copied the list address for every row, so five rows
+                       produced five identical links. */
+                    navigator.clipboard?.writeText(
+                      window.location.origin + (a.open ? '/analyses/northlane' : a.id ? '/analyses/' + a.id : '/analyses'))
                       .then(() => toast('Link copied.'), () => toast('Could not copy.'))
                   }}>Copy link</button>
                 </span>
