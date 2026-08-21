@@ -180,15 +180,16 @@ export const SOCIAL_PATH = ''
 /** SPREADSHEET INTAKE.
  *
  *  The three data endpoints the Sheets add-on already uses, so the portal
- *  reaches the same intake rather than a parallel one. Code.gs confirms these
- *  against the live API: ingest at POST {INTAKE_PATH}/ingest, confirm at
- *  PUT {INTAKE_PATH}/snapshots/{id}/confirm, then POST /v1/analyses.
+ *  reaches the same intake rather than a parallel one: ingest at
+ *  POST {INTAKE_PATH}/ingest, confirm at PUT {INTAKE_PATH}/snapshots/{id}/confirm,
+ *  then POST /v1/analyses.
  *
- *  Empty until the upload screen is proven end to end against a real
- *  workspace. Empty means the Upload screen tells the truth about not being
- *  connected rather than throwing on a URL built from an empty string, which
- *  is the failure mode Feed and Connections currently have.
+ *  On, with the request and response shapes of all three confirmed against
+ *  the running backend rather than inferred. Set this back to empty to take
+ *  the upload screen offline: empty makes it say so plainly rather than throw
+ *  on a URL built from an empty string, which is the failure mode Feed and
+ *  Connections still have.
  */
-export const INTAKE_PATH = ''
+export const INTAKE_PATH = '/v1/data'
 
 export const FEED_PATH = ''
