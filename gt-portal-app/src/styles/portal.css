@@ -3411,3 +3411,152 @@ h1{font-weight:700;letter-spacing:-.032em}
   body::after{content:none}
   .shell.railed .apphdr{left:auto}
 }
+
+/* ===========================================================================
+   SPREADSHEET INTAKE
+   ---------------------------------------------------------------------------
+   A guided screen that has to stay calm while the thing it describes is
+   messy. The restraint is deliberate: the customer is about to spend a credit
+   on a diagnosis, and a screen that looks like a configuration panel makes
+   that feel like work they might get wrong.
+
+   Amber appears three times and never as decoration: the primary action, the
+   confirm-this state, and the accent on a warning. Everything else is ink on
+   paper with hairlines.
+   =========================================================================== */
+
+.intake{max-width:960px}
+.vh{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ---- the opening ---------------------------------------------------- */
+.ib{padding:34px 0 8px}
+.ibh{font-size:29px;font-weight:600;letter-spacing:-.026em;margin-bottom:10px}
+.ibs{font-size:14.5px;line-height:1.6;color:var(--muted);max-width:56ch;margin-bottom:26px}
+.ibn{font-size:12.5px;line-height:1.6;color:var(--faint);max-width:62ch;margin-top:18px}
+
+/* The drop zone stays visible and stays large. GOV.UK moved to exactly this
+   after testing: a permanently visible target beats one that appears on drag. */
+.drop{
+  border:1.5px dashed var(--border2);border-radius:14px;background:var(--s1);
+  padding:44px 28px;display:flex;flex-direction:column;align-items:center;gap:10px;
+  transition:border-color .15s var(--ease), background .15s var(--ease);
+}
+.drop.over{border-color:var(--amber);background:var(--tint);border-style:solid}
+.drop.busy{opacity:.7}
+.dropico{width:34px;height:34px;stroke:var(--faint);fill:none;stroke-width:1.6;
+  stroke-linecap:round;stroke-linejoin:round}
+.drop.over .dropico{stroke:var(--amber)}
+.dropt{font-size:15.5px;font-weight:600;letter-spacing:-.012em}
+.dropf{font-size:12.5px;color:var(--faint);margin-bottom:6px;text-align:center}
+
+/* ---- the collapsed summary of what was read -------------------------- */
+/* Completed steps collapse into a scannable summary rather than a tick,
+   because people re-read the earlier steps before they commit. */
+.sumcard{padding:0;overflow:hidden}
+.sumhead{display:flex;gap:0;flex-wrap:wrap}
+.sumhead>div{flex:1 1 140px;padding:16px 18px;border-right:1px solid var(--line)}
+.sumhead>div:last-child{border-right:0}
+.suml{font-size:11px;font-weight:500;color:var(--faint);margin-bottom:5px}
+.sumv{font-size:15px;font-weight:600;letter-spacing:-.014em;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.sumv.tab{font-variant-numeric:tabular-nums}
+.skiplist{list-style:none;margin:0;padding:12px 18px;border-top:1px solid var(--line);
+  background:var(--s2);font-size:13px;line-height:1.6;color:var(--muted)}
+.skiplist li{margin:2px 0}
+
+.warnline{font-size:13px;line-height:1.6;color:var(--text);background:var(--tint);
+  border-left:3px solid var(--amber);padding:11px 14px;border-radius:0 8px 8px 0;margin-top:12px}
+.notecard{font-size:13px;line-height:1.6;color:var(--muted);padding:12px 14px;
+  background:var(--s2);border-radius:10px;box-shadow:0 0 0 1px var(--line) inset;margin-bottom:16px}
+.errcard{border-color:var(--border2)}
+.errh{font-size:16px;font-weight:600;margin-bottom:8px;letter-spacing:-.016em}
+.errcard p{font-size:14px;line-height:1.6;color:var(--muted);margin-bottom:14px;max-width:60ch}
+
+/* ---- preview --------------------------------------------------------- */
+.prevh{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.prev .sech{margin:0}
+/* Wide tables scroll inside their own box. The summary above never does:
+   essential content behind a horizontal scroll is content nobody sees. */
+.prevscroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;
+  -webkit-overflow-scrolling:touch}
+.prevt{border-collapse:collapse;font-size:12.5px;min-width:100%}
+.prevt th{position:sticky;top:0;background:var(--s2);text-align:left;font-weight:600;
+  padding:9px 12px;white-space:nowrap;border-bottom:1px solid var(--line);color:var(--muted)}
+.prevt td{padding:8px 12px;white-space:nowrap;border-bottom:1px solid var(--line);
+  font-variant-numeric:tabular-nums}
+.prevt tr:last-child td{border-bottom:0}
+.prevt .dim{color:var(--faint)}
+.prevf{font-size:12px;color:var(--faint);margin-top:9px}
+
+/* ---- the three states ------------------------------------------------ */
+.statrow{display:flex;gap:10px;margin:16px 0 18px;flex-wrap:wrap}
+.stat{flex:1 1 120px;padding:12px 14px;border-radius:10px;background:var(--s2);
+  box-shadow:0 0 0 1px var(--line) inset}
+.stat.warn{background:var(--tint);box-shadow:0 0 0 1px var(--aborder) inset}
+.statn{font-size:21px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat.warn .statn{color:var(--amber)}
+.statl{font-size:11.5px;color:var(--muted);margin-top:2px}
+
+/* Colour never carries a state on its own. Each chip has a mark as well,
+   because a state a colourblind reader cannot see is not a state. */
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500;
+  padding:3px 9px;border-radius:7px;background:var(--s2);color:var(--muted);white-space:nowrap}
+.chip i{width:7px;height:7px;border-radius:50%;background:currentColor;flex:0 0 auto}
+.chip.recognised{color:var(--muted)}
+.chip.confirm{background:var(--tint);color:var(--amber)}
+.chip.unmapped{color:var(--faint)}
+.chip.unmapped i{background:none;box-shadow:0 0 0 1.5px currentColor inset}
+
+/* ---- the mapping list ------------------------------------------------ */
+/* Anchored on their columns, not our fields, and a select rather than a drag:
+   a drag-only interaction fails WCAG 2.2 at AA. */
+.maplist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.maprow{display:grid;grid-template-columns:minmax(0,1fr) auto 190px;gap:14px;align-items:center;
+  padding:12px 14px;border-bottom:1px solid var(--line);background:var(--s1)}
+.maprow:last-child{border-bottom:0}
+.maprow.confirm{background:var(--tint)}
+.maph{font-size:13.5px;font-weight:600;letter-spacing:-.01em;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.mapmeta{font-size:11.5px;color:var(--faint);margin-top:2px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.mapsel select,.ract.sel,.ract.inp{
+  width:100%;font:inherit;font-size:13px;padding:8px 11px;border-radius:9px;
+  background:var(--s1);color:var(--text);border:0;
+  box-shadow:0 0 0 1px var(--border2), 0 1px 2px rgba(15,15,14,.05);min-height:38px}
+.mapsel select:focus-visible,.ract.sel:focus-visible,.ract.inp:focus-visible{
+  outline:2px solid var(--amber);outline-offset:2px}
+.ract.sel,.ract.inp{max-width:420px;margin-bottom:10px;display:block}
+
+.fieldl{display:block;font-size:12px;font-weight:500;color:var(--muted);margin:4px 0 6px}
+
+/* ---- readiness ------------------------------------------------------- */
+.ready{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+.rdy{flex:1 1 240px;padding:14px 16px;border-radius:11px;background:var(--s2);
+  box-shadow:0 0 0 1px var(--line) inset}
+.rdy.miss{background:var(--tint);box-shadow:0 0 0 1px var(--aborder) inset}
+.rdyh{font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:8px}
+.rdy ul{list-style:none;margin:0;padding:0}
+.rdy li{font-size:13.5px;padding:3px 0;letter-spacing:-.008em}
+.rdyf{font-size:12px;line-height:1.55;color:var(--muted);margin-top:9px}
+
+.gorow{display:flex;align-items:center;gap:14px;margin-top:20px;flex-wrap:wrap}
+.gof{font-size:12.5px;color:var(--faint)}
+
+@media(max-width:760px){
+  .ib{padding:22px 0 4px}
+  .ibh{font-size:24px}
+  .drop{padding:30px 18px}
+  /* Two legible columns is the realistic budget on a phone, so the mapping
+     row stacks rather than compressing into something nobody can read. */
+  .maprow{grid-template-columns:1fr;gap:9px;padding:14px}
+  .maprow .mapstate{order:-1}
+  .mapsel select{max-width:none}
+  .sumhead>div{flex:1 1 50%;border-bottom:1px solid var(--line)}
+}
+
+/* A tab taken out of the analysis. Dimmed rather than hidden, so it stays
+   visible as a decision somebody made rather than disappearing. */
+.prev.out{opacity:.55}
+.prev.out .prevscroll{filter:grayscale(1)}
+.btn.g.mini{min-height:30px;padding:6px 12px;font-size:12.5px}
