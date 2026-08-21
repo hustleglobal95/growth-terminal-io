@@ -9,6 +9,7 @@ import { Agents } from './screens/Agents'
 import { Brand } from './screens/Brand'
 import { Connections } from './screens/Connections'
 import { Feed } from './screens/Feed'
+import { Intake } from './screens/Intake'
 import { Teams } from './screens/Teams'
 import { Content } from './screens/Content'
 import { ContentSetup } from './screens/ContentSetup'
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <Overview /> },
       { path: '/analyses', element: <Analyses /> },
+      /* Where a workbook becomes an analysis without the Sheets add-on. The
+         add-on remains the fast path for people already living in a
+         spreadsheet; this is the one that depends on nobody's approval. */
+      { path: '/analyses/new', element: <Intake /> },
       { path: '/analyses/:id', element: <AnalysisRoute /> },
       { path: '/content', element: <Content /> },
       { path: '/content/setup', element: <ContentSetup /> },

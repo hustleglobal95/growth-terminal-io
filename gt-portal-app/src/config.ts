@@ -177,4 +177,18 @@ export const SOCIAL_PATH = ''
  *
  *  Empty until the engine has the routes.
  */
+/** SPREADSHEET INTAKE.
+ *
+ *  The three data endpoints the Sheets add-on already uses, so the portal
+ *  reaches the same intake rather than a parallel one. Code.gs confirms these
+ *  against the live API: ingest at POST {INTAKE_PATH}/ingest, confirm at
+ *  PUT {INTAKE_PATH}/snapshots/{id}/confirm, then POST /v1/analyses.
+ *
+ *  Empty until the upload screen is proven end to end against a real
+ *  workspace. Empty means the Upload screen tells the truth about not being
+ *  connected rather than throwing on a URL built from an empty string, which
+ *  is the failure mode Feed and Connections currently have.
+ */
+export const INTAKE_PATH = ''
+
 export const FEED_PATH = ''
