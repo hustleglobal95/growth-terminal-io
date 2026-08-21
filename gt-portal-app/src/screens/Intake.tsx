@@ -1,24 +1,25 @@
 /** SPREADSHEET INTAKE.
  *
- *  Four steps, and the third is the point of the whole screen: the customer
- *  reads what Growth Terminal understood before it is allowed to analyse
- *  anything. Every importer worth copying converged on the same spine, and
- *  the two steps that vendors skip when they can are skipped here too.
+ *  Three steps, and the middle one is the point of the whole screen: the
+ *  customer reads every tab and column that is about to be sent, and can take
+ *  a tab out, before a credit is spent.
  *
- *    Choose a file  ->  Check what was read  ->  Confirm columns  ->  Analyse
+ *    Choose a file  ->  Check what is going up  ->  Analyse
  *
  *  DECISIONS TAKEN FROM THE RESEARCH, AND WHY.
  *
- *  Mapping is anchored on the customer's columns, not on our fields. Anchoring
- *  on our schema makes required field completion legible; anchoring on their
- *  columns makes "what happened to my data" legible. For a screen whose job is
- *  to show what was understood, theirs is the right list.
+ *  The preview is anchored on the customer's own tabs and headers, not on our
+ *  field names. Anchoring on our schema makes required field completion
+ *  legible; anchoring on theirs makes "what happened to my data" legible. For
+ *  a screen whose job is to show what is being sent, theirs is the right list.
  *
- *  A column is never silently dropped. Flatfile excludes unmapped source
- *  fields and documents it rather than showing it, which is fine for a
- *  developer reading docs and wrong for an owner uploading a messy sheet. Here
- *  every column is recognised, needs confirming, or is explicitly not used,
- *  and the third one is a choice somebody made.
+ *  There is no column mapping control, because ingest returns nothing about
+ *  how the columns were read and confirm does not accept column roles. See
+ *  lib/intake.ts for the shapes. A dropdown that changed nothing would be
+ *  worse than no dropdown: it would be a screen that lies about its effect.
+ *
+ *  A tab is never silently dropped. Everything the parser keeps is on screen
+ *  with its headers and first rows, and everything it skipped says why.
  *
  *  Completed steps collapse into a summary, not a tick. Baymard's checkout
  *  eyetracking found people routinely re-scan earlier steps before
@@ -28,13 +29,12 @@
  *  makes a drag-only interaction a Level AA failure, and the same rule is why
  *  the column controls are selects rather than something you drag.
  */
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { readWorkbook, blockingReason, MAX_SHEETS, MAX_ROWS_PER_SHEET } from '../lib/sheet'
 import type { ReadResult, SheetSummary } from '../lib/sheet'
-import { intakeLive, ingest, confirm, queueAnalysis, ROLES, roleLabel, columnState } from '../lib/intake'
-import type { Snapshot, ReadColumn, Correction, ColumnState } from '../lib/intake'
-import { useBusinesses } from '../lib/liveData'
+import { intakeLive, ingest, confirm, queueAnalysis } from '../lib/intake'
+import type { Snapshot } from '../lib/intake'
 
 type Phase = 'choose' | 'reading' | 'review' | 'sending'
 
@@ -42,16 +42,12 @@ const ACCEPT = '.csv,.xlsx,.xls,.tsv'
 
 export function Intake() {
   const nav = useNavigate()
-  const businesses = useBusinesses()
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [phase, setPhase] = useState<Phase>('choose')
   const [over, setOver] = useState(false)
   const [read, setRead] = useState<ReadResult | null>(null)
   const [snap, setSnap] = useState<Snapshot | null>(null)
-  const [roles, setRoles] = useState<Record<string, string | null>>({})
-  const [business, setBusiness] = useState<string>('')
-  const [newBusiness, setNewBusiness] = useState('')
   /* Tabs the customer has taken out. A workbook often carries a Start Here
      or Notes tab full of prose, and sending it is how an engine ends up
      reasoning about a paragraph. The add-on has the same blind spot; the
@@ -67,7 +63,7 @@ export function Intake() {
 
   const take = useCallback(async (file: File | undefined) => {
     if (!file) return
-    setError(null); setNote(null); setSnap(null); setRoles({}); setDropped({})
+    setError(null); setNote(null); setSnap(null); setDropped({})
     setPhase('reading')
     try {
       const r = await readWorkbook(file)
@@ -76,18 +72,17 @@ export function Intake() {
       const stop = blockingReason(r)
       if (stop) { setError(stop); return }
 
-      /* The server reads the columns. If the intake is not wired yet, the
-         screen still works up to this point and says so, rather than
-         pretending it knows what the engine would have found. */
+      /* The file goes up now, so the analyse press is one call rather than
+         three and the customer finds out about a rejected upload while they
+         are still looking at the file. If the intake is not wired yet the
+         screen still works to this point and says so, rather than failing on
+         a URL built from an empty string. */
       if (!intakeLive()) {
-        setNote('Reading columns needs the intake endpoint switched on. Everything above is what will be sent.')
+        setNote('Sending needs the intake endpoint switched on. Everything above is what will be sent.')
         return
       }
       const s = await ingest(r.workbook, r.fileName)
       setSnap(s)
-      const seed: Record<string, string | null> = {}
-      for (const c of s.columns || []) seed[key(c)] = c.role ?? null
-      setRoles(seed)
       if (s.existed) setNote('This workbook has been uploaded before, so the stored copy is being reused. You will not be charged twice.')
     } catch (e) {
       setPhase('review')
@@ -110,9 +105,6 @@ export function Intake() {
     try {
       const s = await ingest(keptWorkbook(read, next), read.fileName)
       setSnap(s)
-      const seed: Record<string, string | null> = {}
-      for (const c of s.columns || []) seed[key(c)] = c.role ?? null
-      setRoles(seed)
     } catch (e) { setError(readableError(e)) }
   }
 
@@ -120,11 +112,8 @@ export function Intake() {
     if (!read || !snap) return
     setPhase('sending'); setError(null)
     try {
-      const corrections: Correction[] = (snap.columns || [])
-        .filter(c => (roles[key(c)] ?? null) !== (c.role ?? null))
-        .map(c => ({ sheet: c.sheet, index: c.index, header: c.header, role: roles[key(c)] ?? null }))
-      await confirm(snap.snapshotId, corrections)
-      const id = await queueAnalysis(snap.snapshotId, business || undefined)
+      await confirm(snap.snapshotId)
+      const id = await queueAnalysis(snap.snapshotId)
       nav('/analyses/' + encodeURIComponent(id))
     } catch (e) {
       setPhase('review')
@@ -136,9 +125,6 @@ export function Intake() {
 
   const included = read?.summaries.filter(s => s.included) || []
   const skipped = read?.summaries.filter(s => !s.included) || []
-  const cols = snap?.columns || []
-  const counts = useMemo(() => tally(cols, roles), [cols, roles])
-  const needsWork = counts.confirm > 0
 
   return (
     <>
@@ -216,12 +202,6 @@ export function Intake() {
                   <div className="suml">Rows</div>
                   <div className="sumv tab">{read.totalDataRows.toLocaleString()}</div>
                 </div>
-                {snap?.dateRange?.start && (
-                  <div>
-                    <div className="suml">Covers</div>
-                    <div className="sumv">{fmtRange(snap.dateRange)}</div>
-                  </div>
-                )}
               </div>
 
               {skipped.length > 0 && (
@@ -267,98 +247,17 @@ export function Intake() {
             />
           ))}
 
-          {/* step 3, the review ------------------------------------------ */}
-          {snap && !blocked && (
-            <section className="card">
-              <h2 className="sech">What Growth Terminal understood</h2>
-              <p className="secs">
-                Each column below is either recognised, needs a moment from you, or is not
-                being used as a signal. Nothing is dropped without you seeing it here.
-              </p>
-
-              <div className="statrow">
-                <Stat n={counts.recognised} label="Recognised" tone="ok" />
-                <Stat n={counts.confirm} label="Need confirming" tone="warn" />
-                <Stat n={counts.unmapped} label="Not used" tone="off" />
-              </div>
-
-              <div className="maplist">
-                {cols.map(c => {
-                  const k = key(c)
-                  const state = roles[k] ? columnState({ ...c, role: roles[k], status: null }) : 'unmapped'
-                  return (
-                    <div className={'maprow ' + state} key={k}>
-                      <div className="mapsrc">
-                        <div className="maph">{c.header || 'Column ' + ((c.index ?? 0) + 1)}</div>
-                        <div className="mapmeta">
-                          {c.sheet ? c.sheet + ' · ' : ''}{c.type || 'text'}
-                          {c.sample?.length ? ' · ' + c.sample.slice(0, 2).map(String).join(', ') : ''}
-                        </div>
-                      </div>
-                      <div className="mapstate">
-                        <StateChip state={state} />
-                      </div>
-                      <label className="mapsel">
-                        <span className="vh">What is {c.header || 'this column'}?</span>
-                        <select
-                          value={roles[k] ?? ''}
-                          onChange={e => setRoles(r => ({ ...r, [k]: e.target.value || null }))}
-                        >
-                          <option value="">Not used</option>
-                          {ROLES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
-                        </select>
-                      </label>
-                    </div>
-                  )
-                })}
-              </div>
-            </section>
-          )}
-
-          {/* readiness + business + action -------------------------------- */}
+          {/* step 3, send it --------------------------------------------- */}
           {snap && !blocked && (
             <section className="card">
               <h2 className="sech">Before it runs</h2>
-
-              <label className="fieldl" htmlFor="biz">Which business is this?</label>
-              <select id="biz" className="ract sel" value={business} onChange={e => setBusiness(e.target.value)}>
-                <option value="">New business from this file</option>
-                {(businesses || []).map(b => (
-                  <option key={String(b.id)} value={String(b.id)}>{String(b.name)}</option>
-                ))}
-              </select>
-              {!business && (
-                <input className="ract inp" placeholder="Name it, or leave blank to use the file name"
-                  value={newBusiness} onChange={e => setNewBusiness(e.target.value)} aria-label="New business name" />
-              )}
-
-              {(snap.supports?.length || snap.missing?.length) ? (
-                <div className="ready">
-                  {snap.supports?.length ? (
-                    <div className="rdy">
-                      <div className="rdyh">This file supports</div>
-                      <ul>{snap.supports.map(s => <li key={s}>{s}</li>)}</ul>
-                    </div>
-                  ) : null}
-                  {snap.missing?.length ? (
-                    <div className="rdy miss">
-                      <div className="rdyh">Add these and it can go further</div>
-                      <ul>{snap.missing.map(s => <li key={s}>{roleLabel(s)}</li>)}</ul>
-                      <p className="rdyf">
-                        It will still run without them. The engine says when a finding rests on
-                        something it could not see.
-                      </p>
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {needsWork && (
-                <p className="warnline">
-                  {counts.confirm} {counts.confirm === 1 ? 'column needs' : 'columns need'} a moment from you above.
-                  You can run it anyway, and anything left unused is simply not treated as a signal.
-                </p>
-              )}
+              <p className="secs">
+                {included.length - Object.keys(dropped).length === 1
+                  ? 'One tab goes up. '
+                  : (included.length - Object.keys(dropped).length) + ' tabs go up. '}
+                Growth Terminal reads them, names the one constraint holding revenue back, and
+                says plainly what would prove that reading wrong.
+              </p>
 
               <div className="gorow">
                 <button className="btn p" onClick={analyse} disabled={phase === 'sending'}>
@@ -414,47 +313,12 @@ function Preview({ s, kept, onlyOne, toggle }:
   )
 }
 
-function Stat({ n, label, tone }: { n: number; label: string; tone: string }) {
-  return (
-    <div className={'stat ' + tone}>
-      <div className="statn tab">{n}</div>
-      <div className="statl">{label}</div>
-    </div>
-  )
-}
-
-function StateChip({ state }: { state: ColumnState }) {
-  const text = state === 'recognised' ? 'Recognised' : state === 'confirm' ? 'Confirm this' : 'Not used'
-  return <span className={'chip ' + state}><i /> {text}</span>
-}
-
 /* --------------------------------------------------------------- utils */
 
 /** The payload minus the tabs somebody took out. Same shape, fewer sheets,
  *  which is exactly what the add-on sends for a workbook with fewer tabs. */
 function keptWorkbook(r: ReadResult, dropped: Record<string, true>) {
   return { ...r.workbook, sheets: r.workbook.sheets.filter(s => !dropped[s.title]) }
-}
-
-const key = (c: ReadColumn) => (c.sheet || '') + '::' + (c.index ?? c.header ?? '')
-
-function tally(cols: ReadColumn[], roles: Record<string, string | null>) {
-  let recognised = 0, confirm = 0, unmapped = 0
-  for (const c of cols) {
-    const r = roles[key(c)] ?? null
-    if (!r) { unmapped++; continue }
-    const st = columnState({ ...c, role: r, status: null })
-    if (st === 'recognised') recognised++
-    else if (st === 'confirm') confirm++
-    else unmapped++
-  }
-  return { recognised, confirm, unmapped }
-}
-
-function fmtRange(r: { start?: string; end?: string } | null | undefined): string {
-  if (!r?.start) return ''
-  const f = (s?: string) => s ? new Date(s).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : ''
-  return r.end ? f(r.start) + ' to ' + f(r.end) : f(r.start)
 }
 
 /** Server errors are for us. This is for the person who dropped a file in. */
