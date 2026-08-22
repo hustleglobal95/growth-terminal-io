@@ -96,12 +96,68 @@ export function problemText(p: AccountProblem): { title: string; what: string } 
   }
 }
 
+/** What the engine actually sends.
+ *
+ *  It is not this file's shape and there is no reason it should be. The engine
+ *  stores a row id and the platform's id separately, names the fields after its
+ *  own columns, and writes the reason an account cannot publish as a sentence,
+ *  sometimes several joined together. That is the right thing for a server to
+ *  keep. The screen needs one of four cases so it can say the right thing and
+ *  point at the right fix, so the translation happens here, once. */
+interface EngineAccount {
+  id: string
+  platform: string
+  accountId: string
+  displayName: string
+  pageName: string | null
+  avatarUrl: string | null
+  grantedPermissions: string[]
+  problemReason: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** The engine's sentence, turned back into the case it describes.
+ *
+ *  Order matters. A missing permission is checked last because the engine
+ *  joins it onto the front of the more specific reasons, and telling somebody
+ *  to re-accept a permission when the real problem is that their account is
+ *  personal sends them round a loop that cannot end. */
+function problemFrom(reason: string | null): AccountProblem | null {
+  if (!reason) return null
+  const r = reason.toLowerCase()
+  if (r.includes('business or creator')) return 'not_business'
+  if (r.includes('no linked facebook page') || r.includes('no instagram professional account')) return 'no_page'
+  if (r.includes('did not grant a page access token') || r.includes('could not be verified')) return 'token_expired'
+  if (r.includes('missing required meta permissions') || r.includes('publishing permission was not granted')) return 'missing_permission'
+  /* Something the engine knows about and this list does not. Reconnecting is
+     the only advice that is true for every case, and saying nothing at all
+     would draw a broken account as a healthy one. */
+  return 'token_expired'
+}
+
+function toAccount(a: EngineAccount): ConnectedAccount {
+  return {
+    platform: a.platform === 'instagram' ? 'instagram' : 'facebook',
+    /* The platform's id, not the engine's row id. Disconnect sends this back
+       and the engine matches on it, so taking the wrong one here deletes
+       nothing and reports success. */
+    id: String(a.accountId || ''),
+    name: String(a.displayName || ''),
+    avatar: String(a.avatarUrl || ''),
+    pageName: String(a.pageName || ''),
+    connectedAt: String(a.createdAt || ''),
+    problem: problemFrom(a.problemReason)
+  }
+}
+
 /** What is connected. */
 export async function listSocial(): Promise<SocialState> {
   if (!socialConfigured()) return { accounts: [], publishingLive: false }
-  const r = await liveRoot<SocialState>(SOCIAL_PATH)
+  const r = await liveRoot<{ accounts?: EngineAccount[]; publishingLive?: boolean }>(SOCIAL_PATH)
+  const raw = Array.isArray(r && r.accounts) ? r!.accounts! : []
   return {
-    accounts: Array.isArray(r && r.accounts) ? r.accounts : [],
+    accounts: raw.filter(a => a && a.accountId).map(toAccount),
     publishingLive: Boolean(r && r.publishingLive)
   }
 }
@@ -124,8 +180,10 @@ export async function beginConnect(): Promise<string> {
 
 export async function disconnect(platform: Platform, id: string): Promise<void> {
   if (!socialConfigured()) throw new Error('Connecting is not switched on for this workspace yet.')
+  /* accountId, not id. The engine validates the name and answers 400 to
+     anything else, so a rename here is a disconnect button that never works. */
   await liveRoot<null>(
-    SOCIAL_PATH + '?platform=' + encodeURIComponent(platform) + '&id=' + encodeURIComponent(id),
+    SOCIAL_PATH + '?platform=' + encodeURIComponent(platform) + '&accountId=' + encodeURIComponent(id),
     { method: 'DELETE' }
   )
 }
