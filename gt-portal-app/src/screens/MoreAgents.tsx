@@ -18,13 +18,19 @@
  *  breakdown they are not, and marking the bottom row taught the eye that the
  *  smallest number was the problem, which is the opposite of true.
  *
+ *  The twelve are behind a picker rather than laid out. Twelve rows is a
+ *  screenful before the reading starts, and the reading is the thing worth
+ *  reading. The picker still carries the ordinal, the price and the two that
+ *  are not built, so nothing that was visible in the list is lost by closing
+ *  it.
+ *
  *  Nothing here can be bought yet. The button raises a toast and no money
  *  moves, because billing is a separate change and a control that looks live
  *  and takes a card without a subscription behind it is the worst possible
  *  version of this screen. The figures are sample data and say so on the
  *  screen, not in a comment.
  */
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { toast } from '../lib/bus'
 
 type Agent = {
@@ -193,10 +199,9 @@ const WORD = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven']
    local means this screen can be deleted in one file. */
 const CSS = `
 .magents{--am:#FC5802;--amtint:rgba(252,88,2,.09);--amedge:rgba(252,88,2,.24)}
-.magents .marow{display:grid;grid-template-columns:28px minmax(0,1fr) minmax(80px,190px) 84px;
+.magents .marow{display:grid;grid-template-columns:minmax(0,1fr) minmax(80px,190px) 84px;
   gap:18px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);
-  width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0;
-  font:inherit;color:inherit}
+  width:100%;text-align:left}
 .magents .marow:last-child{border-bottom:0}
 .magents .marow .i{font-size:13px;color:var(--faint);font-variant-numeric:tabular-nums}
 .magents .marow .nm{font-size:14.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -204,13 +209,9 @@ const CSS = `
 .magents .marow .bar i{display:block;height:100%;background:var(--border2)}
 .magents .marow .sc{font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;
   color:var(--muted);text-align:right;white-space:nowrap}
-.magents .marow.on{background:var(--s2)}
-.magents .marow.pick{cursor:pointer}
-.magents .marow.pick:hover{background:var(--s2)}
 .magents .marow.mark .nm{font-weight:600}
 .magents .marow.mark .bar i{background:var(--am)}
 .magents .marow.mark .sc{color:var(--am)}
-.magents .marow.dim{opacity:.5}
 .magents .malbl{display:block;font-size:12.5px;font-weight:500;color:var(--faint);margin-bottom:6px}
 .magents .mabody{font-size:15px;line-height:1.55;margin:0;overflow-wrap:anywhere}
 .magents .maq{font-size:15px;line-height:1.55;margin:0;color:var(--am);overflow-wrap:anywhere}
@@ -230,9 +231,38 @@ const CSS = `
 .magents .mafull{margin-top:22px}
 .magents .maruncap{display:flex;align-items:baseline;gap:14px;margin:26px 0 12px}
 .magents .maruncap .hint{margin-left:auto;font-size:12.5px;color:var(--faint);white-space:nowrap}
+
+/* The picker. A menu that sits over the reading rather than pushing it down,
+   so choosing an agent costs no vertical space at all. */
+.magents .masel{position:relative;max-width:460px;margin-bottom:4px}
+.magents .matrig{display:grid;grid-template-columns:22px minmax(0,1fr) auto 10px;gap:13px;
+  align-items:center;width:100%;padding:13px 16px;border:1px solid var(--border2);
+  border-radius:var(--r2);background:var(--card);box-shadow:var(--shadow-sm);
+  font:inherit;color:inherit;text-align:left;cursor:pointer;
+  transition:background .18s var(--ease),border-color .18s var(--ease)}
+.magents .matrig:hover{background:var(--s2)}
+.magents .matrig:focus-visible{outline:2px solid var(--am);outline-offset:2px}
+.magents .matrig .chev{width:8px;height:8px;border-right:1.5px solid var(--faint);
+  border-bottom:1.5px solid var(--faint);transform:rotate(45deg) translate(-2px,-2px);
+  transition:transform .22s var(--ease)}
+.magents .matrig[aria-expanded="true"] .chev{transform:rotate(225deg) translate(-2px,-2px)}
+.magents .mamenu{position:absolute;z-index:60;top:calc(100% + 7px);left:0;right:0;
+  border:1px solid var(--border2);border-radius:var(--r2);background:var(--card);
+  box-shadow:var(--lift-2);max-height:min(72vh,580px);overflow-y:auto;padding:5px}
+.magents .maopt{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:13px;
+  align-items:center;width:100%;padding:10px 11px;border:0;border-radius:var(--r3);
+  background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.magents .maopt:hover:not(:disabled){background:var(--s2)}
+.magents .maopt:focus-visible{outline:2px solid var(--am);outline-offset:-2px}
+.magents .maopt[aria-selected="true"]{background:var(--s2)}
+.magents .maopt:disabled{opacity:.5;cursor:default}
+.magents .maopt.mark .nm{font-weight:600}
+.magents .maopt.mark .sc{color:var(--am)}
 @media(max-width:820px){
   .magents .mastakes,.magents .mapair{grid-template-columns:1fr}
-  .magents .marow{grid-template-columns:24px minmax(0,1fr) 72px;gap:12px;padding:13px 14px}
+  .magents .masel{max-width:none}
+  .magents .matrig,.magents .maopt{gap:11px}
+  .magents .marow{grid-template-columns:minmax(0,1fr) 72px;gap:12px;padding:13px 14px}
   .magents .marow .bar{display:none}
   .magents .maruncap{flex-wrap:wrap;gap:6px}
   .magents .maruncap .hint{margin-left:0;width:100%}
@@ -241,7 +271,47 @@ const CSS = `
 
 export function MoreAgents() {
   const [openN, setOpenN] = useState<number>(4)
+  const [listOpen, setListOpen] = useState(false)
+  const box = useRef<HTMLDivElement | null>(null)
+  const trig = useRef<HTMLButtonElement | null>(null)
+  const menu = useRef<HTMLDivElement | null>(null)
   const open = AGENTS.find(a => a.n === openN) || AGENTS[3]
+
+  /* A menu that stays open after you have clicked past it is a bug people
+     blame on the page, not on the menu. */
+  useEffect(() => {
+    if (!listOpen) return
+    const away = (e: MouseEvent) => {
+      if (box.current && !box.current.contains(e.target as Node)) setListOpen(false)
+    }
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setListOpen(false); trig.current?.focus() }
+    }
+    document.addEventListener('mousedown', away)
+    document.addEventListener('keydown', key)
+    return () => {
+      document.removeEventListener('mousedown', away)
+      document.removeEventListener('keydown', key)
+    }
+  }, [listOpen])
+
+  /* Open on the row you are already on, so the list starts where the eye is. */
+  useEffect(() => {
+    if (!listOpen) return
+    menu.current?.querySelector<HTMLButtonElement>('[aria-selected="true"]')?.focus()
+  }, [listOpen])
+
+  const arrows = (e: React.KeyboardEvent) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+    e.preventDefault()
+    const all = Array.from(menu.current?.querySelectorAll<HTMLButtonElement>('.maopt:not(:disabled)') || [])
+    if (!all.length) return
+    const at = all.indexOf(document.activeElement as HTMLButtonElement)
+    const to = e.key === 'ArrowDown' ? at + 1 : at - 1
+    all[(to + all.length) % all.length].focus()
+  }
+
+  const badge = (a: Agent) => (a.soon ? 'Soon' : a.owned ? 'Added' : a.mine ? 'Yours' : usd(a.price))
 
   const owned = AGENTS.filter(a => a.owned)
   const monthly = owned.reduce((s, a) => s + a.price, 0)
@@ -262,27 +332,45 @@ export function MoreAgents() {
         {mine && <span className="hint">Your diagnosis put you at number {mine.n}</span>}
       </div>
 
-      <div className="tbl">
-        {AGENTS.map(a => (
-          <button
-            key={a.n}
-            type="button"
-            disabled={a.soon}
-            className={'marow' + (a.soon ? ' dim' : ' pick') + (a.n === openN && !a.soon ? ' on' : '') + (a.mine ? ' mark' : '')}
-            onClick={() => { if (!a.soon) setOpenN(a.n) }}
-          >
-            <span className="i">{a.n}</span>
-            <span className="nm">{a.name}</span>
-            <span className="bar"><i style={{ width: `${(a.n / 12) * 100}%` }} /></span>
-            <span className="sc">
-              {a.soon ? 'Soon' : a.owned ? 'Added' : a.mine ? 'Yours' : usd(a.price)}
-            </span>
-          </button>
-        ))}
+      <div className="masel" ref={box}>
+        <button
+          ref={trig}
+          type="button"
+          className="matrig"
+          aria-haspopup="listbox"
+          aria-expanded={listOpen}
+          onClick={() => setListOpen(v => !v)}
+          onKeyDown={e => { if (e.key === 'ArrowDown' && !listOpen) { e.preventDefault(); setListOpen(true) } }}
+        >
+          <span className="i">{open.n}</span>
+          <span className="nm">{open.name} agent</span>
+          <span className="sc">{badge(open)}</span>
+          <span className="chev" aria-hidden="true" />
+        </button>
+
+        {listOpen && (
+          <div className="mamenu" role="listbox" aria-label="The twelve agents" ref={menu} onKeyDown={arrows}>
+            {AGENTS.map(a => (
+              <button
+                key={a.n}
+                type="button"
+                role="option"
+                aria-selected={a.n === openN}
+                disabled={a.soon}
+                className={'maopt' + (a.mine ? ' mark' : '')}
+                onClick={() => { setOpenN(a.n); setListOpen(false); trig.current?.focus() }}
+              >
+                <span className="i">{a.n}</span>
+                <span className="nm">{a.name}</span>
+                <span className="sc">{badge(a)}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {open.soon ? (
-        <div className="emptypage" style={{ marginTop: 30 }}>
+        <div className="emptypage" style={{ marginTop: 22 }}>
           <span className="lbl">Not built yet</span>
           <h2>The {open.name.toLowerCase()} agent is not ready.</h2>
           <p>It is on the list because growth genuinely breaks here, and leaving it out would make
@@ -290,12 +378,7 @@ export function MoreAgents() {
         </div>
       ) : (
         <>
-          <div className="shead" style={{ marginTop: 34 }}>
-            <h2>{open.name} agent</h2>
-            <span className="hint">{open.n} of 12</span>
-          </div>
-
-          <div className="macard">
+          <div className="macard" style={{ marginTop: 22 }}>
             <span className="malbl">What it finds</span>
             <h3 className="mah">{open.title}</h3>
             <p className="malede">{open.lede}</p>
@@ -308,7 +391,6 @@ export function MoreAgents() {
             <div className="tbl">
               {open.funnel.map((r, i) => (
                 <div key={r[0]} className={'marow' + (i === open.markRow ? ' mark' : '')}>
-                  <span className="i" />
                   <span className="nm">{r[0]}</span>
                   <span className="bar"><i style={{ width: `${Math.max(2, (r[1] / top) * 100)}%` }} /></span>
                   <span className="sc">{num(r[1])}</span>
