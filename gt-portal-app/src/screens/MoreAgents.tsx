@@ -43,6 +43,9 @@ type Agent = {
   title: string
   lede: string
   funnel: [string, number][]
+  /* Plain language, in the order a person thinks about it: what they hand
+     over, what the agent does with it, what lands back. */
+  does: [string, string, string]
   /* Which row the reading is about. On a funnel it is the last one; on a
      breakdown it is whichever channel the weak line names. */
   markRow: number
@@ -62,6 +65,11 @@ const AGENTS: Agent[] = [
     n: 1, name: 'Acquisition', owned: true, price: 49,
     title: 'Find the channel paying for itself, and the ones being carried',
     lede: 'It works on acquisition and nothing else. One channel named, its real cost per customer, and what to stop.',
+    does: [
+      'Where your customers came from and what you spent to get them, over two periods.',
+      'What each channel really costs you per customer, once the ones who never buy are counted.',
+      'One channel to cut, one to move the money into, and what that swap is worth in a year.'
+    ],
     funnel: [['Sessions', 12800], ['Leads', 940], ['Qualified', 318], ['Won', 61]], markRow: 3,
     weak: 'Paid search. It brings a third of the leads and two thirds of the cost.',
     worthRange: '$22,000 to $40,000',
@@ -74,6 +82,11 @@ const AGENTS: Agent[] = [
     n: 2, name: 'Activation', price: 49,
     title: 'Find where new signups stop, and what it costs you',
     lede: 'It works on activation and nothing else. One step named, priced, and a short list of changes in the order to make them.',
+    does: [
+      'How many new signups reached each step of your setup, over two periods.',
+      'Which step loses the most people, and whether it has got worse lately.',
+      'The one step to fix, what fixing it is worth, and the changes to try in order.'
+    ],
     funnel: [['Signups', 2604], ['Set up', 1782], ['First value', 890], ['Habit', 402]], markRow: 2,
     weak: 'First value. Half of the people who finish setup never reach it.',
     worthRange: '$14,000 to $26,000',
@@ -86,6 +99,11 @@ const AGENTS: Agent[] = [
     n: 3, name: 'Retention', price: 49,
     title: 'Find the month people leave, and what holding them is worth',
     lede: 'It works on retention and nothing else. One cohort named, priced, and what the people who stayed did differently.',
+    does: [
+      'When each customer started and whether they are still with you, over at least six months.',
+      'The month people tend to leave, and what the ones who stayed did differently.',
+      'The month to defend, what holding those people is worth, and what to change before it.'
+    ],
     funnel: [['Month one', 1431], ['Month two', 1044], ['Month three', 806], ['Month six', 519]], markRow: 1,
     weak: 'Month two. Twenty seven of every hundred leave before it ends.',
     worthRange: '$31,000 to $52,000',
@@ -98,6 +116,11 @@ const AGENTS: Agent[] = [
     n: 4, name: 'Conversion', mine: true, price: 49,
     title: 'Find the step losing you the most money, and what it is worth',
     lede: 'It works on conversion and nothing else. One step named, priced, and a short list of changes in the order to make them.',
+    does: [
+      'How many people reached each step, from first visit to payment, over two periods.',
+      'Which step loses you the most money, and whether it slipped recently.',
+      'The one step to fix, what fixing it is worth in a year, and the changes to try in order.'
+    ],
     funnel: [['Visitors', 8410], ['Signups', 2604], ['Trials', 1431], ['Paid', 157]], markRow: 3,
     weak: 'Trial to paid. Eleven of every hundred trials convert. Three months ago it was nineteen.',
     worthRange: '$18,000 to $31,000',
@@ -110,6 +133,11 @@ const AGENTS: Agent[] = [
     n: 5, name: 'Traffic', price: 49,
     title: 'Find whether you have a traffic problem at all',
     lede: 'It works on traffic and nothing else. Volume, mix, and whether the shape of who arrives has changed.',
+    does: [
+      'How many people arrived and where they came from, over two periods.',
+      'Whether your visitor numbers actually fell, or just moved between sources.',
+      'A straight answer on whether traffic is your problem, and what the gap is worth.'
+    ],
     funnel: [['Direct', 3120], ['Organic', 2890], ['Referral', 1480], ['Paid', 920]], markRow: 1,
     weak: 'Organic. Down a fifth since the spring while everything else held.',
     worthRange: '$9,000 to $17,000',
@@ -122,6 +150,11 @@ const AGENTS: Agent[] = [
     n: 6, name: 'Offer', owned: true, price: 49,
     title: 'Find whether the offer or the audience is the mismatch',
     lede: 'It works on the offer and nothing else. Which segment says yes, which says no, and what the no is actually about.',
+    does: [
+      'Who saw your offer, who started, and who bought, split by the kind of customer.',
+      'Whether people are turning down the offer itself or the price on it.',
+      'Which group to sell to, what the real objection is, and what winning them back is worth.'
+    ],
     funnel: [['Saw offer', 4210], ['Started', 1620], ['Reached price', 740], ['Bought', 198]], markRow: 3,
     weak: 'Reached price to bought. Three quarters walk at the price screen.',
     worthRange: '$24,000 to $38,000',
@@ -134,6 +167,11 @@ const AGENTS: Agent[] = [
     n: 7, name: 'Capacity', price: 49,
     title: 'Find whether you can serve what you are already selling',
     lede: 'It works on capacity and nothing else. What you can deliver, what you promised, and where the two part company.',
+    does: [
+      'What you sold, the date you promised, and the date you actually delivered.',
+      'How often you run late, and whether being late is costing you repeat work.',
+      'Where delivery breaks down, what the late jobs cost you in a year, and what to change.'
+    ],
     funnel: [['Sold', 312], ['Started', 298], ['On time', 201], ['Late', 97]], markRow: 3,
     weak: 'On time delivery. Thirty one of every hundred jobs run past the date you gave.',
     worthRange: '$19,000 to $34,000',
@@ -146,6 +184,11 @@ const AGENTS: Agent[] = [
     n: 8, name: 'Churn', price: 49,
     title: 'Find who leaves, and whether you could have seen it coming',
     lede: 'It works on churn and nothing else. Which accounts go, what they did first, and how much warning there was.',
+    does: [
+      'What each account did month by month, and which of them have left.',
+      'What customers tend to do in the weeks before they go quiet.',
+      'Which accounts are at risk now, how much warning you get, and what saving them is worth.'
+    ],
     funnel: [['Active', 806], ['At risk', 214], ['Lapsed', 131], ['Gone', 88]], markRow: 2,
     weak: 'At risk to lapsed. Six in ten of the accounts that go quiet never come back.',
     worthRange: '$27,000 to $46,000',
@@ -156,12 +199,17 @@ const AGENTS: Agent[] = [
   },
   {
     n: 9, name: 'Fulfilment', soon: true, price: 49,
-    title: '', lede: '', funnel: [], markRow: 0, weak: '', worth: '', worthRange: '', falsifier: '', needs: '', wont: ''
+    title: '', lede: '', funnel: [], does: ['', '', ''], markRow: 0, weak: '', worth: '', worthRange: '', falsifier: '', needs: '', wont: ''
   },
   {
     n: 10, name: 'Cash collection', price: 49,
     title: 'Find the money you have earned and not been paid',
     lede: 'It works on collection and nothing else. What is outstanding, how old it is, and which of it is at real risk.',
+    does: [
+      'What you invoiced, when it was due, and when it was paid.',
+      'Which unpaid invoices are merely slow and which are genuinely at risk.',
+      'The money to chase first, in order, and what pulling it forward is worth to your cash.'
+    ],
     funnel: [['Invoiced', 420], ['Paid on time', 248], ['Late', 134], ['At risk', 38]], markRow: 2,
     weak: 'Sixty to ninety days. A third of what is late sits in that band and stalls there.',
     worthRange: '$12,000 to $21,000',
@@ -172,12 +220,17 @@ const AGENTS: Agent[] = [
   },
   {
     n: 11, name: 'Utilisation', soon: true, price: 49,
-    title: '', lede: '', funnel: [], markRow: 0, weak: '', worth: '', worthRange: '', falsifier: '', needs: '', wont: ''
+    title: '', lede: '', funnel: [], does: ['', '', ''], markRow: 0, weak: '', worth: '', worthRange: '', falsifier: '', needs: '', wont: ''
   },
   {
     n: 12, name: 'Pricing', price: 49,
     title: 'Find whether your price is leaving money on the table',
     lede: 'It works on pricing and nothing else. What people pay, what they nearly paid, and where the resistance actually sits.',
+    does: [
+      'What you quoted and what you finally charged, on every deal.',
+      'How much you give away in discounts, and which customers you give it to.',
+      'Where the discounting is worst, what halving it is worth, and which deals to hold firm on.'
+    ],
     funnel: [['Quoted', 680], ['Negotiated', 412], ['Discounted', 287], ['Full price', 125]], markRow: 2,
     weak: 'Discounting. Seven in ten closed deals gave something away.',
     worthRange: '$33,000 to $58,000',
@@ -232,6 +285,18 @@ const CSS = `
 .magents .maruncap{display:flex;align-items:baseline;gap:14px;margin:26px 0 12px}
 .magents .maruncap .hint{margin-left:auto;font-size:12.5px;color:var(--faint);white-space:nowrap}
 
+/* What it actually does for you. Three plain sentences in the order a person
+   thinks about it, before any price is on screen. It sits above the sample run
+   because a customer who does not understand the thing cannot be helped by a
+   demonstration of it. */
+.magents .madoes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;
+  background:var(--border);border:1px solid var(--border);border-radius:var(--r2);
+  overflow:hidden;margin-top:14px}
+.magents .madoes>div{background:var(--card);padding:16px 18px;min-width:0}
+.magents .madoes .s{display:block;font-size:12.5px;font-weight:500;color:var(--faint);
+  margin-bottom:7px}
+.magents .madoes p{margin:0;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+
 /* The picker. A menu that sits over the reading rather than pushing it down,
    so choosing an agent costs no vertical space at all. */
 .magents .masel{position:relative;max-width:460px;margin-bottom:4px}
@@ -259,7 +324,7 @@ const CSS = `
 .magents .maopt.mark .nm{font-weight:600}
 .magents .maopt.mark .sc{color:var(--am)}
 @media(max-width:820px){
-  .magents .mastakes,.magents .mapair{grid-template-columns:1fr}
+  .magents .mastakes,.magents .mapair,.magents .madoes{grid-template-columns:1fr}
   .magents .masel{max-width:none}
   .magents .matrig,.magents .maopt{gap:11px}
   .magents .marow{grid-template-columns:minmax(0,1fr) 72px;gap:12px;padding:13px 14px}
@@ -382,6 +447,24 @@ export function MoreAgents() {
             <span className="malbl">What it finds</span>
             <h3 className="mah">{open.title}</h3>
             <p className="malede">{open.lede}</p>
+
+            <div className="mafull">
+              <span className="malbl">What it actually does for you</span>
+              <div className="madoes">
+                <div>
+                  <span className="s">You give it</span>
+                  <p>{open.does[0]}</p>
+                </div>
+                <div>
+                  <span className="s">It works out</span>
+                  <p>{open.does[1]}</p>
+                </div>
+                <div>
+                  <span className="s">You get back</span>
+                  <p>{open.does[2]}</p>
+                </div>
+              </div>
+            </div>
 
             <div className="maruncap">
               <span className="malbl" style={{ marginBottom: 0 }}>A run on sample figures</span>
