@@ -36,6 +36,7 @@ import { brandConfigured } from '../lib/brandApi'
 import { businessLabel, useAccounts, useBusinesses, useMe } from '../lib/liveData'
 import { teamApi } from '../lib/teamLive'
 import { toast } from '../lib/bus'
+import { MoreAgents } from './MoreAgents'
 
 const SCRIPT = 'https://unpkg.com/@elevenlabs/convai-widget-embed'
 const SCRIPT_ID = 'gt-convai-embed'
@@ -66,6 +67,7 @@ declare global {
 
 export function Agents() {
   const [failed, setFailed] = useState(false)
+  const [tab, setTab] = useState<'yours' | 'more'>('yours')
   const configured = VOICE_AGENT_ID.length > 0
 
   useEffect(() => {
@@ -84,9 +86,15 @@ export function Agents() {
 
   return (
     <div className="scr on">
-      <Header title="Agents" />
+      <Header title="Agents">
+        <div className="seg">
+          <button className={tab === 'yours' ? 'on' : ''} onClick={() => setTab('yours')}>Yours</button>
+          <button className={tab === 'more' ? 'on' : ''} onClick={() => setTab('more')}>More Agents</button>
+        </div>
+      </Header>
       <div className="canvas">
         <div className="wrap">
+          {tab === 'yours' && (<>
           <p className="pgintro">Two kinds of agent live here. The Growth Terminal guide, which
             answers questions about the product and about this portal, and your own, which is
             briefed on one of your businesses and the analyses run against it.</p>
@@ -149,6 +157,9 @@ export function Agents() {
           )}
 
           <YourAgents />
+          </>)}
+
+          {tab === 'more' && <MoreAgents />}
         </div>
         <QuickActions />
       </div>
