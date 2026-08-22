@@ -43,7 +43,21 @@ export function Connections() {
      customer on the screen they started from. */
   useEffect(() => {
     const q = new URLSearchParams(window.location.search)
-    if (q.get('connected') === '1') {
+    /* The engine sends social=connected|cancelled|failed. The older
+       connected=1|0 is still read because it costs two lines and a marker
+       nobody handles is a customer staring at an unchanged screen. */
+    const social = q.get('social')
+    if (social === 'connected') {
+      toast('Connected. Checking which accounts can publish.')
+      window.history.replaceState({}, '', window.location.pathname)
+      load()
+    } else if (social === 'cancelled') {
+      toast('You stopped before Facebook finished. Nothing was changed.')
+      window.history.replaceState({}, '', window.location.pathname)
+    } else if (social === 'failed') {
+      toast('Facebook could not complete that. Nothing was changed.')
+      window.history.replaceState({}, '', window.location.pathname)
+    } else if (q.get('connected') === '1') {
       toast('Connected. Checking which accounts can publish.')
       window.history.replaceState({}, '', window.location.pathname)
       load()
