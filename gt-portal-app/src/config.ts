@@ -167,7 +167,12 @@ export const BRAND_PATH = '/v1/portal/brand'
  *  Empty until the engine has the routes, and the connections screen says so
  *  rather than rendering a Connect button that throws.
  */
-export const SOCIAL_PATH = ''
+/* The engine serves this at /v1/portal/social. It was an empty string while
+   the routes were unbuilt; they exist now, so the screen is live. Publishing
+   still does not happen: the engine reports publishingLive off its own
+   PORTAL_SOCIAL_PUBLISHING_LIVE flag and the screen keys its warning to that,
+   so connecting early is safe and honest. */
+export const SOCIAL_PATH = '/v1/portal/social'
 
 /** Where suggestions and the queue live on the engine.
  *

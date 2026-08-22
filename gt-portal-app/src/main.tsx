@@ -5,6 +5,7 @@ import { Shell } from './components/Shell'
 import { WorkspaceGate } from './components/WorkspaceGate'
 import { Overview, Analyses, Businesses, ApiKeys, Stub } from './screens/simple'
 import { CheckoutSuccess, CheckoutCancel, SubscriptionReturn, CreditsReturn } from './screens/Billing'
+import { SocialReturn } from './screens/SocialReturn'
 import { Agents } from './screens/Agents'
 import { Brand } from './screens/Brand'
 import { Connections } from './screens/Connections'
@@ -82,6 +83,12 @@ const router = createBrowserRouter([
          the return URLs the portal sends it. Both were rendering the 404. */
       { path: '/checkout', element: <SubscriptionReturn /> },
       { path: '/settings/credits', element: <CreditsReturn /> },
+      /* Facebook returns to the engine, which redirects to /settings with a
+         marker. The portal has no settings screen and never has, so this used
+         to be the 404 at the end of an otherwise successful connection. It
+         forwards to the screen the customer started on, carrying the marker so
+         that screen can say what happened. */
+      { path: '/settings', element: <SocialReturn /> },
       { path: '/:id', element: <Stub /> },
       /* Everything else, at any depth. Without this, a two segment address
          matched no route at all and React Router printed "Unexpected
