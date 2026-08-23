@@ -27,8 +27,8 @@ import {
   listSocial, problemText, socialConfigured
 } from '../lib/social'
 import {
-  ThreadsResult, beginThreadsConnect, takeThreadsResult,
-  threadsConfigured, threadsResultText
+  ThreadsAccount, ThreadsResult, beginThreadsConnect, listThreads,
+  takeThreadsResult, threadsConfigured, threadsResultText
 } from '../lib/threads'
 
 export function Connections() {
@@ -39,6 +39,7 @@ export function Connections() {
      knows, and it says exactly that rather than drawing an account card out
      of nothing. */
   const [threads, setThreads] = useState<ThreadsResult | null>(null)
+  const [thAccount, setThAccount] = useState<ThreadsAccount | null>(null)
 
   const load = useCallback(() => {
     if (!socialConfigured()) { setState({ accounts: [], publishingLive: false }); return }
@@ -50,10 +51,24 @@ export function Connections() {
   /* Facebook sends the browser back to the engine, which redirects here with
      a marker. Reading it here rather than on a route of its own keeps the
      customer on the screen they started from. */
+  const loadThreads = useCallback(() => {
+    if (!threadsConfigured()) return
+    listThreads().then(setThThenClear).catch(() => setThAccount(null))
+    function setThThenClear(a: ThreadsAccount | null) { setThAccount(a) }
+  }, [])
+
+  useEffect(loadThreads, [loadThreads])
+
   useEffect(() => {
     const t = takeThreadsResult()
-    if (t) { setThreads(t); toast(threadsResultText(t)) }
-  }, [])
+    if (t) {
+      setThreads(t)
+      toast(threadsResultText(t))
+      /* The engine has just written the connection, so ask it again rather
+         than leaving the screen showing what was true a second ago. */
+      if (t === 'connected') loadThreads()
+    }
+  }, [loadThreads])
 
   useEffect(() => {
     const q = new URLSearchParams(window.location.search)
@@ -183,6 +198,7 @@ export function Connections() {
 
           <ThreadsCard
             configured={threadsConfigured()}
+            account={thAccount}
             result={threads}
             busy={busy}
             onConnect={connectThreads}
@@ -198,22 +214,27 @@ export function Connections() {
  *  a different set of things it will let a person grant. Kept visually
  *  separate from the Instagram and Facebook block so nobody assumes
  *  connecting one connected the other. */
-function ThreadsCard({ configured, result, busy, onConnect }: {
+function ThreadsCard({ configured, account, result, busy, onConnect }: {
   configured: boolean
+  account: ThreadsAccount | null
   result: ThreadsResult | null
   busy: boolean
   onConnect: () => void
 }) {
   if (!configured) return null
 
+  /* The engine's answer outranks the redirect marker. The marker says what
+     happened a moment ago; the account says what is true now. */
+  const live = !!account && !account.problem
+
   return (
     <div className="setupcard" style={{ marginTop: 28 }}>
       <div className="shead">
         <h2>Threads</h2>
         <span className="sp" />
-        {result === 'connected'
+        {live
           ? <span className="brtag on"><i />Connected</span>
-          : <span className="brtag"><i />Not connected</span>}
+          : <span className="brtag"><i />{account ? 'Cannot publish' : 'Not connected'}</span>}
       </div>
 
       <p className="ssub">A separate connection with its own permission screen. Connecting
@@ -232,16 +253,27 @@ function ThreadsCard({ configured, result, busy, onConnect }: {
         </div>
       </div>
 
-      {result === 'connected' && (
+      {account && (
+        <div className="cnrow" style={{ marginTop: 18 }}>
+          {account.avatar
+            ? <img className="cnav" src={account.avatar} alt="" />
+            : <span className="cnav cnavblank" aria-hidden="true" />}
+          <span className="cnmeta">
+            <b>{account.username ? '@' + account.username : account.threadsUserId}</b>
+            <span>{account.name || 'Threads account'}{expiryNote(account.expiresAt)}</span>
+          </span>
+        </div>
+      )}
+
+      {account && account.problem === 'token_expired' && (
         <p className="brev">
-          <span className="lbl">Connected</span>
-          The token was exchanged and stored on the engine. Your account details are not
-          shown here yet because the engine has no route to read them back, so this screen
-          reports what it actually knows rather than filling the gap in.
+          <span className="lbl">Reconnect needed</span>
+          Threads refused the stored permission. That happens when it is revoked from the
+          Threads app, or when sixty days pass without a refresh. Connecting again fixes it.
         </p>
       )}
 
-      {result && result !== 'connected' && (
+      {!account && result && result !== 'connected' && (
         <p className="brev">
           <span className="lbl">Not connected</span>
           {threadsResultText(result)}
@@ -250,7 +282,7 @@ function ThreadsCard({ configured, result, busy, onConnect }: {
 
       <div className="act" style={{ marginTop: 16 }}>
         <button className="btn p" disabled={busy} onClick={onConnect}>
-          {result === 'connected' ? 'Reconnect Threads' : 'Connect Threads'}
+          {account ? 'Reconnect Threads' : 'Connect Threads'}
         </button>
       </div>
 
@@ -258,6 +290,19 @@ function ThreadsCard({ configured, result, busy, onConnect }: {
         offer it on the consent screen, so no amount of clicking Allow grants it.</p>
     </div>
   )
+}
+
+/** How long the permission has left, in the terms a person thinks in. Silent
+ *  when the engine did not give a date, rather than printing "Invalid Date". */
+function expiryNote(iso: string): string {
+  if (!iso) return ''
+  const at = Date.parse(iso)
+  if (!Number.isFinite(at)) return ''
+  const days = Math.round((at - Date.now()) / 86400000)
+  if (days < 0) return '. The permission has already lapsed'
+  if (days === 0) return '. The permission lapses today'
+  if (days === 1) return '. The permission lapses tomorrow'
+  return '. The permission lasts another ' + days + ' days'
 }
 
 function NotSwitchedOn() {
