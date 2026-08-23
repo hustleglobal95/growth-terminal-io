@@ -174,6 +174,24 @@ export const BRAND_PATH = '/v1/portal/brand'
    so connecting early is safe and honest. */
 export const SOCIAL_PATH = '/v1/portal/social'
 
+/** Where the Threads connection lives on the engine.
+ *
+ *  Separate from SOCIAL_PATH on purpose. Threads authorizes at threads.com
+ *  and exchanges tokens at graph.threads.com, neither of which is the
+ *  Facebook graph, and its scope list is its own. Pointing both at one path
+ *  would be tidy right up until one of the two providers changed something.
+ *
+ *  The engine serves POST {THREADS_PATH}/begin, which answers with the
+ *  authorization window URL, and GET {THREADS_PATH}/callback, which the
+ *  browser lands on and which redirects back here carrying ?threads=. There
+ *  is no read route yet, so the screen reports the connection from the
+ *  redirect marker and does not invent an account list it cannot see.
+ *
+ *  Empty takes Threads connecting offline and the screen says so plainly
+ *  rather than rendering a button that throws.
+ */
+export const THREADS_PATH = '/v1/portal/threads'
+
 /** Where suggestions and the queue live on the engine.
  *
  *  A suggestion is one thought the customer wants said. The engine turns
