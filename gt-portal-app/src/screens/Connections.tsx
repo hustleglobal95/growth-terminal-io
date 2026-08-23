@@ -26,10 +26,19 @@ import {
   ConnectedAccount, SocialState, beginConnect, disconnect,
   listSocial, problemText, socialConfigured
 } from '../lib/social'
+import {
+  ThreadsResult, beginThreadsConnect, takeThreadsResult,
+  threadsConfigured, threadsResultText
+} from '../lib/threads'
 
 export function Connections() {
   const [state, setState] = useState<SocialState | null>(null)
   const [busy, setBusy] = useState(false)
+  /* Threads reports itself through the redirect marker. There is no read
+     route on the engine yet, so this is the only thing the screen actually
+     knows, and it says exactly that rather than drawing an account card out
+     of nothing. */
+  const [threads, setThreads] = useState<ThreadsResult | null>(null)
 
   const load = useCallback(() => {
     if (!socialConfigured()) { setState({ accounts: [], publishingLive: false }); return }
@@ -41,6 +50,11 @@ export function Connections() {
   /* Facebook sends the browser back to the engine, which redirects here with
      a marker. Reading it here rather than on a route of its own keeps the
      customer on the screen they started from. */
+  useEffect(() => {
+    const t = takeThreadsResult()
+    if (t) { setThreads(t); toast(threadsResultText(t)) }
+  }, [])
+
   useEffect(() => {
     const q = new URLSearchParams(window.location.search)
     /* The engine sends social=connected|cancelled|failed. The older
@@ -77,6 +91,16 @@ export function Connections() {
       window.location.assign(url)
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not start the connection.')
+      setBusy(false)
+    }
+  }
+
+  const connectThreads = async () => {
+    setBusy(true)
+    try {
+      window.location.assign(await beginThreadsConnect())
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not start the Threads connection.')
       setBusy(false)
     }
   }
@@ -157,8 +181,81 @@ export function Connections() {
             </div>
           )}
 
+          <ThreadsCard
+            configured={threadsConfigured()}
+            result={threads}
+            busy={busy}
+            onConnect={connectThreads}
+          />
+
         </div>
       </div>
+    </div>
+  )
+}
+
+/** Threads, which is a different provider with a different consent screen and
+ *  a different set of things it will let a person grant. Kept visually
+ *  separate from the Instagram and Facebook block so nobody assumes
+ *  connecting one connected the other. */
+function ThreadsCard({ configured, result, busy, onConnect }: {
+  configured: boolean
+  result: ThreadsResult | null
+  busy: boolean
+  onConnect: () => void
+}) {
+  if (!configured) return null
+
+  return (
+    <div className="setupcard" style={{ marginTop: 28 }}>
+      <div className="shead">
+        <h2>Threads</h2>
+        <span className="sp" />
+        {result === 'connected'
+          ? <span className="brtag on"><i />Connected</span>
+          : <span className="brtag"><i />Not connected</span>}
+      </div>
+
+      <p className="ssub">A separate connection with its own permission screen. Connecting
+        Instagram does not connect Threads, and revoking one leaves the other alone.</p>
+
+      <div className="bgrows">
+        <div className="bgrow">
+          <span className="lbl">What you are granting</span>
+          <b>Reading your own posts, publishing on your behalf, reading the replies you
+            receive, replying to them, and reading your own insights.</b>
+        </div>
+        <div className="bgrow">
+          <span className="lbl">What stays with you</span>
+          <b>Your password, which we never see, and the connection itself, which you can
+            revoke from Threads at any time without telling us.</b>
+        </div>
+      </div>
+
+      {result === 'connected' && (
+        <p className="brev">
+          <span className="lbl">Connected</span>
+          The token was exchanged and stored on the engine. Your account details are not
+          shown here yet because the engine has no route to read them back, so this screen
+          reports what it actually knows rather than filling the gap in.
+        </p>
+      )}
+
+      {result && result !== 'connected' && (
+        <p className="brev">
+          <span className="lbl">Not connected</span>
+          {threadsResultText(result)}
+        </p>
+      )}
+
+      <div className="act" style={{ marginTop: 16 }}>
+        <button className="btn p" disabled={busy} onClick={onConnect}>
+          {result === 'connected' ? 'Reconnect Threads' : 'Connect Threads'}
+        </button>
+      </div>
+
+      <p className="sfine">Keyword search is deliberately not in that list. Threads does not
+        offer it on the consent screen, so no amount of clicking Allow grants it.</p>
     </div>
   )
 }
