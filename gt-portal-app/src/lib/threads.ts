@@ -67,6 +67,47 @@ export function threadsResultText(r: ThreadsResult): string {
   }
 }
 
+/** The connection as the engine reports it. No token, ever: the engine holds
+ *  it and answers questions about it. */
+export interface ThreadsAccount {
+  username: string
+  name: string
+  avatar: string
+  threadsUserId: string
+  /** When the sixty day token lapses if nothing refreshes it. */
+  expiresAt: string
+  /** Set when the stored token exists but Threads refused it. Distinct from
+   *  not being connected at all, because the fix is different: reconnect
+   *  rather than connect. */
+  problem: 'token_expired' | null
+}
+
+interface EngineThreads {
+  connected?: boolean
+  username?: string
+  name?: string
+  profilePictureUrl?: string
+  threadsUserId?: string
+  expiresAt?: string
+  problem?: string
+}
+
+/** Reads the stored connection. Returns null when there is none, which is a
+ *  fact worth distinguishing from a request that failed. */
+export async function listThreads(): Promise<ThreadsAccount | null> {
+  if (!threadsConfigured()) return null
+  const r = await liveRoot<EngineThreads>(THREADS_PATH)
+  if (!r || !r.connected) return null
+  return {
+    username: r.username || '',
+    name: r.name || '',
+    avatar: r.profilePictureUrl || '',
+    threadsUserId: r.threadsUserId || '',
+    expiresAt: r.expiresAt || '',
+    problem: r.problem === 'token_expired' ? 'token_expired' : null
+  }
+}
+
 /** Asks the engine where to send the browser. The engine builds the URL
  *  because it owns the app id and the state it will later verify. */
 export async function beginThreadsConnect(): Promise<string> {
