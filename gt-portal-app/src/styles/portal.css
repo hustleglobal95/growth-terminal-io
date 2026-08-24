@@ -3687,3 +3687,56 @@ h1{font-weight:700;letter-spacing:-.032em}
   font-size:11.5px;font-weight:500;padding:5px 11px}
 .gsec .wkbtn:hover{background:rgba(15,15,14,.05)}
 .gsec .lvplanhead{border-top:0;padding-top:0;margin-top:0}
+
+/* ---------------------------------------------------------------------------
+   THE DERIVATION CHAIN.
+
+   Every step that turned a workbook into a dollar figure, in order, with the
+   two discounts exposed rather than folded in. This is the section a sceptical
+   reader opens first, so it is a ledger and not a paragraph: one claim per
+   row, the arithmetic visible, the result marked.
+   --------------------------------------------------------------------------- */
+.gchain{margin:0 -8px}
+.gstep{display:grid;grid-template-columns:20px minmax(0,1fr) 132px;align-items:center;gap:12px;
+  padding:7px 8px;border-radius:6px}
+.gstep:hover{background:rgba(15,15,14,.03)}
+.gstep .i{font:500 10px/1 var(--mono);color:var(--faint);text-align:right}
+.gstep .n{font-size:12.5px;color:var(--muted)}
+.gstep .n em{font-style:normal;color:var(--faint);font-size:11px}
+.gstep .v{font-size:12.5px;font-weight:500;text-align:right;font-variant-numeric:tabular-nums;color:var(--text)}
+.gstep.rule{border-top:1px solid var(--border);margin-top:5px;padding-top:10px}
+.gstep.rule .n{color:var(--text);font-weight:500}
+.gstep.res{background:var(--wash);box-shadow:inset 2px 0 0 var(--amber)}
+.gstep.res .n{color:var(--text);font-weight:600}
+.gstep.res .v{color:#FC5802;font-weight:600}
+.gchainnote{font-size:11px;color:var(--faint);line-height:1.6;max-width:74ch;padding:11px 0 0}
+
+/* ---------------------------------------------------------------------------
+   WATCH CONDITIONS.
+
+   The falsifier, as instrumentation rather than a sentence. Each condition is
+   its own cell: what is being watched, the threshold it has to hold, and the
+   gate that will score it. There is no needle, because the engine does not
+   send the portal a current reading, and a gauge with no measurement behind
+   it is a decoration that looks like a fact.
+   --------------------------------------------------------------------------- */
+.gwatch{display:grid;grid-template-columns:1fr 1fr}
+.gwc{padding:12px 26px 14px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);min-width:0}
+.gwc:nth-child(2n){border-right:0}
+.gwch{display:flex;align-items:baseline;gap:9px}
+.gwch .n{font-size:12.5px;font-weight:500;color:var(--text);min-width:0}
+.gwch .w{margin-left:auto;font:400 10px/1 var(--mono);color:var(--faint);white-space:nowrap}
+.gwct{font-size:13px;color:var(--text);line-height:1.5;margin-top:8px;font-variant-numeric:tabular-nums}
+.gwct b{font-weight:600}
+.gwcm{font-size:11px;color:var(--faint);margin-top:7px}
+.gwcbar{height:4px;background:rgba(15,15,14,.09);border-radius:2px;margin-top:9px;position:relative}
+.gwcbar span{position:absolute;top:-2px;width:1.5px;height:8px;background:var(--text);opacity:.45}
+@media (max-width:900px){
+  .gwatch{grid-template-columns:1fr}
+  .gwc{border-right:0}
+}
+
+/* Rail: where the plan stands, above everything the rail used to lead with. */
+.railplan .gkv{padding:4px 0}
+.gwatchnote{font-size:11.5px;color:var(--muted);line-height:1.6;max-width:78ch;padding:13px 26px 0}
+.gwc .gwcm .gst{font-size:10.5px}
