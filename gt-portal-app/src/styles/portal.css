@@ -3817,3 +3817,16 @@ svg{vector-effect:non-scaling-stroke}
   *{animation-duration:0.001ms !important;animation-iteration-count:1 !important;
     transition-duration:0.001ms !important}
 }
+
+/* Filter groups. A label and its chips travel together, and the whole group
+   is absent when the data behind it holds one value. */
+.gfgroup{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
+.gfgroup + .gfgroup{margin-left:6px;padding-left:10px;box-shadow:inset 1px 0 0 var(--border)}
+.gflbl{font-size:10.5px;color:var(--faint);font-weight:500;margin-right:3px}
+.gfsel{font:400 12px var(--sans);color:var(--text);background:none;border:1px solid var(--line2);
+  border-radius:6px;padding:4px 8px;cursor:pointer;max-width:200px}
+.gfsel:hover{background:rgba(15,15,14,.04)}
+
+/* Section headers reserve the corner the explain mark sits in, so a header
+   with several verbs never runs underneath it. */
+.gsh{padding-right:46px}
