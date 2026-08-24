@@ -3740,3 +3740,80 @@ h1{font-weight:700;letter-spacing:-.032em}
 .railplan .gkv{padding:4px 0}
 .gwatchnote{font-size:11.5px;color:var(--muted);line-height:1.6;max-width:78ch;padding:13px 26px 0}
 .gwc .gwcm .gst{font-size:10.5px}
+
+/* ===========================================================================
+   RESOLUTION.
+
+   The page was carrying three things that soften an interface without adding
+   anything to it: two fixed radial washes behind every screen, a noise layer,
+   and a set of long blurred drop shadows inherited from the card era. On a
+   white ground none of them read as depth. They read as haze, and every
+   hairline and every figure sits behind it.
+
+   Cleared here, and the rendering hints that actually sharpen type and
+   geometry are set in one place instead of five.
+   =========================================================================== */
+
+html{background:#FFFFFF}
+body{
+  background:#FFFFFF;
+  background-attachment:scroll;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+  font-feature-settings:"kern" 1,"liga" 1,"calt" 1,"cv05" 1;
+  font-optical-sizing:auto;
+}
+body::before{content:none !important;opacity:0 !important;background:none !important}
+
+/* Depth is one hairline. The long shadows blurred every edge they touched. */
+:root{
+  --shadow:none;
+  --shadow-sm:none;
+  --lift-1:none;
+  --lift-2:none;
+  --lift-edge:none;
+}
+.card,.tile,.lvpanel,.tmstat,.bizcard,.tbl,.dgcard,.rank,.ind,.pcard,.evc,.gantt,.stake,.path{
+  box-shadow:none
+}
+
+/* Hairlines land on one device pixel instead of straddling two. A 1px CSS
+   border on a 2x screen is drawn two device pixels wide and reads heavy; half
+   that is exactly one, which is what a ruled interface is supposed to look
+   like. */
+@media (min-resolution:2dppx){
+  .gsec,.gsh,.gstrip,.gstripc,.gstat,.gwc,.ggate,.glist .grow,.gfind,.ghead,
+  .gtwo > div,.glist2 li,.gsec .pcard,.gsec .wkrow,.side,.apphdr,.rail{
+    border-width:0.5px
+  }
+  .gsh{border-bottom-width:0.5px}
+  .gsec{border-bottom-width:0.5px}
+}
+
+/* Figures are measurements, so they align in columns and never reflow width
+   as a digit changes. */
+.gfig b,.gstep .v,.gstripc .v,.grow .f,.gkv .v2,.gwct,.sevbig b,.tile .fig,
+.trow .num,.kv dd{
+  font-variant-numeric:tabular-nums lining-nums;
+  font-feature-settings:"tnum" 1,"lnum" 1,"kern" 1
+}
+
+/* Geometry. Straight strokes snap, curves stay smooth. */
+svg line,svg rect{shape-rendering:crispEdges}
+svg path,svg circle,svg polyline,svg polygon{shape-rendering:geometricPrecision}
+svg{vector-effect:non-scaling-stroke}
+
+/* The mark is a raster asset in a small box, which is where a browser's
+   default downscale looks softest. */
+.marklogo{image-rendering:-webkit-optimize-contrast}
+
+/* Headline sizes get their own tracking rather than inheriting one value from
+   the body, because tracking that reads correctly at 13px reads loose at 25. */
+.ghl{text-wrap:balance}
+.gsh .t{font-feature-settings:"kern" 1,"calt" 1}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:0.001ms !important;animation-iteration-count:1 !important;
+    transition-duration:0.001ms !important}
+}
