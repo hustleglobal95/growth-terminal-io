@@ -2297,64 +2297,21 @@ body{
    sets, so a panel that is not part of the argument keeps the default card.
    =========================================================================== */
 
-/* --- Tier one. The verdict. -----------------------------------------------
-   Ink on a light page is the strongest emphasis available, and it echoes the
-   sidebar so the two most important surfaces in the product share a language.
-   This is the constraint being named, which is the whole promise. */
-#verdict{
-  background:var(--chrome-deep);
-  border-color:transparent;
-  padding:22px 24px;
-  box-shadow:0 1px 2px rgba(15,15,14,.10),0 18px 40px -18px rgba(15,15,14,.35);
-}
-#verdict .lbl{color:var(--signal)}
-#verdict .lvbody{
-  color:var(--on-dark);font-size:16px;line-height:1.5;letter-spacing:-.012em;
-  max-width:60ch;
-}
-/* The explain mark has to invert too, or it disappears into the ink. */
-#verdict .why{border-color:rgba(255,255,255,.22);color:rgba(255,255,255,.55)}
-#verdict .why:hover{border-color:var(--on-dark);color:var(--on-dark)}
-#verdict .why.on{background:#FFFFFF;border-color:#FFFFFF;color:var(--chrome-deep)}
-#verdict .whybody{
-  background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);
-  color:var(--on-dark-2);
-}
-#verdict .whybody b{color:var(--on-dark)}
+/* --- The tier system that used to live here has been removed. ------------
+   It described a card hierarchy: the verdict raised on ink, the reasoning on
+   white cards with a lift, evidence and indicators recessed into the page
+   tint. Those cards no longer exist. The analysis is now a stack of sections,
+   and hierarchy is carried by order, by the scope qualifier in each header,
+   and by the one amber figure at the top.
 
-/* --- Tier two. The reasoning. ---------------------------------------------
-   Root causes and the long narrative stay white cards and keep their lift.
-   They are claims, so they sit on the page rather than in it. --- */
+   Its #verdict rule survived the rewrite as a 24px inset on a single section,
+   which is how one screen ends up with one paragraph that does not line up
+   with any other. Deleted rather than patched. --- */
 
-/* --- Tier three. The material. --------------------------------------------
-   Evidence, indicators and limits are what the claim rests on. They recess:
-   no elevation, seated on the page tint rather than raised above it, so the
-   eye reads them as substrate and can skip them without feeling it missed a
-   section. */
-#evidence .lvpanel,#indicators,#limits{
-  background:var(--recess);
-  box-shadow:none;
-  border-color:rgba(15,15,14,.07);
-}
-
-/* Evidence for and against are a pair, and they were indistinguishable. A
-   quiet left edge makes the balance legible at a glance: supported on the
-   left, contradicted on the right, without colouring either as good or bad. */
-#evidence .lvpanel{border-left:2px solid rgba(15,15,14,.20)}
-#evidence .lvpanel:last-child{border-left-color:var(--signal)}
-
-/* --- The plan is a different kind of object. ------------------------------
-   It is not a statement about the past, it is instructions for the future, so
-   it gets a rule above it rather than a card around it. --- */
 #plan .lvplanhead{
   border-top:1px solid var(--border2);padding-top:20px;margin-top:8px;
 }
 #plan .lvplanhead .lbl{color:var(--text)}
-
-@media(max-width:760px){
-  #verdict{padding:18px}
-  #verdict .lvbody{font-size:15px}
-}
 
 /* ---------------------------------------------------------------------------
    Teams: the section switcher speaks the same language as the filters.
@@ -2467,9 +2424,6 @@ svg polyline,svg path,svg circle{shape-rendering:geometricPrecision}
 .why{border:0;box-shadow:0 0 0 1px var(--line2) inset}
 .why:hover{box-shadow:0 0 0 1px var(--text) inset}
 .why.on{background:#000000;color:#FFFFFF;box-shadow:0 0 0 1px #000000 inset}
-#verdict .why{box-shadow:0 0 0 1px rgba(255,255,255,.22) inset}
-#verdict .why:hover{box-shadow:0 0 0 1px var(--on-dark) inset}
-#verdict .why.on{background:#FFFFFF;color:var(--chrome-deep);box-shadow:0 0 0 1px #FFFFFF inset}
 
 /* The grain tile is a 140 unit SVG painted at 140 CSS px, so on a 2x display
    each noise cell covers four device pixels and the texture reads as soft
@@ -3639,3 +3593,97 @@ h1{font-weight:700;letter-spacing:-.032em}
 .grow .rowacts{display:none;gap:6px}
 .grow.act:hover .rowacts{display:inline-flex}
 .grow.act:hover .dt{display:none}
+
+/* ===========================================================================
+   THE ANALYSIS SURFACE.
+
+   The finding block, the live status strip and the section stack underneath
+   it. This is the screen the section grammar was designed against: a claim,
+   the money, the controls that act on it, and then the argument in layers a
+   sceptical reader can attack at any depth.
+   =========================================================================== */
+
+.gfind{padding:20px 26px 18px;border-bottom:1px solid var(--border)}
+.gtag{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:500;color:var(--text)}
+.gtag i{width:5px;height:5px;border-radius:50%;background:var(--amber);flex:0 0 auto}
+.gtagm{font-size:11.5px;color:var(--faint)}
+.gtagrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ghl{font-size:25px;font-weight:600;letter-spacing:-.028em;line-height:1.16;margin:11px 0 0;max-width:30ch}
+.gimpact{display:flex;align-items:baseline;gap:12px;margin-top:14px;flex-wrap:wrap}
+.gimpact .f{font-size:27px;font-weight:600;letter-spacing:-.032em;color:#FC5802;
+  font-variant-numeric:tabular-nums;line-height:1.1}
+.gimpact .s{font-size:12px;color:var(--muted)}
+.gacts{display:flex;gap:7px;margin-top:16px;flex-wrap:wrap}
+.gacts .btn{padding:7px 13px;border-radius:7px;font-size:12px;font-weight:500;min-height:0}
+.gacts .btn.d{background:var(--text);color:#FBFAF8}
+.gacts .btn.d:hover{background:#2A2621}
+
+/* The live status strip. Where the plan is, right now, above everything. */
+.gstrip{display:flex;align-items:stretch;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.gstripc{padding:9px 20px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:3px;min-width:0}
+.gstripc:last-child{border-right:0}
+.gstripc .k{font-size:10px;color:var(--faint);font-weight:500}
+.gstripc .v{font-size:12.5px;font-weight:500;font-variant-numeric:tabular-nums;
+  display:flex;align-items:center;gap:6px;white-space:nowrap}
+.gstripc .v i.dot{width:6px;height:6px;border-radius:50%;flex:0 0 auto;background:var(--faint)}
+.gstripc .v i.dot.run{background:var(--amber);box-shadow:0 0 0 3px var(--wash)}
+.gstripc .v i.dot.ok{background:var(--green)}
+.gstripbar{height:3px;width:74px;background:rgba(15,15,14,.1);border-radius:2px;overflow:hidden;margin-top:3px}
+.gstripbar i{display:block;height:100%;background:var(--amber);border-radius:2px}
+.gstripact{margin-left:auto;display:flex;align-items:center;padding:0 16px}
+
+/* Prose and lists inside a section body. */
+.gbody{font-size:13px;line-height:1.65;color:var(--text);max-width:76ch}
+.gbody.pre{white-space:pre-wrap}
+.gbody + .gbody{margin-top:10px}
+.glist2{margin:0;padding:0;list-style:none}
+.glist2 li{position:relative;padding:7px 0 7px 18px;font-size:12.5px;line-height:1.6;
+  border-bottom:1px solid var(--border);max-width:80ch}
+.glist2 li:last-child{border-bottom:0}
+.glist2 li::before{content:"";position:absolute;left:4px;top:15px;width:4px;height:4px;
+  border-radius:50%;background:var(--faint)}
+
+/* Two panes side by side, divided by a rule rather than boxed apart. */
+.gtwo{display:grid;grid-template-columns:1fr 1fr}
+.gtwo > div{padding:13px 26px 16px;border-right:1px solid var(--border);min-width:0}
+.gtwo > div:last-child{border-right:0}
+.gtwo .k{display:block;font-size:10.5px;color:var(--faint);font-weight:500;margin-bottom:8px}
+@media (max-width:900px){
+  .gtwo{grid-template-columns:1fr}
+  .gtwo > div{border-right:0;border-bottom:1px solid var(--border)}
+  .gtwo > div:last-child{border-bottom:0}
+}
+
+/* Gates read across, each carrying its own consequence. */
+.ggates{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.ggate{padding:13px 20px 15px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.ggate:last-child{border-right:0}
+.ggate .gh{display:flex;align-items:center;gap:8px}
+.ggate .gh b{font-size:12px;font-weight:600}
+.ggate .gh span{font:400 10.5px/1 var(--mono);color:var(--faint)}
+.ggate .q{font-size:12px;color:var(--text);line-height:1.55;margin-top:8px}
+.ggate .x{font-size:11px;color:var(--faint);margin-top:9px;padding-top:9px;
+  border-top:1px solid var(--border);line-height:1.55}
+.ggate .x b{color:var(--text);font-weight:500}
+
+/* A centred state: loading, running, failed. Not a card. */
+.gcenter{padding:44px 26px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;
+  border-bottom:1px solid var(--border)}
+.gcenter b{font-size:14px;font-weight:600}
+.gcenter span{font-size:12.5px;color:var(--muted);max-width:62ch;line-height:1.6}
+
+/* The plan internals, brought onto the same ground as the sections around
+   them. The phase cards and the week ledger were drawn for a page with a
+   tint behind them; on white they read as grey boxes inside a clean stack. */
+.gsec .pcard{background:none;border:0;border-bottom:1px solid var(--border);
+  border-radius:0;box-shadow:none}
+.gsec .pcard:last-child{border-bottom:0}
+.gsec .wkcommit{margin-top:14px}
+.gsec .wkrows{border-top:1px solid var(--border)}
+.gsec .wkrow{background:none;border:0;border-bottom:1px solid var(--border);
+  border-radius:0;box-shadow:none;padding:8px 0}
+.gsec .wkrow:last-child{border-bottom:0}
+.gsec .wkbtn{background:none;box-shadow:0 0 0 1px var(--border2) inset;border-radius:6px;
+  font-size:11.5px;font-weight:500;padding:5px 11px}
+.gsec .wkbtn:hover{background:rgba(15,15,14,.05)}
+.gsec .lvplanhead{border-top:0;padding-top:0;margin-top:0}
