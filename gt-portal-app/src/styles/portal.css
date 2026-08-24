@@ -3940,3 +3940,12 @@ svg{vector-effect:non-scaling-stroke}
   .apphdr{gap:8px;padding-left:12px;padding-right:12px}
   .apphdr .btn{padding:6px 11px;font-size:12px;min-height:0}
 }
+
+/* A jump target has to clear the fixed header even when something other than
+   the rail does the scrolling: a keyboard focus, a browser restoring a
+   position, a hash typed by hand. The scroller sets the same offset in script;
+   this is the backstop so no path lands a section under the chrome. */
+.gsec{scroll-margin-top:calc(var(--hdr) + 20px)}
+@media(max-width:760px){
+  .gsec{scroll-margin-top:calc(56px + 50px + 16px)}
+}
