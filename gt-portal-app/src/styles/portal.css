@@ -3503,3 +3503,139 @@ h1{font-weight:700;letter-spacing:-.032em}
 .prev.out{opacity:.55}
 .prev.out .prevscroll{filter:grayscale(1)}
 .btn.g.mini{min-height:30px;padding:6px 12px;font-size:12.5px}
+
+/* ===========================================================================
+   THE SECTION GRAMMAR.
+
+   Every analytical surface in the product is built from sections, and every
+   section is the same four parts: a rule, a name, a scope qualifier in mono,
+   and right aligned verbs that do something. The body underneath is rows.
+
+   This replaces the card era. A card is a box you read. A section is an
+   instrument you operate, and because every one of them is built the same
+   way, a screen you have never opened is still a screen you can already use.
+
+   Nothing here carries a fill. Structure is hairlines, spacing and type
+   weight, because a page of tinted boxes reads as a document and a page of
+   ruled sections reads as an application.
+   =========================================================================== */
+
+/* White ground. Cards used to need a tinted page to sit on; sections do not,
+   they have rules. */
+:root{
+  --page:#FFFFFF;
+  --recess:#FFFFFF;
+  --elev:#FAFAF9;
+  --border:rgba(15,15,14,.105);
+  --wash:rgba(252,88,2,.05);
+}
+
+.gwrap{padding:0 0 70px;max-width:none}
+
+.gsec{border-bottom:1px solid var(--border);padding:0}
+.gsec:last-child{border-bottom:0}
+.gsh{display:flex;align-items:center;gap:9px;padding:15px 26px 9px;
+  border-bottom:1px solid var(--border)}
+.gsh .t{font-size:12px;font-weight:600;letter-spacing:-.005em;color:var(--text)}
+.gsh .q{font:400 10.5px/1 var(--mono);color:var(--faint);letter-spacing:0}
+.gsh .sp{flex:1}
+.gsh .v{font-size:11px;color:var(--muted);padding:3px 7px;border-radius:6px;
+  background:none;border:0;cursor:pointer;font-family:inherit;
+  transition:background 110ms var(--ease),color 110ms var(--ease)}
+.gsh .v:hover{background:rgba(15,15,14,.05);color:var(--text)}
+.gsh .v:disabled{opacity:.4;cursor:default}
+.gsh .v:disabled:hover{background:none;color:var(--muted)}
+.gsb{padding:13px 26px 20px}
+.gsb.flush{padding:0}
+
+/* Rows. The unit of interaction inside every section. */
+.grow{display:grid;align-items:center;gap:12px;padding:7px 8px;margin:0 -8px;
+  border-radius:6px;transition:background 110ms var(--ease)}
+.grow.act{cursor:pointer}
+.grow.act:hover{background:rgba(15,15,14,.032)}
+.grow.sel{background:var(--wash);box-shadow:inset 2px 0 0 var(--amber)}
+.grow .n{font-size:12.5px;color:var(--text);min-width:0}
+.grow .n em{font-style:normal;color:var(--faint);font-size:11px}
+.grow .n span.sub{display:block;color:var(--faint);font-size:11px;margin-top:2px}
+.grow .m{font-size:11.5px;color:var(--muted)}
+.grow .f{font-size:12.5px;font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+.grow .ch{width:10px;height:10px;stroke:var(--faint);fill:none;stroke-width:1.8;justify-self:end}
+
+/* Key and value, right aligned, for rail blocks and run details. */
+.gkv{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:3px 0;font-size:11.5px}
+.gkv .k{color:var(--muted)}
+.gkv .v2{color:var(--text);font-variant-numeric:tabular-nums}
+
+/* A figure that is the point of its section. */
+.gfig{display:flex;align-items:baseline;gap:9px}
+.gfig b{font-size:22px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.gfig b.am{color:#FC5802}
+.gfig span{font-size:11.5px;color:var(--faint)}
+
+/* Gauges. Green only where the outcome is genuinely verified. */
+.ggauge{height:4px;background:rgba(15,15,14,.09);border-radius:2px;margin-top:8px;position:relative;overflow:hidden}
+.ggauge i{display:block;height:100%;border-radius:2px;background:rgba(15,15,14,.42)}
+.ggauge i.ok{background:var(--green)}
+.ggauge i.am{background:var(--amber)}
+.ggauge span{position:absolute;top:-2px;width:1.5px;height:8px;background:var(--text);opacity:.5}
+
+/* Status as a dot and a word. No filled chips anywhere in this system. */
+.gst{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--muted)}
+.gst::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--faint);flex:0 0 auto}
+.gst.ok::before{background:var(--green)}
+.gst.run::before{background:var(--amber)}
+.gst.none::before{display:none}
+
+/* Honest empty states. A section with nothing in it says what is missing and
+   what to do, and never pretends to hold data. */
+.gempty{padding:18px 8px 10px;max-width:62ch}
+.gempty b{display:block;font-size:12.5px;font-weight:600;margin-bottom:4px}
+.gempty span{display:block;font-size:12px;color:var(--muted);line-height:1.6}
+.gempty .btn{margin-top:12px}
+
+/* De-boxed chips, product wide. Every pill in the old system was a tinted
+   rounded rectangle; on a white ground they read as clutter. */
+.chip,.pfchip,.fchip{background:none;border:0}
+.pill,.chip,.badge,.side .chip{box-shadow:none}
+.side .chip{padding:3px 2px;font-size:11.5px;color:var(--muted);border:0;background:none}
+.side .chip.warn{color:var(--text)}
+.fchip{color:var(--muted);padding:4px 9px;border-radius:6px;box-shadow:none;min-height:0}
+.fchip:hover{background:rgba(15,15,14,.05);color:var(--text);box-shadow:none}
+.fchip.on{background:none;color:var(--text);font-weight:600;box-shadow:inset 0 -1.5px 0 var(--amber)}
+.fchip:active{transform:none}
+
+/* Page furniture that sits between sections. */
+.ghead{padding:20px 26px 18px;border-bottom:1px solid var(--border)}
+.ghead h1{font-size:23px;font-weight:600;letter-spacing:-.028em;line-height:1.2}
+.ghead p{margin-top:6px;font-size:12.5px;color:var(--muted)}
+
+/* A strip of figures reading across, divided by rules rather than boxed. */
+.gstats{display:grid;grid-template-columns:repeat(4,1fr)}
+.gstat{padding:14px 26px 16px;border-right:1px solid var(--border);min-width:0}
+.gstat:last-child{border-right:0}
+.gstat .k{display:block;font-size:10.5px;color:var(--faint);font-weight:500;margin-bottom:8px}
+.gstat .c{display:block;font-size:11px;color:var(--faint);margin-top:5px}
+@media (max-width:900px){
+  .gstats{grid-template-columns:repeat(2,1fr)}
+  .gstat:nth-child(2n){border-right:0}
+  .gstat:nth-child(-n+2){border-bottom:1px solid var(--border)}
+}
+
+/* Rows that run the full width of a flush section, ruled between. */
+.glist .grow{margin:0;border-radius:0;padding:9px 26px;border-bottom:1px solid var(--border)}
+.glist .grow:last-child{border-bottom:0}
+.glist .grow.act:hover{background:rgba(15,15,14,.028)}
+
+/* Toolbar inside a flush section: the search and the filters, on a rule. */
+.gtool{padding:11px 26px;border-bottom:1px solid var(--border);margin:0;display:flex;
+  align-items:center;gap:8px;flex-wrap:wrap}
+.gtool .searchin{flex:1;min-width:180px}
+
+/* Column heads. A row of labels, not a filled table header. */
+.grow.ghrow{padding:8px 26px;margin:0;border-radius:0;border-bottom:1px solid var(--border)}
+.grow.ghrow .m{font-size:10.5px;font-weight:500;color:var(--faint)}
+.grow .n.faintcell{color:var(--faint)}
+.grow .rowend{display:inline-flex;align-items:center;justify-content:flex-end;gap:8px}
+.grow .rowacts{display:none;gap:6px}
+.grow.act:hover .rowacts{display:inline-flex}
+.grow.act:hover .dt{display:none}
