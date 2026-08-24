@@ -363,8 +363,25 @@ export function LiveDetail({ id }: { id: string }) {
   const narrative = pick(raw, ['claudeNarrative'])
   const narrativeText = typeof narrative === 'string' ? narrative
     : textOf(pick(narrative, ['narrative', 'summary', 'text', 'body', 'headline']))
-  const feas = pick(raw, ['interventionFeasibility']) as Loose | undefined
-  const upside = money(pick(feas, ['adjustedOpportunity', 'adjustedMonthlyOpportunity']) ?? pick(raw, ['estimatedMonthlyUpside']))
+  /* Feasibility is an array of per-constraint entries. The entry that backs
+   * the headline is the one matching the deterministic selection; the first
+   * entry is only a fallback. The engine's impactP10/impactP90 bound the RAW
+   * impact, so they are scaled here by the same execution and causal discount
+   * that produced adjustedOpportunity - one coherent quantity, not a point
+   * from one distribution shown inside bounds from another. */
+  const feasRaw = pick(raw, ['interventionFeasibility'])
+  const feasList = (Array.isArray(feasRaw) ? feasRaw : feasRaw ? [feasRaw] : []) as Loose[]
+  const selectedId = textOf(pick(raw, ['constraintDecision', 'selectedConstraintId'])
+    ?? pick(pick(raw, ['constraintDecision']) as Loose, ['selectedConstraintId']))
+  const feasEntry = feasList.find(f => selectedId && textOf(pick(f, ['constraintId'])) === selectedId) ?? feasList[0]
+  const upside = money(pick(feasEntry, ['adjustedOpportunity', 'adjustedMonthlyOpportunity']) ?? pick(raw, ['estimatedMonthlyUpside']))
+  const upsideFromFunnel = textOf(pick(feasEntry, ['impactSource'])) === 'funnel_posterior'
+  const upsideStage = textOf(pick(feasEntry, ['impactStage'])).replace(/_/g, ' ').replace(/\s*(?:->|\u2192)\s*/g, ' to ')
+  const numOf = (v: unknown): number => { const n = typeof v === 'number' ? v : parseFloat(String(v)); return isFinite(n) ? n : NaN }
+  const upDiscount = numOf(pick(feasEntry, ['executionProbability'])) * numOf(pick(feasEntry, ['causalSuccessProbability']))
+  const upLow = money(numOf(pick(feasEntry, ['impactP10'])) * upDiscount)
+  const upHigh = money(numOf(pick(feasEntry, ['impactP90'])) * upDiscount)
+  const upsideRange = upsideFromFunnel && upLow && upHigh ? { low: upLow, high: upHigh } : null
 
   /* Role gate from the Teams permission matrix. Owner sees everything, so
    * the default workspace renders exactly as before. */
@@ -573,7 +590,15 @@ export function LiveDetail({ id }: { id: string }) {
               {((acc.financials && upside) || subDiagnosis) && (
                 <div className="lvcall">
                   {acc.financials && upside && <div className="lvpanel amber"><span className="lbl">If you act</span><Why k="upside" />
-                    <p className="lvbody"><b className="lvfig">{upside}</b> Engine-computed: raw impact adjusted by execution and causal success probability.</p></div>}
+                    {upsideRange ? (
+                      <p className="lvbody"><b className="lvfig">{upsideRange.low.replace(' a month', '')} to {upsideRange.high}</b> central
+                        estimate {upside.replace(' a month', '')}. Measured from your own funnel{upsideStage ? ' at the ' + upsideStage + ' stage' : ''},
+                        then discounted by execution and causal success probability.</p>
+                    ) : (
+                      <p className="lvbody"><b className="lvfig">{upside}</b> Modelled from category benchmarks, adjusted by execution
+                        and causal success probability. Not yet measured from your funnel: add lead, opportunity and win counts to your
+                        sheet and this becomes a measured range.</p>
+                    )}</div>}
                   {subDiagnosis && <div className="lvpanel"><span className="lbl">Sub-diagnosis</span><Why k="subDiagnosis" />
                     <p className="lvbody">{subDiagnosis}</p></div>}
                 </div>
