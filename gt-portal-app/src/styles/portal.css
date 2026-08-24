@@ -3949,3 +3949,100 @@ svg{vector-effect:non-scaling-stroke}
 @media(max-width:760px){
   .gsec{scroll-margin-top:calc(56px + 50px + 16px)}
 }
+
+/* ===========================================================================
+   SECTIONS THAT READ AS SECTIONS.
+
+   Removing the fills was right and went one step too far. What was left was a
+   12px header, a hairline at ten percent, and eleven pixels of air, repeated
+   down the page: every boundary the same weight as every row divider, every
+   title barely larger than the sentence under it. Nothing told the eye where
+   one instrument ended and the next began, so the whole screen read as one
+   scroll.
+
+   The fix is rhythm and weight, not fill. A section boundary is now a heavier
+   rule than the dividers inside a section, the title is unmistakably a title,
+   and there is real air above each header. Type comes up across the board:
+   a working surface people read for ten minutes should not be set at the size
+   of a footnote.
+   =========================================================================== */
+
+/* The boundary between two sections outranks the dividers inside one. */
+.gsec{border-bottom:1px solid rgba(15,15,14,.17)}
+.gsec:last-child{border-bottom:0}
+
+/* Air above the title, then the rule close under it, so the header belongs to
+   what follows it rather than floating between two things. */
+.gsh{padding:30px 26px 11px;border-bottom:1px solid var(--border)}
+.gsh .t{font-size:15px;font-weight:600;letter-spacing:-.014em;line-height:1.2}
+.gsh .q{font-size:11px;letter-spacing:0}
+.gsh .v{font-size:12px}
+.gsb{padding:17px 26px 28px}
+
+/* Body copy at a size meant for reading. */
+.gbody{font-size:14px;line-height:1.7;max-width:74ch}
+.gbody + .gbody{margin-top:13px}
+.glist2 li{font-size:13.5px;line-height:1.65;padding:9px 0 9px 20px}
+.glist2 li::before{top:17px}
+.gchainnote,.gwatchnote{font-size:12px;line-height:1.65}
+
+/* Rows and figures. */
+.grow .n{font-size:13.5px}
+.grow .m{font-size:12px}
+.grow .f{font-size:13.5px}
+.grow .n span.sub{font-size:12px}
+.grow.ghrow .m{font-size:11px}
+.gkv{font-size:12.5px}
+.gstat .k{font-size:11px}
+.gstat .c{font-size:12px}
+.gfig b{font-size:24px}
+.gfig span{font-size:12.5px}
+
+/* The derivation ledger. */
+.gstep{padding:9px 8px;grid-template-columns:22px minmax(0,1fr) 140px}
+.gstep .n{font-size:13.5px}
+.gstep .n em{font-size:12px}
+.gstep .v{font-size:13.5px}
+.gstep .i{font-size:11px}
+
+/* Watch conditions and gates. */
+.gwch .n{font-size:13.5px}
+.gwch .w{font-size:11px}
+.gwct{font-size:14px;line-height:1.55}
+.gwc{padding:15px 26px 17px}
+.ggate{padding:16px 20px 18px}
+.ggate .gh b{font-size:13px}
+.ggate .gh span{font-size:11px}
+.ggate .q{font-size:13px;line-height:1.6}
+.ggate .x{font-size:12px;line-height:1.6}
+.gtwo > div{padding:16px 26px 20px}
+.gtwo .k{font-size:11px;margin-bottom:10px}
+
+/* The finding block leads the page, so it gets the most air of any of them. */
+.gfind{padding:26px 26px 24px}
+.ghl{font-size:28px;line-height:1.14}
+.gimpact .f{font-size:30px}
+.gimpact .s{font-size:13px}
+.gtagm,.gtag{font-size:12px}
+
+/* Chrome that sits beside the sections comes up with them. */
+.gstripc .k{font-size:10.5px}
+.gstripc .v{font-size:13px}
+.jump a{font-size:13px;padding:8px 9px}
+.rail .rt{font-size:11.5px}
+.gempty b{font-size:13.5px}
+.gempty span{font-size:13px;line-height:1.65}
+.gsh,.gsb,.gfind{scroll-margin-top:calc(var(--hdr) + 20px)}
+
+@media(max-width:760px){
+  .gsh{padding:24px 16px 10px}
+  .gsh .t{font-size:14.5px}
+  .gsb{padding:15px 16px 24px}
+  .gfind{padding:20px 16px 18px}
+  .ghl{font-size:23px}
+  .gimpact .f{font-size:25px}
+  .gbody{font-size:13.5px}
+  .gwc{padding:14px 16px 16px}
+  .ggate{padding:14px 16px 16px}
+  .gtwo > div{padding:14px 16px 18px}
+}
