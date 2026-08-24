@@ -3830,3 +3830,113 @@ svg{vector-effect:non-scaling-stroke}
 /* Section headers reserve the corner the explain mark sits in, so a header
    with several verbs never runs underneath it. */
 .gsh{padding-right:46px}
+
+/* ===========================================================================
+   THE PHONE, CORRECTED.
+
+   Two things were wrong at 390px, the width most phones actually report.
+
+   The lockup. A 52px mark under a 21px wordmark inside a 72px bar made the
+   logo the largest type on the screen by half again: bigger than any headline,
+   bigger than any figure, in a bar that ate a tenth of the viewport before a
+   single row of content. A logo that outweighs the work is a logo the reader
+   has to look past. It comes down to a 34px mark and a 17px wordmark in a 56px
+   bar, which is still comfortably legible, sits in scale with the content, and
+   returns sixteen pixels of height to every screen.
+
+   The rows. Section rows carry their column widths as an inline grid template,
+   sized for a desktop canvas. At 390px the fixed columns add up to more than
+   the row, so the flexible constraint column is squeezed to zero and its text
+   is painted straight over the column beside it: "CoSretreaiirnitty". Switching
+   the row to flex on narrow screens retires the grid template entirely rather
+   than fighting it, and the cells stack in reading order instead of colliding.
+   =========================================================================== */
+
+@media(max-width:760px){
+  .mbar{height:56px}
+  .mbar .marklogo{width:34px;height:34px;border-radius:9px}
+  .mbar .lockup{font-size:17px;letter-spacing:-.014em;gap:8px;min-width:0}
+  .apphdr{top:56px}
+  main{padding-top:calc(56px + 50px)}
+  .stick{top:56px}
+
+  /* Sixteen points of gutter instead of twenty six. On a 390px screen the
+     extra twenty are a tenth of the line length. */
+  .gsh,.gsb,.ghead,.gfind,.gtool,.gstat,.gwc,.ggate,.gtwo > div,
+  .glist .grow,.grow.ghrow,.gwatchnote{padding-left:16px;padding-right:16px}
+  .gsb{padding-top:11px;padding-bottom:16px}
+  .gfind{padding-top:16px;padding-bottom:15px}
+  .ghl{font-size:21px;max-width:none}
+  .ghead h1{font-size:20px}
+  .gimpact .f{font-size:23px}
+  .gbody{font-size:13px}
+
+  /* The header wraps rather than crushing its own title. Verbs drop to their
+     own line and read as links, because a tap target on a phone does not need
+     a hover pill to be findable. */
+  .gsh{flex-wrap:wrap;row-gap:2px;padding-top:14px;padding-bottom:8px}
+  .gsh .sp{flex:1 0 100%;height:0}
+  .gsh .v{padding:4px 0;margin-right:16px;border-radius:0}
+  .gsh .v:hover{background:none}
+
+  /* Rows stack. The grid template that arrives as an inline style is retired
+     rather than overridden value by value. */
+  .glist .grow{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 12px;
+    padding-top:12px;padding-bottom:12px}
+  .glist .grow > *{min-width:0}
+  .glist .grow .n{flex:1 0 100%;order:1;font-size:13.5px;line-height:1.4}
+  .glist .grow .m{order:2;font-size:11.5px;color:var(--faint)}
+  .glist .grow .gst{order:3}
+  .glist .grow .f{order:4;margin-left:auto;font-size:11.5px;color:var(--faint);font-weight:400}
+  .glist .grow .ch{display:none}
+  /* Column heads describe columns. Once the columns are gone, so are they. */
+  .glist .grow.ghrow{display:none}
+  /* The hover-only row actions never appear on a touch screen, so the date
+     they were hiding behind stays put. */
+  .grow.act:hover .rowacts{display:none}
+  .grow.act:hover .dt{display:inline}
+
+  /* Filters scroll sideways instead of stacking five rows deep. */
+  .gtool{flex-direction:column;align-items:stretch;gap:9px;padding-top:12px;padding-bottom:12px}
+  .gtool .searchin{width:100%;min-width:0}
+  .gfgroup{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+    -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);
+    mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent)}
+  .gfgroup::-webkit-scrollbar{display:none}
+  .gfgroup > *{flex:0 0 auto}
+  .gfgroup + .gfgroup{margin-left:0;padding-left:0;box-shadow:none}
+  .gflbl{position:sticky;left:0;background:var(--page);padding-right:4px;z-index:1}
+
+  /* The status strip scrolls rather than wrapping into four ragged rows. */
+  .gstrip{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .gstrip::-webkit-scrollbar{display:none}
+  .gstripc{flex:0 0 auto;padding:9px 14px}
+  .gstripact{padding:0 14px}
+
+  /* Derivation keeps its three columns but loses the index gutter. */
+  .gstep{grid-template-columns:minmax(0,1fr) 104px;padding-left:0;padding-right:0}
+  .gstep .i{display:none}
+  .gchain{margin:0}
+  .gchainnote{font-size:11px}
+}
+
+@media(max-width:340px){
+  .mbar .marklogo{width:30px;height:30px;border-radius:8px}
+  .mbar .lockup{font-size:15.5px}
+}
+
+/* The back button and the screen title were hidden on phones, on the
+   reasoning that the bar above already carries the brand. That is true of the
+   brand and false of the screen: on an analysis, hiding both leaves a phone
+   with no way back and no statement of which business is on screen. The
+   bottom tab bar is not a back button; it is a different place to go.
+
+   They come back. The title shrinks and ellipsises rather than pushing the
+   status and the action off the edge, which is what hiding it was avoiding. */
+@media(max-width:760px){
+  .apphdr .back{display:flex;flex:0 0 auto}
+  .apphdr .ttl{display:block;flex:0 1 auto;min-width:0;max-width:none;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+  .apphdr{gap:8px;padding-left:12px;padding-right:12px}
+  .apphdr .btn{padding:6px 11px;font-size:12px;min-height:0}
+}
