@@ -354,7 +354,14 @@ export function LiveDetail({ id }: { id: string }) {
   const raw = d?.raw
   const c = (pick(raw, ['constraintResult']) || d?.constraint) as Loose | undefined
   const headline = textOf(pick(c, ['title', 'headline'])) || textOf(pick(raw, ['primaryConstraintTitle']))
-  const category = textOf(pick(c, ['category'])) || textOf(pick(raw, ['primaryConstraintCategory']))
+  /* The engine sends the category in caps. The design system is explicit that
+     readouts are language rather than shouting, so it is cased here rather
+     than styled into submission, which would leave the raw value in the DOM
+     for anything that copies it. */
+  const categoryRaw = textOf(pick(c, ['category'])) || textOf(pick(raw, ['primaryConstraintCategory']))
+  const category = categoryRaw && categoryRaw === categoryRaw.toUpperCase()
+    ? categoryRaw.toLowerCase().replace(/(^|[\s/_-])([a-z])/g, (_m, p1, p2) => p1 + p2.toUpperCase()).replace(/_/g, ' ')
+    : categoryRaw
   const sevRaw = pick(c, ['severityScore', 'severity']) ?? pick(raw, ['severityScore'])
   const sev = typeof sevRaw === 'number' ? sevRaw : parseInt(String(sevRaw || ''), 10)
   const confidence = textOf(pick(c, ['confidenceLevel', 'confidence']))
@@ -369,7 +376,14 @@ export function LiveDetail({ id }: { id: string }) {
   const sequencing = textOf(pick(et, ['sequencingLogic']))
   const planHeadline = textOf(pick(et, ['headline']))
   const horizon = pick(et, ['horizonWeeks'])
-  const subDiagnosis = textOf(pick(et, ['subDiagnosis']))
+  /* Sub-diagnosis is sometimes a sentence and sometimes an internal handle
+     like "hyp-acquisition-1". A handle is not an explanation, and printing one
+     under a heading a customer reads is how an engine identifier ends up in a
+     board deck. Anything that does not read as prose is dropped. */
+  const subDiagnosisRaw = textOf(pick(et, ['subDiagnosis']))
+  const looksLikeHandle = (s: string): boolean =>
+    !/\s/.test(s.trim()) || /^[a-z0-9]+([-_][a-z0-9]+)+$/i.test(s.trim())
+  const subDiagnosis = subDiagnosisRaw && !looksLikeHandle(subDiagnosisRaw) ? subDiagnosisRaw : ''
 
   /* Evidence, narrative, feasibility: the honest layers. */
   const ep = pick(raw, ['evidencePackage']) as Loose | undefined
