@@ -14,6 +14,7 @@ import { toast } from '../lib/bus'
 import { Editorial } from '../components/Editorial'
 import { Detail } from './Detail'
 import { Why } from '../components/Why'
+import { Section, Row } from '../components/Section'
 
 /** Route switch: the bundled Northlane sample keeps the full demo
  *  experience; every real analysis id renders the live detail. */
@@ -63,25 +64,40 @@ const money = (v: unknown): string => {
   return isFinite(n) && n > 0 ? '+$' + Math.round(n).toLocaleString() + ' a month' : ''
 }
 
-function Sev({ n }: { n: number }) {
-  return (
-    <span className="lvsev" role="img" aria-label={'Severity ' + n + ' of 10'}>
-      {Array.from({ length: 10 }, (_, i) => <i key={i} className={i < n ? 'on' : ''} />)}
-    </span>
-  )
-}
-
 /** Jump to / run details rail. Every entry mirrors a real, currently
  *  rendered section below (or a real field from the analysis record) -
  *  nothing here is invented, it is the same content relocated into the
  *  inspector rail the rest of the portal already uses. */
-function LiveRail({ sev, confidence, jumps, meta }: {
+function LiveRail({ sev, confidence, jumps, meta, plan }: {
   sev: number; confidence: string
   jumps: [string, string][]
   meta: [string, string][]
+  /** Where the plan stands. Absent when this analysis has no plan, which is
+   *  a real state and not an empty one. */
+  plan: { weeks: number; committed: number; now: number; gates: number; nextTask: string } | null
 }) {
   return (
     <aside className="rail">
+      {plan && plan.weeks > 0 && (
+        <div className="blk railplan">
+          <div className="rt">This plan</div>
+          <div className="sevbig"><b>{plan.committed}</b>
+            <span>of {plan.weeks} weeks committed</span></div>
+          <div className="ggauge" style={{ marginTop: 10 }}>
+            <i className={plan.committed === plan.weeks ? 'ok' : 'am'}
+              style={{ width: Math.round((plan.committed / plan.weeks) * 100) + '%' }} />
+            {plan.now > 0 && plan.now <= plan.weeks && (
+              <span style={{ left: Math.round(((plan.now - 1) / plan.weeks) * 100) + '%' }} />
+            )}
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <div className="gkv"><span className="k">Today</span><span className="v2">
+              {plan.now > plan.weeks ? 'past the horizon' : 'week ' + Math.max(1, plan.now)}</span></div>
+            <div className="gkv"><span className="k">Decision gates</span><span className="v2">{plan.gates}</span></div>
+            <div className="gkv"><span className="k">Next</span><span className="v2">{plan.nextTask}</span></div>
+          </div>
+        </div>
+      )}
       {isFinite(sev) && sev > 0 && (
         <div className="blk">
           <div className="rt">Severity</div>
@@ -398,10 +414,10 @@ export function LiveDetail({ id }: { id: string }) {
   if (finding) jumps.push(['verdict', 'What the engine found'])
   if (narrativeText) jumps.push(['narrative', 'The verdict, in full'])
   if (causes.length > 0) jumps.push(['causes', 'Root causes'])
-  if (acc.evidence && (supporting.length > 0 || contradicting.length > 0)) jumps.push(['evidence', 'What the data said'])
-  if (acc.plan && phases.length > 0) jumps.push(['plan', 'The 90 day plan'])
+  if (acc.evidence && (supporting.length > 0 || contradicting.length > 0)) jumps.push(['evidence', 'Evidence'])
+  if (acc.plan && phases.length > 0) jumps.push(['plan', 'The plan'])
   if (acc.plan && gates.length > 0) jumps.push(['gates', 'Decision gates'])
-  if (acc.plan && indicators.length > 0) jumps.push(['indicators', 'Indicators'])
+  if (acc.plan && indicators.length > 0) jumps.push(['indicators', 'Watch conditions'])
   if (acc.evidence && epLimitations.length > 0) jumps.push(['limits', 'What would prove this wrong'])
 
   /* The week map the plan actually covers. Each phase owns the weeks its own
@@ -519,6 +535,69 @@ export function LiveDetail({ id }: { id: string }) {
   if (brainStatus) metaRows.push(['Constraint selection', brainStatus.replace(/_/g, ' ')])
   if (engineVersion) metaRows.push(['Engine', engineVersion])
 
+  /* ---------------------------------------------------------------------
+     The derivation, as a ledger.
+
+     Every row is a field the engine actually sent, or arithmetic over two of
+     them. Nothing here is written by the portal. The raw central figure is
+     recovered by dividing the adjusted number back out by the same two
+     discounts that produced it, so the chain reads in the order the engine
+     applied it rather than in the order the payload happens to arrive.
+     --------------------------------------------------------------------- */
+  type Step = { k: string; v: string; note?: string; num?: number; rule?: boolean; res?: boolean }
+  const dollars = (n: number): string =>
+    isFinite(n) && n > 0 ? '$' + Math.round(n).toLocaleString() : ''
+  const chain: Step[] = []
+  if (acc.financials && upside) {
+    const p10 = numOf(pick(feasEntry, ['impactP10']))
+    const p90 = numOf(pick(feasEntry, ['impactP90']))
+    const adj = numOf(pick(feasEntry, ['adjustedOpportunity', 'adjustedMonthlyOpportunity']))
+    const exec = numOf(pick(feasEntry, ['executionProbability']))
+    const causal = numOf(pick(feasEntry, ['causalSuccessProbability']))
+    let n = 0
+    if (upsideStage) chain.push({ k: 'Stage the impact was measured at', v: upsideStage, num: ++n })
+    if (isFinite(p10) && isFinite(p90) && p10 > 0) {
+      chain.push({ k: 'Modelled monthly impact, 10th percentile', v: dollars(p10), num: ++n })
+      chain.push({ k: 'Modelled monthly impact, 90th percentile', v: dollars(p90), num: ++n })
+    }
+    if (isFinite(adj) && isFinite(upDiscount) && upDiscount > 0) {
+      chain.push({ k: 'Central impact before discounting', v: dollars(adj / upDiscount), num: ++n, rule: true })
+    }
+    if (isFinite(exec)) chain.push({ k: 'Execution probability', note: 'team size, tooling, prior plans', v: '\u00d7\u2009' + exec.toFixed(2) })
+    if (isFinite(causal)) chain.push({ k: 'Causal success probability', note: 'strength of the evidence', v: '\u00d7\u2009' + causal.toFixed(2) })
+    if (isFinite(adj) && adj > 0) {
+      chain.push({ k: 'Adjusted monthly opportunity', v: dollars(adj), res: true })
+    }
+    if (upsideRange) {
+      chain.push({
+        k: 'Range carried to the headline',
+        note: 'both ends through the same two discounts',
+        v: upsideRange.low.replace('+', '').replace(' a month', '') + ' to ' + upsideRange.high.replace('+', '').replace(' a month', '')
+      })
+    }
+  }
+  const copyChain = () => {
+    const txt = chain.map(s => s.k + (s.note ? ' (' + s.note + ')' : '') + ': ' + s.v).join('\n')
+    navigator.clipboard?.writeText(txt)
+      .then(() => toast('Derivation copied.'), () => toast('Could not copy.'))
+  }
+
+  /* The strip needs to know which phase owns this week, because committing a
+     week is a claim about a specific phase and the record stores both. */
+  const nowPhase = phaseWeekMap.findIndex(ws => ws.indexOf(nowWeek) >= 0)
+  const canCommitNow = acc.plan && nowPhase >= 0 && nowWeek > 0 && !commits[nowWeek]
+  const planState = plannedWeeks === 0 ? 'No plan'
+    : planFinished ? 'Complete'
+      : committedCount > 0 ? 'Running' : 'Not started'
+  const jumpTo = (anchor: string) => {
+    const el = document.getElementById(anchor)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+  const copyLink = () => {
+    navigator.clipboard?.writeText(window.location.origin + '/analyses/' + id)
+      .then(() => toast('Link copied.'), () => toast('Could not copy.'))
+  }
+
   return (
     <div className="scr on">
       <div className="apphdr">
@@ -537,11 +616,44 @@ export function LiveDetail({ id }: { id: string }) {
         <a className="btn g" href={'https://growthterminal.io/portal/analyses/' + id}
           target="_blank" rel="noreferrer">Open in classic portal</a>
       </div>
+
+      {/* The live status strip. Where the plan stands, before anything is
+          read. It is the difference between a document about a diagnosis and
+          a surface that is running one. */}
+      {d && complete && acc.plan && plannedWeeks > 0 && (
+        <div className="gstrip">
+          <div className="gstripc"><span className="k">Plan</span>
+            <span className="v">
+              <i className={'dot' + (planState === 'Running' ? ' run' : planState === 'Complete' ? ' ok' : '')} />
+              {planState}</span></div>
+          <div className="gstripc"><span className="k">Progress</span>
+            <span className="v">{nowWeek > plannedWeeks ? 'Past week ' + plannedWeeks : 'Week ' + Math.max(1, nowWeek) + ' of ' + plannedWeeks}</span>
+            <span className="gstripbar"><i style={{ width: Math.min(100, Math.round((Math.max(0, nowWeek) / plannedWeeks) * 100)) + '%' }} /></span></div>
+          <div className="gstripc"><span className="k">Weeks committed</span>
+            <span className="v">{committedCount} of {plannedWeeks}</span></div>
+          {gates.length > 0 && (
+            <div className="gstripc"><span className="k">Decision gates</span>
+              <span className="v">{gates.length} set in advance</span></div>
+          )}
+          {indicators.length > 0 && (
+            <div className="gstripc"><span className="k">Watching</span>
+              <span className="v">{indicators.length} {indicators.length === 1 ? 'indicator' : 'indicators'}</span></div>
+          )}
+          {canCommitNow && (
+            <div className="gstripact">
+              <button className="btn g" style={{ padding: '6px 12px', fontSize: 12, minHeight: 0 }}
+                onClick={() => doCommit(nowWeek, nowPhase, textOf(phases[nowPhase].title))}>
+                Commit week {nowWeek}</button>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="canvas" style={d && complete ? undefined : { gridTemplateColumns: 'minmax(0,1fr)' }}>
-        <div className="wrap lvwrap">
+        <div className="wrap lvwrap gwrap">
 
           {!d && !err && (
-            <div className="lvpanel lvcenter" aria-busy="true">
+            <div className="gcenter" aria-busy="true">
               <span className="skel" style={{ width: 220 }} />
               <span className="skel" style={{ width: 320 }} />
               <span className="skel" style={{ width: 180 }} />
@@ -549,172 +661,283 @@ export function LiveDetail({ id }: { id: string }) {
           )}
 
           {err && (
-            <div className="lvpanel lvcenter">
+            <div className="gcenter">
               <b>Could not load this analysis.</b>
-              <span className="lvmut">{err}</span>
+              <span>{err}</span>
             </div>
           )}
 
           {d && running && (
-            <div className="lvpanel lvcenter">
+            <div className="gcenter">
               <span className="lvpulse" aria-hidden="true" />
               <b>The engine is working.</b>
-              <span className="lvmut">Started {fmtDate(d.createdAt)}. Verdicts usually land in under ten minutes; this page refreshes itself.</span>
+              <span>Started {fmtDate(d.createdAt)}. Verdicts usually land in under ten minutes; this page refreshes itself.</span>
             </div>
           )}
 
           {d && failed && (
-            <div className="lvpanel lvcenter">
+            <div className="gcenter">
               <b>This analysis failed.</b>
-              <span className="lvmut">The workbook may not have had enough numeric data to score. Run it again from the Google Sheets{'™'} add-on.</span>
+              <span>The workbook may not have had enough numeric data to score. Run it again from the Google Sheets{'\u2122'} add-on.</span>
             </div>
           )}
 
           {d && complete && (
             <>
               {acc.previewing && (!acc.evidence || !acc.financials || !acc.plan) && (
-                <div className="lvpanel"><span className="lbl">Role preview</span>
-                  <p className="lvbody">Viewing as {acc.role}. Sections this role cannot access are hidden: {[
+                <Section title="Role preview" qualifier={acc.role}>
+                  <p className="gbody">Sections this role cannot access are hidden: {[
                     !acc.evidence && 'evidence', !acc.financials && 'financials', !acc.plan && 'the plan'
-                  ].filter(Boolean).join(', ')}.</p></div>
-              )}
-              {category && <div className="lvcat">Constraint category<b>{category}</b><Why k="category" /></div>}
-              <h1 className="lvhead">{headline || 'Constraint identified.'}</h1>
-              {isFinite(sev) && sev > 0 && (
-                <div className="lvsevrow">
-                  <Sev n={Math.min(10, Math.max(0, sev))} />
-                  <Why k="severity" /><span className="lvmut">Severity {sev} of 10{confidence ? ', ' + confidence.toLowerCase() + ' confidence' : ''}</span>
-                </div>
+                  ].filter(Boolean).join(', ')}.</p>
+                </Section>
               )}
 
-              {((acc.financials && upside) || subDiagnosis) && (
-                <div className="lvcall">
-                  {acc.financials && upside && <div className="lvpanel amber"><span className="lbl">If you act</span><Why k="upside" />
-                    {upsideRange ? (
-                      <p className="lvbody"><b className="lvfig">{upsideRange.low.replace(' a month', '')} to {upsideRange.high}</b> central
-                        estimate {upside.replace(' a month', '')}. Measured from your own funnel{upsideStage ? ' at the ' + upsideStage + ' stage' : ''},
-                        then discounted by execution and causal success probability.</p>
-                    ) : (
-                      <p className="lvbody"><b className="lvfig">{upside}</b> Modelled from category benchmarks, adjusted by execution
-                        and causal success probability. Not yet measured from your funnel: add lead, opportunity and win counts to your
-                        sheet and this becomes a measured range.</p>
-                    )}</div>}
-                  {subDiagnosis && <div className="lvpanel"><span className="lbl">Sub-diagnosis</span><Why k="subDiagnosis" />
-                    <p className="lvbody">{subDiagnosis}</p></div>}
+              {/* The finding: the claim, the money, and the controls that act
+                  on both. Everything below this block exists to be attacked. */}
+              <div className="gfind">
+                <div className="gtagrow">
+                  {category && <span className="gtag"><i />{category}<Why k="category" /></span>}
+                  {isFinite(sev) && sev > 0 && (
+                    <span className="gtagm">Severity {Math.min(10, Math.max(0, sev))} of 10
+                      {confidence ? ', ' + confidence.toLowerCase() + ' confidence' : ''}<Why k="severity" /></span>
+                  )}
                 </div>
+                <h1 className="ghl">{headline || 'Constraint identified.'}</h1>
+                {acc.financials && upside && (
+                  <div className="gimpact">
+                    {upsideRange ? (
+                      <>
+                        <span className="f">{upsideRange.low.replace('+', '').replace(' a month', '')} to {upsideRange.high.replace('+', '').replace(' a month', '')}</span>
+                        <span className="s">a month · central estimate {upside.replace('+', '').replace(' a month', '')}
+                          {upsideStage ? ' · measured at the ' + upsideStage + ' stage' : ''}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="f">{upside.replace('+', '').replace(' a month', '')}</span>
+                        <span className="s">a month · modelled from category benchmarks, not yet measured from your funnel</span>
+                      </>
+                    )}
+                    <Why k="upside" />
+                  </div>
+                )}
+                <div className="gacts">
+                  {acc.plan && phases.length > 0 && (
+                    <button className="btn d" onClick={() => jumpTo('plan')}>
+                      Open the {typeof horizon === 'number' ? horizon + ' week' : ''} plan</button>
+                  )}
+                  {acc.evidence && (supporting.length > 0 || contradicting.length > 0) && (
+                    <button className="btn g" onClick={() => jumpTo('evidence')}>See the evidence</button>
+                  )}
+                  {narrativeText && <button className="btn g" onClick={() => jumpTo('narrative')}>Read the verdict</button>}
+                  <button className="btn g" onClick={copyLink}>Copy link</button>
+                </div>
+              </div>
+
+              {acc.financials && upside && chain.length > 0 && (
+                <Section
+                  id="derivation"
+                  title="Derivation"
+                  qualifier={chain.length + ' steps'}
+                  verbs={[{ label: 'Copy the numbers', onClick: copyChain }]}
+                >
+                  <div className="gchain">
+                    {chain.map((s, i) => (
+                      <div key={s.k} className={'gstep' + (s.rule ? ' rule' : '') + (s.res ? ' res' : '')}>
+                        <span className="i">{s.res || !s.num ? '' : s.num}</span>
+                        <span className="n">{s.k}{s.note && <em>{'  ' + s.note}</em>}</span>
+                        <span className="v">{s.v}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="gchainnote">{upsideFromFunnel
+                    ? 'Every figure above is read from your own workbook or scored by the engine. The two multipliers are separate questions the engine answers separately: whether this team executes the change, and whether the change causes the outcome. Change either and the range moves with it.'
+                    : 'This run had no measured funnel to model against, so the impact came from category benchmarks rather than your numbers. Adding lead, opportunity and win counts to the sheet replaces the benchmark with a measured range.'}</p>
+                </Section>
+              )}
+
+              {subDiagnosis && (
+                <Section title="Sub-diagnosis">
+                  <Why k="subDiagnosis" />
+                  <p className="gbody">{subDiagnosis}</p>
+                </Section>
               )}
 
               {finding && (
-                <div className="lvpanel" id="verdict"><span className="lbl">What the engine found</span><Why k="verdict" />
-                  <p className="lvbody">{finding}</p></div>
+                <Section id="verdict" title="What the engine found">
+                    <Why k="verdict" />
+                    <p className="gbody">{finding}</p>
+                  </Section>
               )}
 
               {narrativeText && (
-                <div className="lvpanel" id="narrative"><span className="lbl">The verdict, in full</span><Why k="narrative" />
-                  <p className="lvbody lvpre">{narrativeText}</p></div>
+                <Section id="narrative" title="The verdict, in full" qualifier="unedited">
+                    <Why k="narrative" />
+                    <p className="gbody pre">{narrativeText}</p>
+                  </Section>
               )}
 
               {causes.length > 0 && (
-                <div className="lvpanel" id="causes"><span className="lbl">Root causes</span><Why k="causes" />
-                  <ul className="lvlist">{causes.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
+                <Section id="causes" title="Root causes" qualifier={causes.length + (causes.length === 1 ? ' cause' : ' causes')}>
+                    <Why k="causes" />
+                    <ul className="glist2">{causes.map((x, i) => <li key={i}>{x}</li>)}</ul>
+                  </Section>
               )}
 
               {acc.evidence && (supporting.length > 0 || contradicting.length > 0) && (
-                <div className="lvcall" id="evidence">
-                  {supporting.length > 0 && <div className="lvpanel"><span className="lbl">Evidence for this call</span><Why k="supporting" />
-                    <ul className="lvlist">{supporting.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
-                  {contradicting.length > 0 && <div className="lvpanel"><span className="lbl">Evidence against it</span><Why k="contradicting" />
-                    <ul className="lvlist">{contradicting.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
-                </div>
-              )}
-
-              {acc.plan && phases.length > 0 && (
-                <div className="lvtimeline" id="plan">
-                  <div className="lvplanhead">
-                    <span className="lbl">The plan, as the engine wrote it</span><Why k="plan" />
-                    {planHeadline && <b className="lvplant">{planHeadline}</b>}
-                    {typeof horizon === 'number' && <span className="lvmut">{horizon} weeks, {phases.length} phases, {gates.length} decision gates</span>}
-                    {sequencing && <p className="lvbody">{sequencing}</p>}
-                    {plannedWeeks > 0 && (
-                      <div className="planprog">
-                        <span className="lbl">Plan progress</span><Why k="planprog" />
-                        <div className="planbar" role="img"
-                          aria-label={committedCount + ' of ' + plannedWeeks + ' weeks committed'
-                            + (nowWeek > 0 ? '. Today is week ' + nowWeek + ' of ' + plannedWeeks : '')}>
-                          <i className="fill"
-                            style={{ width: Math.round((committedCount / plannedWeeks) * 100) + '%' }} />
-                          {nowWeek > 0 && nowWeek <= plannedWeeks && (
-                            <span className="now"
-                              style={{ left: Math.round(((nowWeek - 1) / plannedWeeks) * 100) + '%' }} />
-                          )}
-                        </div>
-                        <div className="planlegend">
-                          <span className="pk"><i className="sw done" />
-                            {committedCount} of {plannedWeeks} weeks committed</span>
-                          {nowWeek > 0 && nowWeek <= plannedWeeks && (
-                            <span className="pk"><i className="sw now" />
-                              Today, week {nowWeek} of {plannedWeeks}</span>
-                          )}
-                          {nowWeek > plannedWeeks && (
-                            <span className="pk"><i className="sw now" />
-                              The {plannedWeeks} week plan has ended</span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="plan">
-                    {phases.map((p, i) => (
-                      <LivePhase key={i} p={p} n={i + 1} open={openPhase === i}
-                        toggle={() => setOpenPhase(openPhase === i ? -1 : i)}
-                        weeks={phaseWeekMap[i]} now={nowWeek} commits={commits}
-                        onCommit={w => doCommit(w, i, textOf(p.title))}
-                        onUndo={doUndo} />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {acc.plan && planFinished && checkSpec.length > 0 && (
-                <PlanVerify spec={checkSpec} items={checkItems} note={checkNote} sealed={sealed}
-                  onAnswer={doAnswer} onNote={doNote} onCommit={doVerify} onReopen={doReopen} />
-              )}
-
-              {acc.plan && gates.length > 0 && (
-                <div className="lvpanel" id="gates"><span className="lbl">Decision gates</span><Why k="gates" />
-                  {gates.map((g, i) => (
-                    <div key={i} className="gate" style={{ margin: '6px 0 0' }}>
-                      <span className="lbl">Gate {i + 1}{textOf(g.timing) ? ', ' + textOf(g.timing) : ''}</span>
-                      <div className="q">{textOf(pick(g, ['condition', 'question', 'criteria', 'checkpoint', 'description']))}</div>
-                      <div className="two">
-                        {textOf(g.ifPass) && <div><span className="lbl">If pass</span><span className="v">{textOf(g.ifPass)}</span></div>}
-                        {textOf(g.ifMiss) && <div><span className="lbl">If miss</span><span className="v">{textOf(g.ifMiss)}</span></div>}
-                      </div>
+                <Section
+                    id="evidence"
+                    title="Evidence"
+                    qualifier={supporting.length + ' for, ' + contradicting.length + ' against'}
+                    flush
+                  >
+                    <div className="gtwo">
+                      {supporting.length > 0 && (
+                        <div><span className="k">For this call<Why k="supporting" /></span>
+                          <ul className="glist2">{supporting.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
+                      )}
+                      {contradicting.length > 0 && (
+                        <div><span className="k">Against it<Why k="contradicting" /></span>
+                          <ul className="glist2">{contradicting.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  </Section>
               )}
 
               {acc.plan && indicators.length > 0 && (
-                <div className="lvpanel" id="indicators"><span className="lbl">Indicators the engine is watching</span><Why k="indicators" />
-                  <ul className="lvlist">{indicators.map((x, i) => {
-                    const nm = textOf(x)
-                    const tgt = textOf(pick(x, ['target', 'threshold', 'goal']))
-                    return <li key={i}>{nm}{tgt && nm !== tgt ? ', target ' + tgt : ''}</li>
-                  })}</ul></div>
+                <Section
+                    id="indicators"
+                    title="Watch conditions"
+                    qualifier={indicators.length + ', none read yet'}
+                    verbs={gates.length > 0 ? [{ label: 'See the gates', onClick: () => jumpTo('gates') }] : undefined}
+                    flush
+                  >
+                    <p className="gwatchnote">Each of these was named before the work started. The engine reads
+                      them against your workbook at the gate that closes the phase they belong to, and a condition
+                      that breaks withdraws the finding rather than lowering it.</p>
+                    <div className="gwatch">
+                      {indicators.map((x, i) => {
+                        const nm = textOf(x)
+                        const tgt = textOf(pick(x, ['target', 'threshold', 'goal']))
+                        /* Which gate will score this one. Indicators and gates
+                           are both ordered by the phase they belong to, so the
+                           gate that closes the phase this indicator sits in is
+                           the one that reads it. */
+                        const gi = gates.length ? Math.min(gates.length - 1, Math.floor(i * gates.length / Math.max(1, indicators.length))) : -1
+                        const gt = gi >= 0 ? textOf(gates[gi].timing) : ''
+                        return (
+                          <div key={i} className="gwc">
+                            <div className="gwch">
+                              <span className="n">{nm}</span>
+                              {gi >= 0 && <span className="w">{gt ? 'read at ' + gt : 'gate ' + (gi + 1)}</span>}
+                            </div>
+                            <div className="gwct">{tgt && tgt !== nm
+                              ? <>Holds while <b>{tgt}</b></>
+                              : 'No threshold was set for this one'}</div>
+                            <div className="gwcm">
+                              <span className="gst none">{tgt && tgt !== nm ? 'Not read yet' : 'Cannot pass or fail'}</span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </Section>
               )}
 
               {acc.evidence && epLimitations.length > 0 && (
-                <div className="lvpanel" id="limits"><span className="lbl">What would prove this wrong</span><Why k="limits" />
-                  <ul className="lvlist">{epLimitations.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
+                <Section id="limits" title="What would prove this wrong" qualifier="stated in advance">
+                    <Why k="limits" />
+                    <ul className="glist2">{epLimitations.map((x, i) => <li key={i}>{x}</li>)}</ul>
+                  </Section>
+              )}
+
+              {acc.plan && gates.length > 0 && (
+                <Section id="gates" title="Decision gates" qualifier="set before the work started" flush>
+                    <div className="ggates">
+                      {gates.map((g, i) => (
+                        <div key={i} className="ggate">
+                          <div className="gh"><b>Gate {i + 1}</b>
+                            {textOf(g.timing) && <span>{textOf(g.timing)}</span>}
+                            {i === 0 && <Why k="gates" />}</div>
+                          <div className="q">{textOf(pick(g, ['condition', 'question', 'criteria', 'checkpoint', 'description']))}</div>
+                          {(textOf(g.ifPass) || textOf(g.ifMiss)) && (
+                            <div className="x">
+                              {textOf(g.ifPass) && <div>If it passes, <b>{textOf(g.ifPass)}</b></div>}
+                              {textOf(g.ifMiss) && <div>If it misses, <b>{textOf(g.ifMiss)}</b></div>}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </Section>
+              )}
+
+              {acc.plan && phases.length > 0 && (
+                <Section
+                    id="plan"
+                    title="The plan"
+                    qualifier={(typeof horizon === 'number' ? horizon + ' weeks, ' : '') + phases.length + ' phases, ' + gates.length + ' gates'}
+                    verbs={[{ label: 'Jump to gates', onClick: () => jumpTo('gates'), disabled: gates.length === 0 }]}
+                    flush
+                  >
+                    <div className="lvtimeline">
+                      <div className="lvplanhead">
+                        <Why k="plan" />
+                        {planHeadline && <b className="lvplant">{planHeadline}</b>}
+                        {sequencing && <p className="gbody">{sequencing}</p>}
+                        {plannedWeeks > 0 && (
+                          <div className="planprog">
+                            <span className="lbl">Plan progress</span><Why k="planprog" />
+                            <div className="planbar" role="img"
+                              aria-label={committedCount + ' of ' + plannedWeeks + ' weeks committed'
+                                + (nowWeek > 0 ? '. Today is week ' + nowWeek + ' of ' + plannedWeeks : '')}>
+                              <i className="fill"
+                                style={{ width: Math.round((committedCount / plannedWeeks) * 100) + '%' }} />
+                              {nowWeek > 0 && nowWeek <= plannedWeeks && (
+                                <span className="now"
+                                  style={{ left: Math.round(((nowWeek - 1) / plannedWeeks) * 100) + '%' }} />
+                              )}
+                            </div>
+                            <div className="planlegend">
+                              <span className="pk"><i className="sw done" />
+                                {committedCount} of {plannedWeeks} weeks committed</span>
+                              {nowWeek > 0 && nowWeek <= plannedWeeks && (
+                                <span className="pk"><i className="sw now" />
+                                  Today, week {nowWeek} of {plannedWeeks}</span>
+                              )}
+                              {nowWeek > plannedWeeks && (
+                                <span className="pk"><i className="sw now" />
+                                  The {plannedWeeks} week plan has ended</span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="plan">
+                        {phases.map((p, i) => (
+                          <LivePhase key={i} p={p} n={i + 1} open={openPhase === i}
+                            toggle={() => setOpenPhase(openPhase === i ? -1 : i)}
+                            weeks={phaseWeekMap[i]} now={nowWeek} commits={commits}
+                            onCommit={w => doCommit(w, i, textOf(p.title))}
+                            onUndo={doUndo} />
+                        ))}
+                      </div>
+                    </div>
+                  </Section>
+              )}
+
+              {acc.plan && planFinished && checkSpec.length > 0 && (
+                <div id="verify">
+                  <PlanVerify spec={checkSpec} items={checkItems} note={checkNote} sealed={sealed}
+                    onAnswer={doAnswer} onNote={doNote} onCommit={doVerify} onReopen={doReopen} />
+                </div>
               )}
 
               {acc.plan && phases.length === 0 && (
-                <div className="lvpanel">
-                  <span className="lbl">The plan, as the engine wrote it</span>
-                  {fallbackWhy && <p className="lvbody">{fallbackWhy}</p>}
-                  <p className="lvmut" style={{ maxWidth: '62ch' }}>The engine wrote no phased timeline for this run. When it cannot observe enough to plan honestly, it says so instead of inventing one.</p>
-                </div>
+                <Section title="The plan" qualifier="none written">
+                  {fallbackWhy && <p className="gbody">{fallbackWhy}</p>}
+                  <p className="gbody">The engine wrote no phased timeline for this run. When it cannot observe
+                    enough to plan honestly, it says so instead of inventing one.</p>
+                </Section>
               )}
 
               {/* Mounted last so the sections it reaches into already exist. */}
@@ -723,7 +946,13 @@ export function LiveDetail({ id }: { id: string }) {
           )}
 
         </div>
-        {d && complete && <LiveRail sev={sev} confidence={confidence} jumps={jumps} meta={metaRows} />}
+        {d && complete && <LiveRail sev={sev} confidence={confidence} jumps={jumps} meta={metaRows}
+          plan={acc.plan && plannedWeeks > 0 ? {
+            weeks: plannedWeeks, committed: committedCount, now: nowWeek, gates: gates.length,
+            nextTask: nowWeek > plannedWeeks ? 'the horizon has passed'
+              : commits[nowWeek] ? 'week ' + nowWeek + ' is committed'
+                : nowWeek > 0 ? 'commit week ' + nowWeek : 'commit week 1'
+          } : null} />}
       </div>
     </div>
   )
