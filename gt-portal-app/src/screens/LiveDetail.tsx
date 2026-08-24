@@ -44,7 +44,29 @@ const textOf = (v: unknown): string => {
   const t = pick(v, ['text', 'title', 'name', 'summary', 'description', 'statement', 'label', 'metric'])
   return typeof t === 'string' ? t : ''
 }
-const listOf = (v: unknown): string[] => asArray(v).map(textOf).filter(Boolean)
+/** Anything the engine wrote that is not language.
+ *
+ *  The artifact carries internal handles beside prose in the same fields:
+ *  "hyp-acquisition-1", "c_2f9a", a bare uuid, a SCREAMING_ENUM. Those are how
+ *  the engine talks to itself. Printed under a heading a customer reads, one
+ *  of them ends up in a board deck, and every number on the page loses a
+ *  little credibility with it.
+ *
+ *  The test is deliberately conservative: no spaces at all, or a slug shape,
+ *  or a uuid, or an all caps token. Real prose always survives it. */
+const HANDLE = /^[a-z0-9]+([-_.][a-z0-9]+)+$/i
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const isHandle = (s: string): boolean => {
+  const v = (s || '').trim()
+  if (!v) return true
+  if (UUID.test(v)) return true
+  if (!/\s/.test(v)) return true
+  if (HANDLE.test(v)) return true
+  return /^[A-Z0-9_\s]+$/.test(v) && v.length < 40
+}
+/** A string that is safe to show a customer, or nothing. */
+const prose = (s: string): string => (s && !isHandle(s) ? s : '')
+const listOf = (v: unknown): string[] => asArray(v).map(textOf).filter(x => x && !isHandle(x))
 
 function fmtDate(s?: string | null): string {
   if (!s) return ''
@@ -365,7 +387,7 @@ export function LiveDetail({ id }: { id: string }) {
   const sevRaw = pick(c, ['severityScore', 'severity']) ?? pick(raw, ['severityScore'])
   const sev = typeof sevRaw === 'number' ? sevRaw : parseInt(String(sevRaw || ''), 10)
   const confidence = textOf(pick(c, ['confidenceLevel', 'confidence']))
-  const finding = textOf(pick(c, ['description', 'summary']))
+  const finding = prose(textOf(pick(c, ['description', 'summary'])))
   const causes = listOf(pick(c, ['rootCauses']) || pick(raw, ['rootCauses']))
 
   /* The v4 timeline: the play-bank engine's artifact. */
@@ -373,17 +395,15 @@ export function LiveDetail({ id }: { id: string }) {
   const phases = asArray(pick(et, ['phases'])) as Loose[]
   const gates = asArray(pick(et, ['decisionGates', 'gates'])) as Loose[]
   const indicators = asArray(pick(et, ['indicators']))
-  const sequencing = textOf(pick(et, ['sequencingLogic']))
-  const planHeadline = textOf(pick(et, ['headline']))
+  const sequencing = prose(textOf(pick(et, ['sequencingLogic'])))
+  const planHeadline = prose(textOf(pick(et, ['headline'])))
   const horizon = pick(et, ['horizonWeeks'])
   /* Sub-diagnosis is sometimes a sentence and sometimes an internal handle
      like "hyp-acquisition-1". A handle is not an explanation, and printing one
      under a heading a customer reads is how an engine identifier ends up in a
      board deck. Anything that does not read as prose is dropped. */
   const subDiagnosisRaw = textOf(pick(et, ['subDiagnosis']))
-  const looksLikeHandle = (s: string): boolean =>
-    !/\s/.test(s.trim()) || /^[a-z0-9]+([-_][a-z0-9]+)+$/i.test(s.trim())
-  const subDiagnosis = subDiagnosisRaw && !looksLikeHandle(subDiagnosisRaw) ? subDiagnosisRaw : ''
+  const subDiagnosis = prose(subDiagnosisRaw)
 
   /* Evidence, narrative, feasibility: the honest layers. */
   const ep = pick(raw, ['evidencePackage']) as Loose | undefined
@@ -420,7 +440,7 @@ export function LiveDetail({ id }: { id: string }) {
   const engineVersion = textOf(pick(raw, ['engineVersion']))
 
   const fallbackPlan = pick(raw, ['executionPlan']) as Loose | undefined
-  const fallbackWhy = textOf(pick(fallbackPlan, ['rationale']))
+  const fallbackWhy = prose(textOf(pick(fallbackPlan, ['rationale'])))
 
   /* Jump to / run details: built only from sections that actually render
    * below, using their real, already-shipped labels. */
@@ -619,7 +639,7 @@ export function LiveDetail({ id }: { id: string }) {
           <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.6">
             <path d="M10 3L5 8l5 5" /></svg>
         </button>
-        <span className="ttl">{d?.businessName || 'Analysis'}</span>
+        <span className="ttl">{d && d.businessName && d.businessName !== 'Untitled business' ? d.businessName : 'Analysis'}</span>
         {d && <span className={'stat' + (complete ? ' ok' : running ? ' run' : '')} style={{ marginLeft: 10 }}>
           <i />{complete ? 'Complete' : failed ? 'Failed' : running ? 'Running' : d.status}</span>}
         <span className="sp" />
@@ -627,8 +647,6 @@ export function LiveDetail({ id }: { id: string }) {
           <button className={'btn g edtoggle' + (markup ? ' on' : '')} aria-pressed={markup}
             onClick={() => setMarkup(!markup)}>{markup ? 'Done marking' : 'Mark up'}</button>
         )}
-        <a className="btn g" href={'https://growthterminal.io/portal/analyses/' + id}
-          target="_blank" rel="noreferrer">Open in classic portal</a>
       </div>
 
       {/* The live status strip. Where the plan stands, before anything is
@@ -830,8 +848,8 @@ export function LiveDetail({ id }: { id: string }) {
                       that breaks withdraws the finding rather than lowering it.</p>
                     <div className="gwatch">
                       {indicators.map((x, i) => {
-                        const nm = textOf(x)
-                        const tgt = textOf(pick(x, ['target', 'threshold', 'goal']))
+                        const nm = prose(textOf(x)) || textOf(x)
+                        const tgt = prose(textOf(pick(x, ['target', 'threshold', 'goal'])))
                         /* Which gate will score this one. Indicators and gates
                            are both ordered by the phase they belong to, so the
                            gate that closes the phase this indicator sits in is
@@ -872,11 +890,11 @@ export function LiveDetail({ id }: { id: string }) {
                           <div className="gh"><b>Gate {i + 1}</b>
                             {textOf(g.timing) && <span>{textOf(g.timing)}</span>}
                             {i === 0 && <Why k="gates" />}</div>
-                          <div className="q">{textOf(pick(g, ['condition', 'question', 'criteria', 'checkpoint', 'description']))}</div>
+                          <div className="q">{prose(textOf(pick(g, ['condition', 'question', 'criteria', 'checkpoint', 'description'])))}</div>
                           {(textOf(g.ifPass) || textOf(g.ifMiss)) && (
                             <div className="x">
-                              {textOf(g.ifPass) && <div>If it passes, <b>{textOf(g.ifPass)}</b></div>}
-                              {textOf(g.ifMiss) && <div>If it misses, <b>{textOf(g.ifMiss)}</b></div>}
+                              {prose(textOf(g.ifPass)) && <div>If it passes, <b>{prose(textOf(g.ifPass))}</b></div>}
+                              {prose(textOf(g.ifMiss)) && <div>If it misses, <b>{prose(textOf(g.ifMiss))}</b></div>}
                             </div>
                           )}
                         </div>
