@@ -87,18 +87,95 @@ const money = (v: unknown): string => {
   return isFinite(n) && n > 0 ? '+$' + Math.round(n).toLocaleString() + ' a month' : ''
 }
 
+
+/** Scroll a section into place inside the app's own scroll container.
+ *
+ *  Two things make the native jump wrong here. The page does not scroll the
+ *  window, it scrolls <main>, so a hash never moves the right box. And the
+ *  application header is fixed over the first 56 pixels of that box, so an
+ *  element aligned to the top of the container lands underneath it: the
+ *  section header is hidden and the reader sees the middle of the section,
+ *  which is exactly the "half way" complaint.
+ *
+ *  So the offset is the header plus a gap, and the section header lands just
+ *  under the chrome with air above it. A section shorter than the remaining
+ *  viewport ends up sitting in open space rather than clipped to an edge.
+ *
+ *  Returns false when the anchor does not exist, so a caller can decline to
+ *  offer a jump that would go nowhere. */
+export function scrollToSection(id: string): boolean {
+  const el = document.getElementById(id)
+  if (!el) return false
+
+  /* Measure the chrome rather than assuming it. The desktop has one fixed
+     header; the phone has that plus the brand bar above it; a future screen
+     may have neither. Reading the actual bottom edge of whatever is pinned to
+     the viewport means the landing stays correct when those heights change,
+     which is exactly what went wrong the last time a bar was resized. */
+  let chromeBottom = 0
+  document.querySelectorAll<HTMLElement>('.mbar, .apphdr, .stick').forEach(bar => {
+    const pos = getComputedStyle(bar).position
+    if (pos !== 'fixed' && pos !== 'sticky') return
+    const r = bar.getBoundingClientRect()
+    if (r.height === 0 || r.top > 200) return
+    if (r.bottom > chromeBottom) chromeBottom = r.bottom
+  })
+  /* Air above the section header, so it reads as landed rather than clipped
+     to an edge. */
+  const target = chromeBottom + 20
+
+  /* Everything is measured against the viewport, and only the delta is applied
+     to the scroller. That works whether the scroller is <main> or the window,
+     and it does not care where in the viewport the scroller itself begins. */
+  const delta = el.getBoundingClientRect().top - target
+  const c = el.closest('main') as HTMLElement | null
+  if (c && c.scrollHeight > c.clientHeight + 4) {
+    c.scrollTo({ top: Math.max(0, c.scrollTop + delta), behavior: 'smooth' })
+  } else {
+    window.scrollTo({ top: Math.max(0, window.scrollY + delta), behavior: 'smooth' })
+  }
+  return true
+}
+
 /** Jump to / run details rail. Every entry mirrors a real, currently
  *  rendered section below (or a real field from the analysis record) -
  *  nothing here is invented, it is the same content relocated into the
  *  inspector rail the rest of the portal already uses. */
 function LiveRail({ sev, confidence, jumps, meta, plan }: {
   sev: number; confidence: string
+  /** In page order, so the list reads down the screen the way the screen does. */
   jumps: [string, string][]
   meta: [string, string][]
   /** Where the plan stands. Absent when this analysis has no plan, which is
    *  a real state and not an empty one. */
   plan: { weeks: number; committed: number; now: number; gates: number; nextTask: string } | null
 }) {
+  /* Which section the reader is actually in. The first entry used to be
+     marked active permanently, which told the reader they were at the top of
+     a page they had scrolled halfway down. */
+  const [active, setActive] = useState<string>(jumps.length ? jumps[0][0] : '')
+  const ids = jumps.map(j => j[0]).join(',')
+  useEffect(() => {
+    const list = ids ? ids.split(',') : []
+    const els = list.map(id => document.getElementById(id)).filter(Boolean) as HTMLElement[]
+    if (els.length === 0) return
+    /* A band just below the fixed header. Whichever section crosses it owns
+       the highlight, so the rail changes at the same moment the section
+       header reaches the top of the readable area. */
+    const io = new IntersectionObserver(
+      entries => {
+        const hit = entries.filter(e => e.isIntersecting)
+        if (hit.length === 0) return
+        hit.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+        const id = hit[0].target.id
+        if (id) setActive(id)
+      },
+      { root: els[0].closest('main'), rootMargin: '-76px 0px -70% 0px', threshold: 0 },
+    )
+    els.forEach(el => io.observe(el))
+    return () => io.disconnect()
+  }, [ids])
+
   return (
     <aside className="rail">
       {plan && plan.weeks > 0 && (
@@ -134,8 +211,20 @@ function LiveRail({ sev, confidence, jumps, meta, plan }: {
         <div className="blk">
           <div className="rt">Jump to</div>
           <nav className="jump">
-            {jumps.map(([id, label], i) => (
-              <a key={id} href={'#' + id} className={i === 0 ? 'on' : ''}><i />{label}</a>
+            {jumps.map(([id, label]) => (
+              <a
+                key={id}
+                href={'#' + id}
+                className={active === id ? 'on' : ''}
+                aria-current={active === id ? 'true' : undefined}
+                onClick={e => {
+                  /* Never let the browser handle this. A hash would put the
+                     wrong box under the wrong offset and leave a fragment in
+                     an address the router owns. */
+                  e.preventDefault()
+                  scrollToSection(id)
+                }}
+              ><i />{label}</a>
             ))}
           </nav>
         </div>
@@ -464,15 +553,97 @@ export function LiveDetail({ id }: { id: string }) {
 
   /* Jump to / run details: built only from sections that actually render
    * below, using their real, already-shipped labels. */
+  /* ---------------------------------------------------------------------
+     The derivation, as a ledger.
+
+     Every row is a field the engine actually sent, or arithmetic over two of
+     them. Nothing here is written by the portal. The raw central figure is
+     recovered by dividing the adjusted number back out by the same two
+     discounts that produced it, so the chain reads in the order the engine
+     applied it rather than in the order the payload happens to arrive.
+     --------------------------------------------------------------------- */
+  type Step = { k: string; v: string; note?: string; num?: number; rule?: boolean; res?: boolean }
+  const dollars = (n: number): string =>
+    isFinite(n) && n > 0 ? '$' + Math.round(n).toLocaleString() : ''
+  const chain: Step[] = []
+  if (acc.financials && upside) {
+    const p10 = numOf(pick(feasEntry, ['impactP10']))
+    const p90 = numOf(pick(feasEntry, ['impactP90']))
+    const adj = numOf(pick(feasEntry, ['adjustedOpportunity', 'adjustedMonthlyOpportunity']))
+    const exec = numOf(pick(feasEntry, ['executionProbability']))
+    const causal = numOf(pick(feasEntry, ['causalSuccessProbability']))
+    let n = 0
+    if (upsideStage) chain.push({ k: 'Stage the impact was measured at', v: upsideStage, num: ++n })
+    if (isFinite(p10) && isFinite(p90) && p10 > 0) {
+      chain.push({ k: 'Modelled monthly impact, 10th percentile', v: dollars(p10), num: ++n })
+      chain.push({ k: 'Modelled monthly impact, 90th percentile', v: dollars(p90), num: ++n })
+    }
+    if (isFinite(adj) && isFinite(upDiscount) && upDiscount > 0) {
+      chain.push({ k: 'Central impact before discounting', v: dollars(adj / upDiscount), num: ++n, rule: true })
+    }
+    if (isFinite(exec)) chain.push({ k: 'Execution probability', note: 'team size, tooling, prior plans', v: '\u00d7\u2009' + exec.toFixed(2) })
+    if (isFinite(causal)) chain.push({ k: 'Causal success probability', note: 'strength of the evidence', v: '\u00d7\u2009' + causal.toFixed(2) })
+    if (isFinite(adj) && adj > 0) {
+      chain.push({ k: 'Adjusted monthly opportunity', v: dollars(adj), res: true })
+    }
+    if (upsideRange) {
+      chain.push({
+        k: 'Range carried to the headline',
+        note: 'both ends through the same two discounts',
+        v: upsideRange.low.replace('+', '').replace(' a month', '') + ' to ' + upsideRange.high.replace('+', '').replace(' a month', '')
+      })
+    }
+  }
+  const copyChain = () => {
+    const txt = chain.map(s => s.k + (s.note ? ' (' + s.note + ')' : '') + ': ' + s.v).join('\n')
+    navigator.clipboard?.writeText(txt)
+      .then(() => toast('Derivation copied.'), () => toast('Could not copy.'))
+  }
+
+  /* The strip needs to know which phase owns this week, because committing a
+     week is a claim about a specific phase and the record stores both. */
+  /* Indicators and gates are both ordered by the phase they belong to, so the
+     gate that closes the phase an indicator sits in is the one that reads it.
+     Computed once here so the section can be filtered by gate rather than
+     recomputing the mapping inside the render. */
+  const watchAll = indicators.map((x, i) => {
+    const gi = gates.length ? Math.min(gates.length - 1, Math.floor(i * gates.length / Math.max(1, indicators.length))) : -1
+    const timing = gi >= 0 ? textOf(gates[gi].timing) : ''
+    return {
+      i,
+      nm: prose(textOf(x)) || textOf(x),
+      tgt: prose(textOf(pick(x, ['target', 'threshold', 'goal']))),
+      gi,
+      gate: timing || (gi >= 0 ? 'gate ' + (gi + 1) : ''),
+    }
+  })
+  const watchGroups: FilterGroup[] = [{
+    key: 'gate',
+    label: 'Read at',
+    options: Array.from(new Set(watchAll.map(w => w.gate).filter(Boolean))),
+    allLabel: 'Every gate',
+  }]
+  const watchRows = watchAll.filter(w => matches(wf, { gate: w.gate }))
+  const watchNarrowed = activeCount(wf, watchGroups)
+
+  /* In the order the sections are rendered, using each section's own title.
+     The list was in neither: it opened with the verdict while Derivation sits
+     above it, and it put the plan before the gates and indicators that appear
+     above the plan on screen. A jump list whose order disagrees with the page
+     is a table of contents for a different document.
+
+     Every label here is the exact string in the section header, so the entry a
+     reader clicks and the header they land on are the same words. */
   const jumps: [string, string][] = []
+  if (acc.financials && upside && chain.length > 0) jumps.push(['derivation', 'Derivation'])
   if (finding) jumps.push(['verdict', 'What the engine found'])
   if (narrativeText) jumps.push(['narrative', 'The verdict, in full'])
   if (causes.length > 0) jumps.push(['causes', 'Root causes'])
   if (acc.evidence && (supporting.length > 0 || contradicting.length > 0)) jumps.push(['evidence', 'Evidence'])
-  if (acc.plan && phases.length > 0) jumps.push(['plan', 'The plan'])
-  if (acc.plan && gates.length > 0) jumps.push(['gates', 'Decision gates'])
   if (acc.plan && indicators.length > 0) jumps.push(['indicators', 'Watch conditions'])
   if (acc.evidence && epLimitations.length > 0) jumps.push(['limits', 'What would prove this wrong'])
+  if (acc.plan && gates.length > 0) jumps.push(['gates', 'Decision gates'])
+  if (acc.plan && phases.length > 0) jumps.push(['plan', 'The plan'])
 
   /* The week map the plan actually covers. Each phase owns the weeks its own
    * label names; the first phase to claim a week keeps it, so nothing is
@@ -553,10 +724,9 @@ export function LiveDetail({ id }: { id: string }) {
   /* The rail only ever lists sections that actually render, so this entry
    * arrives with the panel and sits directly under the plan it closes. */
   if (acc.plan && planFinished && checkSpec.length > 0) {
-    const at = jumps.findIndex(j => j[0] === 'plan')
-    const entry: [string, string] = ['verify', 'Did the plan work']
-    if (at >= 0) jumps.splice(at + 1, 0, entry)
-    else jumps.push(entry)
+    /* The closing check renders directly under the plan, which is the last
+       section, so it goes on the end rather than being spliced into place. */
+    jumps.push(['verify', 'Did the plan work'])
   }
   const savedVerification = verificationOf(id)
   const sealed = savedVerification && savedVerification.verifiedAt ? savedVerification : null
@@ -589,88 +759,12 @@ export function LiveDetail({ id }: { id: string }) {
   if (brainStatus) metaRows.push(['Constraint selection', brainStatus.replace(/_/g, ' ')])
   if (engineVersion) metaRows.push(['Engine', engineVersion])
 
-  /* ---------------------------------------------------------------------
-     The derivation, as a ledger.
-
-     Every row is a field the engine actually sent, or arithmetic over two of
-     them. Nothing here is written by the portal. The raw central figure is
-     recovered by dividing the adjusted number back out by the same two
-     discounts that produced it, so the chain reads in the order the engine
-     applied it rather than in the order the payload happens to arrive.
-     --------------------------------------------------------------------- */
-  type Step = { k: string; v: string; note?: string; num?: number; rule?: boolean; res?: boolean }
-  const dollars = (n: number): string =>
-    isFinite(n) && n > 0 ? '$' + Math.round(n).toLocaleString() : ''
-  const chain: Step[] = []
-  if (acc.financials && upside) {
-    const p10 = numOf(pick(feasEntry, ['impactP10']))
-    const p90 = numOf(pick(feasEntry, ['impactP90']))
-    const adj = numOf(pick(feasEntry, ['adjustedOpportunity', 'adjustedMonthlyOpportunity']))
-    const exec = numOf(pick(feasEntry, ['executionProbability']))
-    const causal = numOf(pick(feasEntry, ['causalSuccessProbability']))
-    let n = 0
-    if (upsideStage) chain.push({ k: 'Stage the impact was measured at', v: upsideStage, num: ++n })
-    if (isFinite(p10) && isFinite(p90) && p10 > 0) {
-      chain.push({ k: 'Modelled monthly impact, 10th percentile', v: dollars(p10), num: ++n })
-      chain.push({ k: 'Modelled monthly impact, 90th percentile', v: dollars(p90), num: ++n })
-    }
-    if (isFinite(adj) && isFinite(upDiscount) && upDiscount > 0) {
-      chain.push({ k: 'Central impact before discounting', v: dollars(adj / upDiscount), num: ++n, rule: true })
-    }
-    if (isFinite(exec)) chain.push({ k: 'Execution probability', note: 'team size, tooling, prior plans', v: '\u00d7\u2009' + exec.toFixed(2) })
-    if (isFinite(causal)) chain.push({ k: 'Causal success probability', note: 'strength of the evidence', v: '\u00d7\u2009' + causal.toFixed(2) })
-    if (isFinite(adj) && adj > 0) {
-      chain.push({ k: 'Adjusted monthly opportunity', v: dollars(adj), res: true })
-    }
-    if (upsideRange) {
-      chain.push({
-        k: 'Range carried to the headline',
-        note: 'both ends through the same two discounts',
-        v: upsideRange.low.replace('+', '').replace(' a month', '') + ' to ' + upsideRange.high.replace('+', '').replace(' a month', '')
-      })
-    }
-  }
-  const copyChain = () => {
-    const txt = chain.map(s => s.k + (s.note ? ' (' + s.note + ')' : '') + ': ' + s.v).join('\n')
-    navigator.clipboard?.writeText(txt)
-      .then(() => toast('Derivation copied.'), () => toast('Could not copy.'))
-  }
-
-  /* The strip needs to know which phase owns this week, because committing a
-     week is a claim about a specific phase and the record stores both. */
-  /* Indicators and gates are both ordered by the phase they belong to, so the
-     gate that closes the phase an indicator sits in is the one that reads it.
-     Computed once here so the section can be filtered by gate rather than
-     recomputing the mapping inside the render. */
-  const watchAll = indicators.map((x, i) => {
-    const gi = gates.length ? Math.min(gates.length - 1, Math.floor(i * gates.length / Math.max(1, indicators.length))) : -1
-    const timing = gi >= 0 ? textOf(gates[gi].timing) : ''
-    return {
-      i,
-      nm: prose(textOf(x)) || textOf(x),
-      tgt: prose(textOf(pick(x, ['target', 'threshold', 'goal']))),
-      gi,
-      gate: timing || (gi >= 0 ? 'gate ' + (gi + 1) : ''),
-    }
-  })
-  const watchGroups: FilterGroup[] = [{
-    key: 'gate',
-    label: 'Read at',
-    options: Array.from(new Set(watchAll.map(w => w.gate).filter(Boolean))),
-    allLabel: 'Every gate',
-  }]
-  const watchRows = watchAll.filter(w => matches(wf, { gate: w.gate }))
-  const watchNarrowed = activeCount(wf, watchGroups)
-
   const nowPhase = phaseWeekMap.findIndex(ws => ws.indexOf(nowWeek) >= 0)
   const canCommitNow = acc.plan && nowPhase >= 0 && nowWeek > 0 && !commits[nowWeek]
   const planState = plannedWeeks === 0 ? 'No plan'
     : planFinished ? 'Complete'
       : committedCount > 0 ? 'Running' : 'Not started'
-  const jumpTo = (anchor: string) => {
-    const el = document.getElementById(anchor)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
+  const jumpTo = (anchor: string) => { scrollToSection(anchor) }
   const copyLink = () => {
     navigator.clipboard?.writeText(window.location.origin + '/analyses/' + id)
       .then(() => toast('Link copied.'), () => toast('Could not copy.'))
