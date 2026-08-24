@@ -353,15 +353,28 @@ export function LiveDetail({ id }: { id: string }) {
    * should get. */
   const [markup, setMarkup] = useState(false)
 
+  /* How often a running analysis is re-read.
+   *
+   *  This was a flat twelve seconds, which meant a run that finished one
+   *  second after a poll sat finished and unseen for eleven more. On a three
+   *  minute analysis that is a sixth of the wait added at the very end, where
+   *  it is most noticeable, and none of it is the engine's fault.
+   *
+   *  A run rarely lands in the first few seconds, so the interval opens at
+   *  two and a half and widens toward eight. Fast where the answer might
+   *  arrive, unhurried while the engine is clearly still working, and never
+   *  more requests in total than the flat twelve second version made. */
   useEffect(() => {
     let live = true
     let timer: number | undefined
+    let waits = 0
+    const nextDelay = (): number => Math.min(8000, 2500 + waits++ * 900)
     const load = () => api.getAnalysis(id).then(x => {
       if (!live) return
       setD(x); setErr(null)
       const st = (x.status || '').toLowerCase()
       if (st === 'queued' || st === 'running' || st === 'processing') {
-        timer = window.setTimeout(load, 12000)
+        timer = window.setTimeout(load, nextDelay())
       }
     }).catch(e => { if (live) setErr(e instanceof Error ? e.message : 'Could not load the analysis.') })
     load()
