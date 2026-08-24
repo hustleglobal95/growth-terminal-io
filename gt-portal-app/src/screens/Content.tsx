@@ -6,6 +6,7 @@ import { BrandGate } from '../components/BrandGate'
 import { WORKSPACE_SLUG } from './Brand'
 import { useBusinesses } from '../lib/liveData'
 import { Section, Row, Empty, Fig, Status } from '../components/Section'
+import { FilterBar, FilterGroup, FilterState, groupFrom, matches, loadFilters, saveFilters, activeCount } from '../components/Filters'
 import { listSocial, socialConfigured, ConnectedAccount, problemText } from '../lib/social'
 import { listThreads, threadsConfigured, ThreadsAccount } from '../lib/threads'
 import { listSuggestions, listQueue, feedConfigured, Suggestion, QueuedPost } from '../lib/feed'
@@ -56,6 +57,14 @@ export function Content() {
   const [bank, setBank] = useState<Load<Suggestion[]>>({ st: feedConfigured() ? 'loading' : 'off', v: [] })
   const [queue, setQueue] = useState<Load<QueuedPost[]>>({ st: feedConfigured() ? 'loading' : 'off', v: [] })
   const [busy, setBusy] = useState(false)
+  /* Queue and bank filters. Both are built from what the workspace actually
+     holds: a customer publishing to one platform never sees a platform
+     filter, and a bank where nothing has been used yet never offers to hide
+     the used ones. Choices are remembered across visits. */
+  const [qf, setQf] = useState<FilterState>(() => loadFilters('content.queue'))
+  const [bf, setBf] = useState<FilterState>(() => loadFilters('content.bank'))
+  const setQueueFilters = (n: FilterState) => { setQf(n); saveFilters('content.queue', n) }
+  const setBankFilters = (n: FilterState) => { setBf(n); saveFilters('content.bank', n) }
 
   const load = React.useCallback(() => {
     if (socialConfigured()) {
@@ -88,6 +97,22 @@ export function Content() {
   const live = bank.v.filter(s => s.state !== 'retired')
   const scheduled = queue.v.filter(q => q.state === 'queued')
   const anythingOff = social.st === 'off' && threads.st === 'off' && bank.st === 'off'
+
+  const queueGroups: FilterGroup[] = [
+    groupFrom('pf', queue.v, (p: QueuedPost) => p.platform, { label: 'Platform' }),
+    groupFrom('st', queue.v, (p: QueuedPost) => p.state, {
+      label: 'State',
+      format: v => v.charAt(0).toUpperCase() + v.slice(1),
+    }),
+  ]
+  const queueRows = queue.v.filter(p => matches(qf, { pf: p.platform, st: p.state }))
+  const queueNarrowed = activeCount(qf, queueGroups)
+
+  const bankGroups: FilterGroup[] = [
+    groupFrom('use', live, (s: Suggestion) => (s.usedCount > 0 ? 'Used' : 'Not used yet'), { label: 'Use' }),
+  ]
+  const bankRows = live.filter(s => matches(bf, { use: s.usedCount > 0 ? 'Used' : 'Not used yet' }))
+  const bankNarrowed = activeCount(bf, bankGroups)
 
   return (
     <div className="scr on">
@@ -178,12 +203,21 @@ export function Content() {
 
           <Section
             title="Queue"
-            qualifier={queue.st === 'loading' ? 'loading' : scheduled.length + ' scheduled'}
-            verbs={[{ label: 'Feed the engine', onClick: () => nav('/feed') }]}
+            qualifier={queue.st === 'loading' ? 'loading'
+              : scheduled.length + ' scheduled' + (queueNarrowed > 0 ? ', ' + queueRows.length + ' shown' : '')}
+            verbs={[
+              ...(queueNarrowed > 0 ? [{ label: 'Clear filters', onClick: () => setQueueFilters({}) }] : []),
+              { label: 'Feed the engine', onClick: () => nav('/feed') },
+            ]}
             flush
           >
+            {queueGroups.some(g => g.options.length > 1) && (
+              <div className="toolrow gtool">
+                <FilterBar groups={queueGroups} state={qf} onChange={setQueueFilters} />
+              </div>
+            )}
             <div className="glist">
-              {queue.v.slice(0, 12).map(p => (
+              {queueRows.slice(0, 12).map(p => (
                 <Row key={p.id} cols="170px 104px minmax(0,1fr) 150px">
                   <span className="m">{slotText(p.slot)}</span>
                   <span className="m">{p.platform || 'Unassigned'}</span>
@@ -209,12 +243,22 @@ export function Content() {
 
           <Section
             title="Creative bank"
-            qualifier={bank.st === 'loading' ? 'loading' : live.length + (live.length === 1 ? ' suggestion' : ' suggestions')}
-            verbs={[{ label: 'Add a suggestion', onClick: () => nav('/feed') }]}
+            qualifier={bank.st === 'loading' ? 'loading'
+              : live.length + (live.length === 1 ? ' suggestion' : ' suggestions')
+                + (bankNarrowed > 0 ? ', ' + bankRows.length + ' shown' : '')}
+            verbs={[
+              ...(bankNarrowed > 0 ? [{ label: 'Clear filters', onClick: () => setBankFilters({}) }] : []),
+              { label: 'Add a suggestion', onClick: () => nav('/feed') },
+            ]}
             flush
           >
+            {bankGroups.some(g => g.options.length > 1) && (
+              <div className="toolrow gtool">
+                <FilterBar groups={bankGroups} state={bf} onChange={setBankFilters} />
+              </div>
+            )}
             <div className="glist">
-              {live.slice(0, 10).map(s => (
+              {bankRows.slice(0, 10).map(s => (
                 <Row key={s.id} cols="minmax(0,1fr) 108px 130px" onClick={() => nav('/feed')}>
                   <span className="n">{s.line}</span>
                   <span className="m">{s.usedCount === 0 ? 'not used yet' : s.usedCount + (s.usedCount === 1 ? ' post' : ' posts')}</span>

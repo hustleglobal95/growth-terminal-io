@@ -9,6 +9,7 @@ import { BLOG_POSTS, BLOG_URL } from '../lib/blogPosts'
 import { NewAnalysis } from '../components/NewAnalysis'
 import { OvBars, Spark } from '../components/charts'
 import { Section, Row, Empty as SecEmpty, Fig, Status } from '../components/Section'
+import { FilterBar, FilterGroup, FilterState, groupFrom, matches, loadFilters, saveFilters, activeCount } from '../components/Filters'
 
 export function Header({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
@@ -281,10 +282,32 @@ export function Analyses() {
   const accs = useAccounts()
   const acct = accountName(accs)
   const all = an.st === 'ready' ? an.rows : []
+
+  /* Category and business filters, built from the rows on screen rather than
+     from a fixed list. A workspace with one business never sees a business
+     filter; a workspace with nine does, without switching anything on. The
+     selection is remembered, because a filter that resets on every visit is
+     one nobody uses twice. */
+  const [fx, setFx] = useState<FilterState>(() => loadFilters('analyses'))
+  const setFilters = (next: FilterState) => { setFx(next); saveFilters('analyses', next) }
+  const bizOf = (a: AnalysisRow) => a.b || acct || 'This workspace'
+  const groups: FilterGroup[] = useMemo(() => [
+    groupFrom('cat', all, (a: AnalysisRow) => a.cat, {
+      label: 'Category',
+      format: v => v.length > 2 && v === v.toUpperCase()
+        ? v.toLowerCase().replace(/(^|[\s_])([a-z])/g, (_m, p1, p2) => (p1 === '_' ? ' ' : p1) + p2.toUpperCase())
+        : v,
+    }),
+    groupFrom('biz', all, bizOf, { label: 'Business' }),
+    groupFrom('src', all, (a: AnalysisRow) => a.src, { label: 'Source' }),
+  ], [all, acct])
+
   const rows = useMemo(() => all.filter(a =>
     (f === 'all' || a.st === f) &&
+    matches(fx, { cat: a.cat, biz: bizOf(a), src: a.src }) &&
     (!q || (a.b + ' ' + a.c + ' ' + a.cat).toLowerCase().includes(q.toLowerCase()))
-  ), [all, q, f])
+  ), [all, q, f, fx, acct])
+  const narrowed = activeCount(fx, groups)
   /* A column whose every cell says the same thing is not a column, it is a
      caption repeated once per row. On a single business console "Business"
      reads "This workspace" twenty times in the widest column of the table,
@@ -320,7 +343,7 @@ export function Analyses() {
   const qual = an.st === 'loading' ? 'loading'
     : an.st === 'error' ? 'could not load'
       : rows.length === all.length ? all.length + (all.length === 1 ? ' analysis' : ' analyses')
-        : rows.length + ' of ' + all.length
+        : rows.length + ' of ' + all.length + (narrowed > 0 ? ', ' + narrowed + (narrowed === 1 ? ' filter' : ' filters') : '')
 
   const cols = (showBiz ? '150px ' : '') + 'minmax(0,1fr) 78px ' + (showSrc ? '70px ' : '') + '96px 118px'
 
@@ -336,6 +359,9 @@ export function Analyses() {
             title="Analyses"
             qualifier={qual}
             verbs={[
+              ...(q || f !== 'all' || narrowed > 0
+                ? [{ label: 'Clear filters', onClick: () => { setQ(''); setF('all'); setFilters({}) } }]
+                : []),
               { label: busy ? 'Refreshing' : 'Refresh', onClick: refresh, disabled: busy },
               { label: 'New analysis', onClick: () => setNa(true) }
             ]}
@@ -346,11 +372,14 @@ export function Analyses() {
                 <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>
                 <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search businesses and constraints" autoComplete="off" />
               </div>
-              {['all', 'Complete', 'Running', 'Failed'].map(k => (
-                <button key={k} className={'fchip' + (f === k ? ' on' : '')} onClick={() => setF(k)}>
-                  {k === 'all' ? 'All' : k}
-                </button>
-              ))}
+              <span className="gfgroup">
+                {['all', 'Complete', 'Running', 'Failed'].map(k => (
+                  <button key={k} className={'fchip' + (f === k ? ' on' : '')} onClick={() => setF(k)}>
+                    {k === 'all' ? 'All' : k}
+                  </button>
+                ))}
+              </span>
+              <FilterBar groups={groups} state={fx} onChange={setFilters} />
             </div>
 
             <div className="glist">
@@ -404,7 +433,7 @@ export function Analyses() {
               <SecEmpty
                 title="Nothing matches that search."
                 body={'No analysis in this workspace matches ' + (q ? '"' + q + '"' : 'that filter') + '.'}
-                action={{ label: 'Clear filters', onClick: () => { setQ(''); setF('all') } }}
+                action={{ label: 'Clear filters', onClick: () => { setQ(''); setF('all'); setFilters({}) } }}
               />
             )}
             {an.st === 'ready' && all.length === 0 && (

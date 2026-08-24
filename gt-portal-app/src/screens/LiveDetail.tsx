@@ -15,6 +15,7 @@ import { Editorial } from '../components/Editorial'
 import { Detail } from './Detail'
 import { Why } from '../components/Why'
 import { Section, Row } from '../components/Section'
+import { FilterBar, FilterGroup, FilterState, matches, loadFilters, saveFilters, activeCount } from '../components/Filters'
 
 /** Route switch: the bundled Northlane sample keeps the full demo
  *  experience; every real analysis id renders the live detail. */
@@ -352,6 +353,12 @@ export function LiveDetail({ id }: { id: string }) {
    * engine wrote it, which is the state anyone reading it for the first time
    * should get. */
   const [markup, setMarkup] = useState(false)
+  /* Which gate's conditions to show, and which side of the evidence. Both are
+     remembered, and neither appears unless there is more than one thing to
+     choose between. */
+  const [wf, setWf] = useState<FilterState>(() => loadFilters('analysis.watch'))
+  const setWatchFilters = (n: FilterState) => { setWf(n); saveFilters('analysis.watch', n) }
+  const [evSide, setEvSide] = useState<'both' | 'for' | 'against'>('both')
 
   /* How often a running analysis is re-read.
    *
@@ -631,6 +638,30 @@ export function LiveDetail({ id }: { id: string }) {
 
   /* The strip needs to know which phase owns this week, because committing a
      week is a claim about a specific phase and the record stores both. */
+  /* Indicators and gates are both ordered by the phase they belong to, so the
+     gate that closes the phase an indicator sits in is the one that reads it.
+     Computed once here so the section can be filtered by gate rather than
+     recomputing the mapping inside the render. */
+  const watchAll = indicators.map((x, i) => {
+    const gi = gates.length ? Math.min(gates.length - 1, Math.floor(i * gates.length / Math.max(1, indicators.length))) : -1
+    const timing = gi >= 0 ? textOf(gates[gi].timing) : ''
+    return {
+      i,
+      nm: prose(textOf(x)) || textOf(x),
+      tgt: prose(textOf(pick(x, ['target', 'threshold', 'goal']))),
+      gi,
+      gate: timing || (gi >= 0 ? 'gate ' + (gi + 1) : ''),
+    }
+  })
+  const watchGroups: FilterGroup[] = [{
+    key: 'gate',
+    label: 'Read at',
+    options: Array.from(new Set(watchAll.map(w => w.gate).filter(Boolean))),
+    allLabel: 'Every gate',
+  }]
+  const watchRows = watchAll.filter(w => matches(wf, { gate: w.gate }))
+  const watchNarrowed = activeCount(wf, watchGroups)
+
   const nowPhase = phaseWeekMap.findIndex(ws => ws.indexOf(nowWeek) >= 0)
   const canCommitNow = acc.plan && nowPhase >= 0 && nowWeek > 0 && !commits[nowWeek]
   const planState = plannedWeeks === 0 ? 'No plan'
@@ -832,15 +863,21 @@ export function LiveDetail({ id }: { id: string }) {
                 <Section
                     id="evidence"
                     title="Evidence"
-                    qualifier={supporting.length + ' for, ' + contradicting.length + ' against'}
+                    qualifier={supporting.length + ' for, ' + contradicting.length + ' against'
+                      + (evSide === 'both' ? '' : evSide === 'for' ? ' \u00b7 showing for' : ' \u00b7 showing against')}
+                    verbs={supporting.length > 0 && contradicting.length > 0 ? [
+                      { label: 'Both', onClick: () => setEvSide('both'), disabled: evSide === 'both' },
+                      { label: 'Only for', onClick: () => setEvSide('for'), disabled: evSide === 'for' },
+                      { label: 'Only against', onClick: () => setEvSide('against'), disabled: evSide === 'against' },
+                    ] : undefined}
                     flush
                   >
-                    <div className="gtwo">
-                      {supporting.length > 0 && (
+                    <div className="gtwo" style={evSide === 'both' ? undefined : { gridTemplateColumns: '1fr' }}>
+                      {supporting.length > 0 && evSide !== 'against' && (
                         <div><span className="k">For this call<Why k="supporting" /></span>
                           <ul className="glist2">{supporting.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
                       )}
-                      {contradicting.length > 0 && (
+                      {contradicting.length > 0 && evSide !== 'for' && (
                         <div><span className="k">Against it<Why k="contradicting" /></span>
                           <ul className="glist2">{contradicting.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
                       )}
@@ -852,38 +889,37 @@ export function LiveDetail({ id }: { id: string }) {
                 <Section
                     id="indicators"
                     title="Watch conditions"
-                    qualifier={indicators.length + ', none read yet'}
-                    verbs={gates.length > 0 ? [{ label: 'See the gates', onClick: () => jumpTo('gates') }] : undefined}
+                    qualifier={indicators.length + ', none read yet'
+                      + (watchNarrowed > 0 ? ' \u00b7 ' + watchRows.length + ' shown' : '')}
+                    verbs={[
+                      ...(watchNarrowed > 0 ? [{ label: 'Clear filter', onClick: () => setWatchFilters({}) }] : []),
+                      ...(gates.length > 0 ? [{ label: 'See the gates', onClick: () => jumpTo('gates') }] : []),
+                    ]}
                     flush
                   >
                     <p className="gwatchnote">Each of these was named before the work started. The engine reads
                       them against your workbook at the gate that closes the phase they belong to, and a condition
                       that breaks withdraws the finding rather than lowering it.</p>
+                    {watchGroups.some(g => g.options.length > 1) && (
+                      <div className="toolrow gtool">
+                        <FilterBar groups={watchGroups} state={wf} onChange={setWatchFilters} />
+                      </div>
+                    )}
                     <div className="gwatch">
-                      {indicators.map((x, i) => {
-                        const nm = prose(textOf(x)) || textOf(x)
-                        const tgt = prose(textOf(pick(x, ['target', 'threshold', 'goal'])))
-                        /* Which gate will score this one. Indicators and gates
-                           are both ordered by the phase they belong to, so the
-                           gate that closes the phase this indicator sits in is
-                           the one that reads it. */
-                        const gi = gates.length ? Math.min(gates.length - 1, Math.floor(i * gates.length / Math.max(1, indicators.length))) : -1
-                        const gt = gi >= 0 ? textOf(gates[gi].timing) : ''
-                        return (
-                          <div key={i} className="gwc">
-                            <div className="gwch">
-                              <span className="n">{nm}</span>
-                              {gi >= 0 && <span className="w">{gt ? 'read at ' + gt : 'gate ' + (gi + 1)}</span>}
-                            </div>
-                            <div className="gwct">{tgt && tgt !== nm
-                              ? <>Holds while <b>{tgt}</b></>
-                              : 'No threshold was set for this one'}</div>
-                            <div className="gwcm">
-                              <span className="gst none">{tgt && tgt !== nm ? 'Not read yet' : 'Cannot pass or fail'}</span>
-                            </div>
+                      {watchRows.map(w => (
+                        <div key={w.i} className="gwc">
+                          <div className="gwch">
+                            <span className="n">{w.nm}</span>
+                            {w.gi >= 0 && <span className="w">{'read at ' + w.gate}</span>}
                           </div>
-                        )
-                      })}
+                          <div className="gwct">{w.tgt && w.tgt !== w.nm
+                            ? <>Holds while <b>{w.tgt}</b></>
+                            : 'No threshold was set for this one'}</div>
+                          <div className="gwcm">
+                            <span className="gst none">{w.tgt && w.tgt !== w.nm ? 'Not read yet' : 'Cannot pass or fail'}</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </Section>
               )}
