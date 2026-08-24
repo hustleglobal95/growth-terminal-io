@@ -8,6 +8,7 @@ import { toast, noCredits } from '../lib/bus'
 import { BLOG_POSTS, BLOG_URL } from '../lib/blogPosts'
 import { NewAnalysis } from '../components/NewAnalysis'
 import { OvBars, Spark } from '../components/charts'
+import { Section, Row, Empty as SecEmpty, Fig, Status } from '../components/Section'
 
 export function Header({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
@@ -121,14 +122,38 @@ export function Overview() {
   const me = useMe()
   const an = useAnalyses()
   const ov = useOverview()
+  const nav = useNavigate()
   const [na, setNa] = useState(false)
+  const [busy, setBusy] = useState(false)
   const fn = firstName(me)
   const s = ov ? ov.stats : null
+  const acts = ov ? ov.recentActivity : []
   const subline = DEMO
     ? 'One analysis completed today. One workbook is waiting on credits.'
     : s
       ? s.totalAnalyses + ' analyses run in this workspace.' + (s.runningAnalyses > 0 ? ' ' + s.runningAnalyses + ' running now.' : '')
       : ''
+
+  /* Refresh drops both caches and refetches. It is wired to the real hooks
+     rather than to a local re-render, because a control that repaints stale
+     data while saying Refresh is worse than no control. */
+  const refresh = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      await Promise.all([useOverview.refresh(), useAnalyses.refresh()])
+      toast('Workspace refreshed.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const openActivity = (a: { id?: string; type?: string }) => {
+    if (a.type === 'snapshot') { nav('/analyses'); return }
+    if (a.id) nav('/analyses/' + a.id)
+    else nav('/analyses')
+  }
+
   return (
     <div className="scr on">
       {na && <NewAnalysis close={() => setNa(false)} />}
@@ -136,83 +161,80 @@ export function Overview() {
         <button className="btn p" onClick={() => setNa(true)}>New analysis</button>
       </Header>
       <Canvas rail={<QuickActions onNew={() => setNa(true)} live={{ running: s ? s.runningAnalyses : 0 }} />}>
-        <div className="greet">
-          <h1>{'Good ' + daypart() + (fn ? ', ' + fn : '') + '.'}</h1>
-          {subline && <p>{subline}</p>}
-        </div>
-        {DEMO && (
-          <div className="warnrow"><b>0 credits left.</b> New analyses will not run until you top up.
-            <button className="btn p" onClick={() => toast('Opening billing.')}>Top up</button></div>
-        )}
-        <div className="tilegrid">
-          {DEMO ? (
-            <>
-              <div className="tile"><span className="lbl">Analyses run</span><span className="fig">24</span><span className="cap">6 this month</span></div>
-              <div className="tile"><span className="lbl">Businesses</span><span className="fig">9</span><span className="cap">4 active this month</span></div>
-              <div className="tile"><span className="lbl">Forecasts logged</span><span className="fig">3</span><span className="cap">0 resolved yet</span></div>
-              <div className="tile"><span className="lbl">Calibration</span><span className="fig">Drifting</span><span className="cap">Resolve forecasts to score it</span></div>
-            </>
-          ) : (
-            <>
-              <div className="tile"><span className="lbl">Analyses run</span><span className="fig">{s ? s.totalAnalyses : '·'}</span><span className="cap">across this workspace</span></div>
-              <div className="tile"><span className="lbl">Running now</span><span className="fig">{s ? s.runningAnalyses : '·'}</span><span className="cap">live in the engine</span></div>
-              <div className="tile"><span className="lbl">Businesses</span><span className="fig">{s ? s.activeBusinesses : '·'}</span><span className="cap">active in this workspace</span></div>
-              <div className="tile"><span className="lbl">Data snapshots</span><span className="fig">{s ? s.committedSnapshots : '·'}</span><span className="cap">committed and analyzable</span></div>
-            </>
-          )}
-        </div>
-        {/* One list, full width.
-            There were two here, side by side. The left one read the overview
-            endpoint's activity feed and the right one read the analyses
-            endpoint, and on a real workspace those are the same records: the
-            feed is a superset, since it carries data snapshots as well. Two
-            half-width columns of the same six rows is not twice the
-            information, it is the same information at half the measure. */}
-        <div className="ovgrid one">
-          <div className="chartcard">
-            {DEMO ? (
-              <>
-                <div className="ct">Analyses per month</div>
-                <div className="cs">Runs across the workspace, all sources.</div>
-                <OvBars />
-              </>
-            ) : (
-              <>
-                <div className="ct">Latest activity</div>
-                <div className="cs">Analyses and data snapshots, newest first, straight from the workspace.</div>
-                <ul className="actfeed">
-                  {(ov ? ov.recentActivity.slice(0, 8) : []).map(a => (
-                    <li key={a.id}>
-                      <span className="pfchip">{a.type === 'snapshot' ? 'Snapshot' : 'Analysis'}</span>
-                      <span className="actt">{a.type === 'snapshot' ? 'Workbook data received' : a.title}</span>
-                      <span className="actd">{when(a.createdAt)}</span>
-                      <span className={'stat' + ((a.status || '').toLowerCase() === 'complete' || (a.status || '').toLowerCase() === 'confirmed' ? ' ok' : '')}>
-                        <i />{a.status}</span>
-                    </li>
-                  ))}
-                  {!ov && [0, 1, 2, 3].map(i => (
-                    <li key={'sk' + i} className="skelrow" aria-hidden="true">
-                      <span className="skel" style={{ width: '14%' }} />
-                      <span className="skel" style={{ width: '46%' }} />
-                    </li>
-                  ))}
-                  {/* The empty state used to live in the card that has just
-                      been removed, so it moves here rather than disappearing
-                      with it. */}
-                  {ov && ov.recentActivity.length === 0 && (
-                    <li className="emptycell">
-                      <b>Nothing has run yet.</b>
-                      <span>Open the Google Sheets{'™'} add-on in a workbook with your numbers and press
-                        Analyze. Runs and the data behind them land here.</span>
-                    </li>
-                  )}
-                  {an.st === 'error' && ov && ov.recentActivity.length === 0 && (
-                    <li><span className="c">Could not load analyses. Reload to retry.</span></li>
-                  )}
-                </ul>
-              </>
-            )}
+        <div className="gwrap">
+          <div className="ghead">
+            <h1>{'Good ' + daypart() + (fn ? ', ' + fn : '') + '.'}</h1>
+            {subline && <p>{subline}</p>}
           </div>
+
+          <Section
+            title="Workspace"
+            qualifier={ov ? 'live' : 'loading'}
+            verbs={[
+              { label: busy ? 'Refreshing' : 'Refresh', onClick: refresh, disabled: busy },
+              { label: 'Open analyses', onClick: () => nav('/analyses') }
+            ]}
+            flush
+          >
+            <div className="gstats">
+              <div className="gstat">
+                <span className="k">Analyses run</span>
+                <Fig value={s ? s.totalAnalyses : '\u00b7'} />
+                <span className="c">across this workspace</span>
+              </div>
+              <div className="gstat">
+                <span className="k">Running now</span>
+                <Fig value={s ? s.runningAnalyses : '\u00b7'} accent={!!s && s.runningAnalyses > 0} />
+                <span className="c">live in the engine</span>
+              </div>
+              <div className="gstat">
+                <span className="k">Businesses</span>
+                <Fig value={s ? s.activeBusinesses : '\u00b7'} />
+                <span className="c">active in this workspace</span>
+              </div>
+              <div className="gstat">
+                <span className="k">Data snapshots</span>
+                <Fig value={s ? s.committedSnapshots : '\u00b7'} />
+                <span className="c">committed and analyzable</span>
+              </div>
+            </div>
+          </Section>
+
+          <Section
+            title="Latest activity"
+            qualifier={ov ? acts.length + (acts.length === 1 ? ' record' : ' records') : 'loading'}
+            verbs={[{ label: 'All analyses', onClick: () => nav('/analyses') }]}
+            flush
+          >
+            <div className="glist">
+              {acts.slice(0, 8).map(a => (
+                <Row key={a.id} cols="88px minmax(0,1fr) 74px 96px" onClick={() => openActivity(a)}>
+                  <span className="m">{a.type === 'snapshot' ? 'Snapshot' : 'Analysis'}</span>
+                  <span className="n">{a.type === 'snapshot' ? 'Workbook data received' : a.title}</span>
+                  <span className="m">{when(a.createdAt)}</span>
+                  <Status label={a.status}
+                    tone={(a.status || '').toLowerCase() === 'complete' || (a.status || '').toLowerCase() === 'confirmed'
+                      ? 'ok' : (a.status || '').toLowerCase() === 'running' ? 'run' : undefined} />
+                </Row>
+              ))}
+              {!ov && [0, 1, 2, 3].map(i => (
+                <div key={'sk' + i} className="grow skelrow" aria-hidden="true" style={{ gridTemplateColumns: '88px minmax(0,1fr)', padding: '9px 26px' }}>
+                  <span className="skel" style={{ width: '70%' }} />
+                  <span className="skel" style={{ width: '46%' }} />
+                </div>
+              ))}
+              {ov && acts.length === 0 && (
+                <SecEmpty
+                  title="Nothing has run yet."
+                  body={'Open the Google Sheets\u2122 add-on in a workbook with your numbers and press Analyze, or start one here from a file. Runs and the data behind them land in this section.'}
+                  action={{ label: 'New analysis', onClick: () => setNa(true) }}
+                />
+              )}
+              {an.st === 'error' && ov && acts.length === 0 && (
+                <div className="gsb"><span className="m">Could not load analyses. Press Refresh to retry.</span></div>
+              )}
+            </div>
+          </Section>
         </div>
       </Canvas>
     </div>
@@ -254,6 +276,7 @@ export function Analyses() {
   const [q, setQ] = useState('')
   const [f, setF] = useState('all')
   const [na, setNa] = useState(false)
+  const [busy, setBusy] = useState(false)
   const an = useAnalyses()
   const accs = useAccounts()
   const acct = accountName(accs)
@@ -274,7 +297,6 @@ export function Analyses() {
     () => new Set(all.map(a => (a.b || acct || 'This workspace'))).size > 1, [all, acct])
   const showSrc = useMemo(
     () => new Set(all.map(a => a.src).filter(Boolean)).size > 1, [all])
-  const tblCls = 'tbl an' + (showBiz ? '' : ' nobiz') + (showSrc ? '' : ' nosrc')
 
   const openRow = (a: AnalysisRow) => {
     if (a.open) nav('/analyses/northlane')
@@ -283,6 +305,25 @@ export function Analyses() {
     else if (a.st === 'Queued') noCredits()
     else toast('This sample row has no detail view.')
   }
+  const copyLink = (a: AnalysisRow) => {
+    navigator.clipboard?.writeText(
+      window.location.origin + (a.open ? '/analyses/northlane' : a.id ? '/analyses/' + a.id : '/analyses'))
+      .then(() => toast('Link copied.'), () => toast('Could not copy.'))
+  }
+  const refresh = async () => {
+    if (busy) return
+    setBusy(true)
+    try { await useAnalyses.refresh(); toast('Analyses refreshed.') } finally { setBusy(false) }
+  }
+  /* Filtered against total, so the qualifier is a claim about what is on
+     screen rather than a count of everything that exists. */
+  const qual = an.st === 'loading' ? 'loading'
+    : an.st === 'error' ? 'could not load'
+      : rows.length === all.length ? all.length + (all.length === 1 ? ' analysis' : ' analyses')
+        : rows.length + ' of ' + all.length
+
+  const cols = (showBiz ? '150px ' : '') + 'minmax(0,1fr) 78px ' + (showSrc ? '70px ' : '') + '96px 118px'
+
   return (
     <div className="scr on">
       {na && <NewAnalysis close={() => setNa(false)} />}
@@ -290,71 +331,90 @@ export function Analyses() {
         <button className="btn p" onClick={() => setNa(true)}>New analysis</button>
       </Header>
       <Canvas rail={<QuickActions onNew={() => setNa(true)} live={{ running: all.filter(a => a.st === 'Running').length }} />}>
-        <div className="toolrow">
-          <div className="searchin">
-            <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search businesses and constraints" autoComplete="off" />
-          </div>
-          {['all', 'Complete', 'Running', 'Failed'].map(k => (
-            <button key={k} className={'fchip' + (f === k ? ' on' : '')} onClick={() => setF(k)}>
-              {k === 'all' ? 'All' : k}
-            </button>
-          ))}
-        </div>
-        <div className={tblCls}>
-          <div className="trow h">
-            {showBiz && <span>Business</span>}
-            <span>Constraint</span>
-            <span className="hidem">Severity</span>
-            {showSrc && <span className="hidem">Source</span>}
-            <span>Status</span><span className="hidem">Date</span>
-          </div>
-          {rows.map((a, i) => (
-            <div key={i} className="trow" role="button" tabIndex={0}
-              aria-label={'Open analysis: ' + (a.c || 'analysis')}
-              onClick={() => openRow(a)}
-              onKeyDown={e => { if (e.key === 'Enter') openRow(a) }}>
-              {showBiz && <span className="b">{a.b || acct || 'This workspace'}</span>}
-              <span className={a.st === 'Failed' ? 'faint' : 'cns'}>{constraintCell(a)}</span>
-              <span className="num hidem">{severityCell(a.sev)}</span>
-              {showSrc && <span className="mut hidem">{a.src}</span>}
-              <span className={statCls(a.st)}><i />{a.st}</span>
-              <span className="mut num hidem rowend">
-                <span className="dt">{a.d}</span>
-                <span className="rowacts">
-                  <button className="ract" onClick={e => { e.stopPropagation(); openRow(a) }}>Open</button>
-                  <button className="ract" onClick={e => {
-                    e.stopPropagation()
-                    /* It copied the list address for every row, so five rows
-                       produced five identical links. */
-                    navigator.clipboard?.writeText(
-                      window.location.origin + (a.open ? '/analyses/northlane' : a.id ? '/analyses/' + a.id : '/analyses'))
-                      .then(() => toast('Link copied.'), () => toast('Could not copy.'))
-                  }}>Copy link</button>
-                </span>
-              </span>
+        <div className="gwrap">
+          <Section
+            title="Analyses"
+            qualifier={qual}
+            verbs={[
+              { label: busy ? 'Refreshing' : 'Refresh', onClick: refresh, disabled: busy },
+              { label: 'New analysis', onClick: () => setNa(true) }
+            ]}
+            flush
+          >
+            <div className="toolrow gtool">
+              <div className="searchin">
+                <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>
+                <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search businesses and constraints" autoComplete="off" />
+              </div>
+              {['all', 'Complete', 'Running', 'Failed'].map(k => (
+                <button key={k} className={'fchip' + (f === k ? ' on' : '')} onClick={() => setF(k)}>
+                  {k === 'all' ? 'All' : k}
+                </button>
+              ))}
             </div>
-          ))}
-          {an.st === 'loading' && [0, 1, 2, 3, 4, 5].map(i => (
-            <div key={'sk' + i} className="trow skeltrow" aria-hidden="true">
-              {showBiz && <span className="skel" style={{ width: '70%' }} />}
-              <span className="skel" style={{ width: '85%' }} />
-              <span className="skel hidem" style={{ width: '40%' }} />
-              {showSrc && <span className="skel hidem" style={{ width: '60%' }} />}
-              <span className="skel" style={{ width: '55%' }} />
-              <span className="skel hidem" style={{ width: '50%' }} />
+
+            <div className="glist">
+              <div className="grow ghrow" style={{ gridTemplateColumns: cols }}>
+                {showBiz && <span className="m">Business</span>}
+                <span className="m">Constraint</span>
+                <span className="m">Severity</span>
+                {showSrc && <span className="m">Source</span>}
+                <span className="m">Status</span>
+                <span className="m" style={{ textAlign: 'right' }}>Date</span>
+              </div>
+
+              {an.st === 'ready' && rows.map((a, i) => (
+                <Row key={i} cols={cols} onClick={() => openRow(a)}>
+                  {showBiz && <span className="m">{a.b || acct || 'This workspace'}</span>}
+                  <span className={a.st === 'Failed' ? 'n faintcell' : 'n'}>{constraintCell(a)}</span>
+                  <span className="m num">{severityCell(a.sev)}</span>
+                  {showSrc && <span className="m">{a.src}</span>}
+                  <Status label={a.st}
+                    tone={a.st === 'Complete' ? 'ok' : a.st === 'Running' ? 'run' : undefined} />
+                  <span className="f rowend">
+                    <span className="dt">{a.d}</span>
+                    <span className="rowacts">
+                      <button className="ract" onClick={e => { e.stopPropagation(); openRow(a) }}>Open</button>
+                      <button className="ract" onClick={e => { e.stopPropagation(); copyLink(a) }}>Copy link</button>
+                    </span>
+                  </span>
+                </Row>
+              ))}
+
+              {an.st === 'loading' && [0, 1, 2, 3, 4, 5].map(i => (
+                <div key={'sk' + i} className="grow skelrow" aria-hidden="true" style={{ gridTemplateColumns: cols }}>
+                  {showBiz && <span className="skel" style={{ width: '70%' }} />}
+                  <span className="skel" style={{ width: '85%' }} />
+                  <span className="skel" style={{ width: '40%' }} />
+                  {showSrc && <span className="skel" style={{ width: '60%' }} />}
+                  <span className="skel" style={{ width: '55%' }} />
+                  <span className="skel" style={{ width: '50%' }} />
+                </div>
+              ))}
             </div>
-          ))}
-          {an.st === 'error' && <div className="trow"><span className="mut">Could not load analyses. Reload to retry.</span></div>}
-          {an.st === 'ready' && rows.length === 0 && all.length > 0 && (
-            <div className="trow"><span className="mut">Nothing matches that search.</span></div>
-          )}
-          {an.st === 'ready' && all.length === 0 && (
-            <div className="emptyblock">
-              <b>No analyses in this workspace yet.</b>
-              <span>Open the Google Sheets{'™'} add-on in a workbook with your business numbers and press Analyze Workbook. Results appear here within minutes.</span>
-            </div>
-          )}
+
+            {an.st === 'error' && (
+              <SecEmpty
+                title="Could not load analyses."
+                body="The engine did not answer. Nothing has been lost; the list is fetched fresh every time."
+                action={{ label: 'Try again', onClick: refresh }}
+              />
+            )}
+            {an.st === 'ready' && rows.length === 0 && all.length > 0 && (
+              <SecEmpty
+                title="Nothing matches that search."
+                body={'No analysis in this workspace matches ' + (q ? '"' + q + '"' : 'that filter') + '.'}
+                action={{ label: 'Clear filters', onClick: () => { setQ(''); setF('all') } }}
+              />
+            )}
+            {an.st === 'ready' && all.length === 0 && (
+              <SecEmpty
+                title="No analyses in this workspace yet."
+                body={'Open the Google Sheets\u2122 add-on in a workbook with your business numbers and press Analyze Workbook, or start one here from a file. Results appear in this section within minutes.'}
+                action={{ label: 'New analysis', onClick: () => setNa(true) }}
+              />
+            )}
+          </Section>
         </div>
       </Canvas>
     </div>

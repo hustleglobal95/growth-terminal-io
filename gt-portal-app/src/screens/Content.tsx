@@ -1,181 +1,246 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from '../lib/bus'
 import { Header } from './simple'
-import { Spark } from '../components/charts'
 import { BrandGate } from '../components/BrandGate'
 import { WORKSPACE_SLUG } from './Brand'
 import { useBusinesses } from '../lib/liveData'
+import { Section, Row, Empty, Fig, Status } from '../components/Section'
+import { listSocial, socialConfigured, ConnectedAccount, problemText } from '../lib/social'
+import { listThreads, threadsConfigured, ThreadsAccount } from '../lib/threads'
+import { listSuggestions, listQueue, feedConfigured, Suggestion, QueuedPost } from '../lib/feed'
 
-/** Content: the Automated Content Engine's console. An always-on system
- *  that builds on-brand posts from the creative bank, publishes across
- *  every connected platform on a daily schedule, and tracks what performs
- *  so the feed sharpens over time.
+/** Content: the console for the engine that writes and publishes.
  *
- *  Sample data below renders the complete experience; it swaps for the
- *  content API when the backend routes exist, the same pattern the
- *  Analyses screens followed before their live wiring. */
+ *  Everything on this screen used to be a constant in this file. The handles
+ *  were one workspace's handles, shown to every customer who opened it; the
+ *  creative bank held 148 assets and the engine had published 96 posts no
+ *  matter whose account it was; an engagement curve climbed from 2.1 to 6.1
+ *  for everybody, and four sentences described what the engine had learned
+ *  from posts it had never made.
+ *
+ *  A number a customer cannot trace is worse than no number, and a number
+ *  that belongs to somebody else is worse than that. Everything here now
+ *  comes from the engine: connected accounts from the social and Threads
+ *  endpoints, the bank and the queue from the feed. Anything the engine does
+ *  not measure yet has been removed rather than modelled, and each section
+ *  says what it is missing instead of filling the space.
+ */
 
-const PLATFORMS = [
-  { n: 'Instagram', h: '@growthterminal', slot: 'Daily, 6:00 PM', last: 'Posted today, 6:00 PM', on: true },
-  { n: 'Facebook', h: 'Growth Terminal', slot: 'Daily, 6:15 PM', last: 'Posted today, 6:15 PM', on: true },
-  { n: 'Threads', h: '@growthterminal', slot: 'Daily, 7:00 PM', last: 'Posted today, 7:00 PM', on: true },
-  { n: 'TikTok', h: '@growthterminal', slot: 'Daily, 8:30 PM', last: 'Posts tonight, 8:30 PM', on: true }
-]
+type Load<T> = { st: 'loading' | 'ready' | 'off'; v: T }
 
-const QUEUE = [
-  { when: 'Tonight, 8:30 PM', pf: 'TikTok', fmt: 'Reel', cap: 'Three pricing mistakes that quietly cap revenue', src: 'reel_pricing_03' },
-  { when: 'Tomorrow, 6:00 PM', pf: 'Instagram', fmt: 'Carousel', cap: 'The twelve constraints, explained in nine slides', src: 'carousel_twelve_02' },
-  { when: 'Tomorrow, 6:15 PM', pf: 'Facebook', fmt: 'Static', cap: 'One constraint at a time. That is the whole method.', src: 'static_method_11' },
-  { when: 'Tomorrow, 7:00 PM', pf: 'Threads', fmt: 'Text', cap: 'Your CAC did not rise. Your retention fell. Thread on telling the difference.', src: 'thread_retention_05' },
-  { when: 'Wed, 6:00 PM', pf: 'Instagram', fmt: 'Reel', cap: 'Reading a verdict screen in 40 seconds', src: 'reel_portal_01' },
-  { when: 'Wed, 8:30 PM', pf: 'TikTok', fmt: 'Reel', cap: 'What agencies get wrong about audits', src: 'reel_agency_07' }
-]
+const slotText = (s: string): string => {
+  if (!s) return 'No slot set'
+  const d = new Date(s)
+  if (isNaN(d.getTime())) return s
+  return d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
+}
 
-const LEARNED = [
-  { t: 'Reels with the claim on the first frame hold attention 2.4x longer.', d: 'Applied to every Reel built since 28 Jul.' },
-  { t: 'The 6:00 PM slot beats noon by 38% on engagement.', d: 'All platforms moved to evening slots.' },
-  { t: 'Carousels lose readers at slide 3 when it is a chart.', d: 'Charts now land on slide 2, verdicts on slide 3.' },
-  { t: 'Question captions underperform statement captions here.', d: 'Caption generator weights statements 3 to 1.' }
-]
+const queueTone = (st: QueuedPost['state']): 'ok' | 'run' | undefined =>
+  st === 'published' ? 'ok' : st === 'queued' ? 'run' : undefined
 
-const RECENT = [
-  { pf: 'Instagram', fmt: 'Reel', cap: 'Reading a verdict screen in 40 seconds', d: 'Today', reach: '18.4k', eng: '6.1%', kept: true },
-  { pf: 'TikTok', fmt: 'Reel', cap: 'Three pricing mistakes that quietly cap revenue', d: 'Yesterday', reach: '31.2k', eng: '7.8%', kept: true },
-  { pf: 'Threads', fmt: 'Text', cap: 'Your CAC did not rise. Your retention fell.', d: 'Yesterday', reach: '4.1k', eng: '3.9%', kept: true },
-  { pf: 'Facebook', fmt: 'Static', cap: 'One constraint at a time. That is the whole method.', d: '2 days ago', reach: '2.2k', eng: '1.1%', kept: false },
-  { pf: 'Instagram', fmt: 'Carousel', cap: 'The twelve constraints, explained in nine slides', d: '3 days ago', reach: '9.7k', eng: '4.6%', kept: true }
-]
-
-const ENG_TREND = [2.1, 2.4, 2.2, 2.8, 3.1, 2.9, 3.4, 3.8, 3.6, 4.2, 4.7, 4.5, 5.2, 5.8, 6.1]
-
-const FORMATS = [
-  { f: 'Reels', x: 3.1, w: 100 },
-  { f: 'Carousels', x: 1.9, w: 61 },
-  { f: 'Text posts', x: 1.4, w: 45 },
-  { f: 'Statics', x: 0.7, w: 23 }
-]
+const queueLabel = (p: QueuedPost): string =>
+  p.state === 'held' && p.heldReason ? 'Held: ' + p.heldReason
+    : p.state === 'held' ? 'Held'
+      : p.state === 'failed' ? 'Failed'
+        : p.state === 'published' ? 'Published' : 'Scheduled'
 
 export function Content() {
   const nav = useNavigate()
-  const [paused, setPaused] = useState(false)
   const businesses = useBusinesses()
   const rows = (businesses || []).filter(b => b && b.slug)
   const slug = rows.length ? rows[0].slug : WORKSPACE_SLUG
+
+  const [social, setSocial] = useState<Load<ConnectedAccount[]>>({ st: socialConfigured() ? 'loading' : 'off', v: [] })
+  const [threads, setThreads] = useState<Load<ThreadsAccount | null>>({ st: threadsConfigured() ? 'loading' : 'off', v: null })
+  const [bank, setBank] = useState<Load<Suggestion[]>>({ st: feedConfigured() ? 'loading' : 'off', v: [] })
+  const [queue, setQueue] = useState<Load<QueuedPost[]>>({ st: feedConfigured() ? 'loading' : 'off', v: [] })
+  const [busy, setBusy] = useState(false)
+
+  const load = React.useCallback(() => {
+    if (socialConfigured()) {
+      listSocial().then(s => setSocial({ st: 'ready', v: s.accounts }), () => setSocial({ st: 'ready', v: [] }))
+    }
+    if (threadsConfigured()) {
+      listThreads().then(t => setThreads({ st: 'ready', v: t }), () => setThreads({ st: 'ready', v: null }))
+    }
+    if (feedConfigured()) {
+      listSuggestions(slug).then(s => setBank({ st: 'ready', v: s }), () => setBank({ st: 'ready', v: [] }))
+      listQueue(slug).then(q => setQueue({ st: 'ready', v: q }), () => setQueue({ st: 'ready', v: [] }))
+    }
+  }, [slug])
+
+  useEffect(() => { load() }, [load])
+
+  const refresh = async () => {
+    if (busy) return
+    setBusy(true)
+    load()
+    /* The four requests are independent and none of them is slow enough to
+       be worth a spinner per section, so the control settles on a fixed beat
+       rather than pretending to track four promises. */
+    setTimeout(() => { setBusy(false); toast('Content refreshed.') }, 600)
+  }
+
+  /* Threads is a separate connection from the Meta accounts, so the count is
+     the two added together rather than either one on its own. */
+  const accountCount = social.v.length + (threads.v ? 1 : 0)
+  const live = bank.v.filter(s => s.state !== 'retired')
+  const scheduled = queue.v.filter(q => q.state === 'queued')
+  const anythingOff = social.st === 'off' && threads.st === 'off' && bank.st === 'off'
+
   return (
     <div className="scr on">
       <Header title="Content">
         <button className="btn g" onClick={() => nav('/content/setup')}>Set up a machine</button>
-        <button className="btn g" onClick={() => {
-          setPaused(p => !p)
-          toast(paused ? 'Engine resumed. Tonight’s post is back on.' : 'Engine paused. Nothing publishes until you resume.')
-        }}>{paused ? 'Resume engine' : 'Pause engine'}</button>
-        <button className="btn p" onClick={() => toast('Drop files or paste links. The bank takes video, images and copy.')}>
-          Add to creative bank</button>
+        <button className="btn p" onClick={() => nav('/feed')}>Feed the engine</button>
       </Header>
       <div className="canvas" style={{ gridTemplateColumns: 'minmax(0,1fr)' }}>
-        <div className="wrap">
+        <div className="gwrap">
 
-          <div className="greet">
+          <div className="ghead">
             <h1>The engine posts every day. You feed the bank.</h1>
-            <p>On-brand posts built from your creative bank, published across every platform on schedule. It tracks what performs, so the feed sharpens over time.</p>
+            <p>On-brand posts built from what you feed it, published to the accounts you have connected, on a schedule you set once.</p>
           </div>
 
-          {/* On brand means something specific here, and this is where it is
-              defined. The gate sits above the numbers rather than buried in
-              setup, because the record is the thing a customer will want to
-              change once they see what the engine is writing. */}
+          {/* On brand means something specific, and this is where it is
+              defined. The gate sits above the numbers rather than in setup,
+              because the record is the thing a customer wants to change the
+              moment they see what the engine is writing. */}
           <BrandGate businessSlug={slug} />
 
-          <div className="tilegrid">
-            <div className="tile"><span className="lbl">Engine</span>
-              <span className="fig">{paused ? 'Paused' : 'Running'}</span>
-              <span className="cap">{paused ? 'Publishing is on hold' : 'Next post tonight, 8:30 PM'}</span></div>
-            <div className="tile"><span className="lbl">Creative bank</span><span className="fig">148</span>
-              <span className="cap">assets, 12 added this week</span></div>
-            <div className="tile"><span className="lbl">Published</span><span className="fig">96</span>
-              <span className="cap">posts in the last 30 days</span></div>
-            <div className="tile"><span className="lbl">Best format</span><span className="fig">Reels</span>
-              <span className="cap">3.1x the average engagement</span></div>
-          </div>
+          <Section
+            title="Engine"
+            qualifier={anythingOff ? 'not switched on for this workspace' : 'live'}
+            verbs={[
+              { label: busy ? 'Refreshing' : 'Refresh', onClick: refresh, disabled: busy },
+              { label: 'Schedule', onClick: () => nav('/content/setup') }
+            ]}
+            flush
+          >
+            <div className="gstats">
+              <div className="gstat">
+                <span className="k">Accounts connected</span>
+                <Fig value={social.st === 'loading' ? '·' : accountCount} accent={accountCount === 0} />
+                <span className="c">{accountCount === 0 ? 'nothing can publish yet' : 'able to receive posts'}</span>
+              </div>
+              <div className="gstat">
+                <span className="k">Creative bank</span>
+                <Fig value={bank.st === 'loading' ? '·' : live.length} />
+                <span className="c">{bank.st === 'off' ? 'the feed is not switched on' : 'suggestions the engine can build from'}</span>
+              </div>
+              <div className="gstat">
+                <span className="k">Scheduled</span>
+                <Fig value={queue.st === 'loading' ? '·' : scheduled.length} />
+                <span className="c">posts waiting to go out</span>
+              </div>
+              <div className="gstat">
+                <span className="k">Published</span>
+                <Fig value={queue.st === 'loading' ? '·' : queue.v.filter(q => q.state === 'published').length} />
+                <span className="c">recorded by the engine</span>
+              </div>
+            </div>
+          </Section>
 
-          <div className="ctgrid">
-            <div className="card">
-              <div className="cthead"><span className="lbl">Platforms</span>
-                <span className="ctsub">Every account posts on its own daily slot.</span></div>
-              {PLATFORMS.map(p => (
-                <div key={p.n} className="pfrow">
-                  <span className="pfchip">{p.n}</span>
-                  <span className="pfmeta"><b>{p.h}</b><span>{p.slot}</span></span>
-                  <span className={'stat' + (p.on && !paused ? ' ok' : '')}><i />{paused ? 'Paused' : p.last}</span>
-                </div>
+          <Section
+            title="Accounts"
+            qualifier={social.st === 'loading' ? 'loading' : accountCount + (accountCount === 1 ? ' connected' : ' connected')}
+            verbs={[{ label: 'Manage connections', onClick: () => nav('/connections') }]}
+            flush
+          >
+            <div className="glist">
+              {social.v.map(a => (
+                <Row key={a.platform + a.id} cols="112px minmax(0,1fr) 150px" onClick={() => nav('/connections')}>
+                  <span className="m">{a.platform === 'instagram' ? 'Instagram' : 'Facebook'}</span>
+                  <span className="n">{a.name || 'Connected account'}
+                    {a.pageName && <span className="sub">{'via ' + a.pageName}</span>}
+                    {a.problem && <span className="sub">{problemText(a.problem).title}</span>}
+                  </span>
+                  <Status label={a.problem ? 'Needs attention' : 'Connected'} tone={a.problem ? undefined : 'ok'} />
+                </Row>
               ))}
+              {threads.v && (
+                <Row cols="112px minmax(0,1fr) 150px" onClick={() => nav('/connections')}>
+                  <span className="m">Threads</span>
+                  <span className="n">{threads.v.username ? '@' + threads.v.username : threads.v.name || 'Connected account'}</span>
+                  <Status label={threads.v.problem ? 'Reconnect needed' : 'Connected'} tone={threads.v.problem ? undefined : 'ok'} />
+                </Row>
+              )}
+              {social.st !== 'loading' && threads.st !== 'loading' && accountCount === 0 && (
+                <Empty
+                  title="No accounts connected."
+                  body="The engine can write posts without an account, but it cannot publish one. Connecting takes a minute and can be revoked from the same screen."
+                  action={{ label: 'Open connections', onClick: () => nav('/connections') }}
+                />
+              )}
             </div>
+          </Section>
 
-            <div className="card">
-              <div className="cthead"><span className="lbl">What the engine learned</span>
-                <span className="ctsub">Every post feeds the next one.</span></div>
-              {LEARNED.map(l => (
-                <div key={l.t} className="learnrow">
-                  <b>{l.t}</b><span>{l.d}</span>
-                </div>
+          <Section
+            title="Queue"
+            qualifier={queue.st === 'loading' ? 'loading' : scheduled.length + ' scheduled'}
+            verbs={[{ label: 'Feed the engine', onClick: () => nav('/feed') }]}
+            flush
+          >
+            <div className="glist">
+              {queue.v.slice(0, 12).map(p => (
+                <Row key={p.id} cols="170px 104px minmax(0,1fr) 150px">
+                  <span className="m">{slotText(p.slot)}</span>
+                  <span className="m">{p.platform || 'Unassigned'}</span>
+                  <span className="n">{p.layout || 'Post'}</span>
+                  <Status label={queueLabel(p)} tone={queueTone(p.state)} />
+                </Row>
               ))}
+              {queue.st === 'off' && (
+                <Empty
+                  title="The queue is not switched on for this workspace."
+                  body="Nothing is scheduled and nothing will publish. This is a workspace setting rather than something you can turn on from here."
+                />
+              )}
+              {queue.st === 'ready' && queue.v.length === 0 && (
+                <Empty
+                  title="Nothing is scheduled."
+                  body="The engine builds posts from the creative bank. Feed it a few lines and the queue fills itself on the schedule you set."
+                  action={{ label: 'Feed the engine', onClick: () => nav('/feed') }}
+                />
+              )}
             </div>
-          </div>
+          </Section>
 
-          <div className="ovgrid">
-            <div className="chartcard">
-              <div className="ct">Engagement per post</div>
-              <div className="cs">Average rate across platforms, last 15 posts. Severity of the climb is the point: the engine keeps what works.</div>
-              <div className="ctspark"><Spark series={ENG_TREND} /></div>
-              <div className="ctlegend"><span><i className="dotA" />6.1% latest</span><span>2.1% fifteen posts ago</span></div>
+          <Section
+            title="Creative bank"
+            qualifier={bank.st === 'loading' ? 'loading' : live.length + (live.length === 1 ? ' suggestion' : ' suggestions')}
+            verbs={[{ label: 'Add a suggestion', onClick: () => nav('/feed') }]}
+            flush
+          >
+            <div className="glist">
+              {live.slice(0, 10).map(s => (
+                <Row key={s.id} cols="minmax(0,1fr) 108px 130px" onClick={() => nav('/feed')}>
+                  <span className="n">{s.line}</span>
+                  <span className="m">{s.usedCount === 0 ? 'not used yet' : s.usedCount + (s.usedCount === 1 ? ' post' : ' posts')}</span>
+                  <Status label={s.state === 'in_use' ? 'In use' : 'New'} tone={s.state === 'in_use' ? 'ok' : undefined} />
+                </Row>
+              ))}
+              {bank.st === 'off' && (
+                <Empty
+                  title="The feed is not switched on for this workspace."
+                  body="The creative bank is where the engine gets its material. Until the feed is enabled there is nothing for it to read."
+                />
+              )}
+              {bank.st === 'ready' && live.length === 0 && (
+                <Empty
+                  title="The bank is empty."
+                  body="One line is enough to start: something you would say to a customer who asked what you do. The engine shapes it into posts and tells you which shapes it kept."
+                  action={{ label: 'Add a suggestion', onClick: () => nav('/feed') }}
+                />
+              )}
             </div>
-            <div className="chartcard">
-              <div className="ct">Format performance</div>
-              <div className="cs">Engagement against the account average. Weak formats get retired on their own.</div>
-              <div className="fmtbars">
-                {FORMATS.map(f => (
-                  <div key={f.f} className="fmtrow">
-                    <span className="fmtn">{f.f}</span>
-                    <span className="fmttrack"><span className="fmtfill" style={{ width: f.w + '%' }} /></span>
-                    <span className="fmtx">{f.x}x</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          </Section>
 
-          <div className="card ctblock">
-            <div className="cthead"><span className="lbl">Queue, next 7 days</span>
-              <span className="ctsub">Built from the bank, scheduled without you.</span></div>
-            {QUEUE.map((qi, i) => (
-              <div key={i} className="qrow" role="button" tabIndex={0}
-                onClick={() => toast('Post preview opens when the content API lands.')}
-                onKeyDown={e => { if (e.key === 'Enter') toast('Post preview opens when the content API lands.') }}>
-                <span className="qwhen">{qi.when}</span>
-                <span className="pfchip">{qi.pf}</span>
-                <span className="qfmt">{qi.fmt}</span>
-                <span className="qcap">{qi.cap}</span>
-                <span className="qsrc hidem">{qi.src}</span>
-                <span className={'stat' + (paused ? '' : ' ok')}><i />{paused ? 'Held' : 'Scheduled'}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="card ctblock">
-            <div className="cthead"><span className="lbl">Recent posts</span>
-              <span className="ctsub">Kept means the format earns another run. Retired means the engine stops making that shape.</span></div>
-            {RECENT.map((r, i) => (
-              <div key={i} className="qrow">
-                <span className="qwhen">{r.d}</span>
-                <span className="pfchip">{r.pf}</span>
-                <span className="qfmt">{r.fmt}</span>
-                <span className="qcap">{r.cap}</span>
-                <span className="qsrc hidem">{r.reach} reach, {r.eng} engagement</span>
-                <span className={'stat' + (r.kept ? ' ok' : '')}><i />{r.kept ? 'Kept' : 'Retired'}</span>
-              </div>
-            ))}
-          </div>
+          {/* Performance used to live here as four invented insights and two
+              invented charts. The engine does not report per post reach or
+              engagement to the portal yet, so the section is absent rather
+              than modelled. It returns when there is a number behind it. */}
 
         </div>
       </div>
