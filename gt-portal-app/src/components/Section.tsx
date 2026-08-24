@@ -25,7 +25,9 @@ export type Verb = {
   title?: string
 }
 
-export function Section({ title, qualifier, verbs, flush, children }: {
+export function Section({ id, title, qualifier, verbs, flush, children }: {
+  /** Anchor for the jump list and for the editorial markup layer. */
+  id?: string
   title: string
   qualifier?: string
   verbs?: Verb[]
@@ -36,7 +38,7 @@ export function Section({ title, qualifier, verbs, flush, children }: {
 }) {
   const live = (verbs || []).filter(v => v.onClick || v.disabled)
   return (
-    <section className="gsec">
+    <section className="gsec" id={id}>
       <div className="gsh">
         <span className="t">{title}</span>
         {qualifier && <span className="q">{qualifier}</span>}
