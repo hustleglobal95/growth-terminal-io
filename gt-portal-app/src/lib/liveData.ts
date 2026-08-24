@@ -37,10 +37,19 @@ export type AnalysesState =
 let anCache: AnalysisRow[] | null = DEMO ? data.AN : null
 let anPromise: Promise<AnalysisRow[]> | null = null
 
+/* Every mounted copy, so a Refresh verb on one screen updates the list on
+   whichever screen the person is standing on. A control labelled Refresh that
+   only repaints the component that owns it is not refreshing anything. */
+const anListeners = new Set<(s: AnalysesState) => void>()
+
 export function useAnalyses(): AnalysesState {
   const [state, setState] = useState<AnalysesState>(
     anCache ? { st: 'ready', rows: anCache } : { st: 'loading' }
   )
+  useEffect(() => {
+    anListeners.add(setState)
+    return () => { anListeners.delete(setState) }
+  }, [])
   useEffect(() => {
     if (anCache) return
     let live = true
@@ -51,6 +60,23 @@ export function useAnalyses(): AnalysesState {
     return () => { live = false }
   }, [])
   return state
+}
+
+/** Drop the cached list and fetch again. Returns when the new rows have landed
+ *  so a caller can keep a control in its pending state until then. */
+useAnalyses.refresh = async (): Promise<void> => {
+  if (DEMO) return
+  anCache = null
+  anPromise = null
+  anListeners.forEach(fn => fn({ st: 'loading' }))
+  try {
+    const rows = await api.listAnalyses()
+    anCache = rows
+    anListeners.forEach(fn => fn({ st: 'ready', rows }))
+  } catch {
+    anPromise = null
+    anListeners.forEach(fn => fn({ st: 'error' }))
+  }
 }
 
 /** First name for greetings: "Kevin Gonzalez" becomes "Kevin". */
@@ -69,8 +95,14 @@ export function initials(me: Me | null): string {
 let ovCache: OverviewData | null = null
 let ovPromise: Promise<OverviewData> | null = null
 
+const ovListeners = new Set<(o: OverviewData | null) => void>()
+
 export function useOverview(): OverviewData | null {
   const [ov, setOv] = useState<OverviewData | null>(ovCache)
+  useEffect(() => {
+    ovListeners.add(setOv)
+    return () => { ovListeners.delete(setOv) }
+  }, [])
   useEffect(() => {
     if (ovCache) return
     let live = true
@@ -81,6 +113,19 @@ export function useOverview(): OverviewData | null {
     return () => { live = false }
   }, [])
   return ov
+}
+
+useOverview.refresh = async (): Promise<void> => {
+  if (DEMO) return
+  ovCache = null
+  ovPromise = null
+  try {
+    const o = await api.overview()
+    ovCache = o
+    ovListeners.forEach(fn => fn(o))
+  } catch {
+    ovPromise = null
+  }
 }
 
 
