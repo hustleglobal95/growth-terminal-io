@@ -401,7 +401,9 @@ export function Analyses() {
               <div className="grow ghrow" style={{ gridTemplateColumns: cols }}>
                 {showBiz && <span className="m">Business</span>}
                 <span className="m">Constraint</span>
-                <span className="m">Severity</span>
+                {/* The header has to sit on the same edge as the figures under
+                    it, or the column stops reading as a column. */}
+                <span className="m num">Severity</span>
                 {showSrc && <span className="m">Source</span>}
                 <span className="m">Status</span>
                 <span className="m" style={{ textAlign: 'right' }}>Date</span>
