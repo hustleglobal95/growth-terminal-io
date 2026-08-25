@@ -248,7 +248,8 @@ function ThreadsCard({ configured, account, result, busy, onConnect }: {
         <div className="bgrow">
           <span className="lbl">What you are granting</span>
           <b>Reading your own posts, publishing on your behalf, reading the replies you
-            receive, replying to them, and reading your own insights.</b>
+            receive, replying to them, reading your own insights, and reading public
+            Threads profiles and posts, including searching them by keyword.</b>
         </div>
         <div className="bgrow">
           <span className="lbl">What stays with you</span>
@@ -290,8 +291,9 @@ function ThreadsCard({ configured, account, result, busy, onConnect }: {
         </button>
       </div>
 
-      <p className="sfine">Keyword search is deliberately not in that list. Threads does not
-        offer it on the consent screen, so no amount of clicking Allow grants it.</p>
+      <p className="sfine">That list is exactly what the consent screen asks for. Threads
+        grants what an app requests and nothing beyond it, so anything absent from the list
+        above is absent because we do not ask for it.</p>
     </div>
   )
 }
