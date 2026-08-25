@@ -4335,3 +4335,84 @@ p,.ssub,.sfine,.agentnote,.emptypage p{
 .emptyblock{align-items:flex-start;text-align:left;padding:30px 26px;gap:9px}
 .emptyblock b{font-size:15px;font-weight:600;letter-spacing:-.018em}
 .emptyblock span{max-width:58ch}
+
+/* ===========================================================================
+   THE FRAME DOES NOT MOVE
+   ---------------------------------------------------------------------------
+   Measured on the live app at one window size, walking the nav:
+
+     Overview      content right edge 1341
+     Analyses      content right edge 1341
+     Businesses    content right edge 1413
+     Feed          content right edge 1413
+     Connections   content right edge 1413
+
+   Seventy two pixels of travel between two list screens that sit next to each
+   other in the sidebar. Then a further fifteen, because the canvas gains and
+   loses a scrollbar depending on how much a screen has to say, and the header
+   above it moves with it.
+
+   Nothing in the product is more Linear than an application frame that holds
+   still while the contents change, and nothing gives away an interface that
+   grew one screen at a time faster than one that does not. Both causes are
+   layout, not content: a rail that some screens declare and others do not,
+   and a gutter that is only reserved when it is used.
+   =========================================================================== */
+
+/* The rail column exists on every screen at this width, whether or not a rail
+   is standing in it, so the document keeps one measure. A screen that does not
+   mount one leaves the column empty, which costs nothing and is what makes the
+   text column land in the same place on the way in and on the way out.
+
+   Marked important because a screen without a rail declares the single column
+   inline, and an inline declaration is the wrong place to decide the width of
+   the application. Below 1240 the rail is gone for everybody and the earlier
+   rule collapses the grid, so this only ever applies where a rail could fit. */
+@media(min-width:1241px){
+  .canvas{grid-template-columns:minmax(0,1fr) 296px !important}
+}
+
+/* The canvas is the scrolling element, so it is the one that has to hold the
+   gutter open. Without this a screen that fits and a screen that does not sit
+   fifteen pixels apart, and the header moves with them. */
+main{scrollbar-gutter:stable}
+
+/* ===========================================================================
+   ONE TABLE, NOT THREE
+   ---------------------------------------------------------------------------
+   The analyses table heads its columns with small faint text over a hairline.
+   The businesses table heads its columns with the same text on a filled grey
+   band, which is the only filled table head in the product, and it reads as a
+   different component rather than the same one with different columns.
+   =========================================================================== */
+.bizrowi.h,.bizrowi.h:hover{background:transparent;border-bottom:1px solid var(--border)}
+
+/* A hairline is one pixel. The tables were drawn with two, which is a heavier
+   edge than anything else on the same screen is allowed. */
+.tbl{border:1px solid var(--border)}
+
+/* ===========================================================================
+   THE SCOPE TILES
+   ---------------------------------------------------------------------------
+   Three filled boxes inside the card that already contains them, each holding
+   a browser default checkbox, on the one screen a customer reaches while
+   holding an API key. They were the only unstyled controls left, and the fill
+   made them a card inside a card.
+   =========================================================================== */
+.keyscope{background:transparent;border-color:var(--border)}
+.keyscope.on{background:var(--card);border-color:var(--border2)}
+.keyscope input{
+  appearance:none;-webkit-appearance:none;
+  width:14px;height:14px;margin-top:2px;border-radius:2px;
+  border:1px solid var(--border2);background:var(--card);
+  display:grid;place-content:center;cursor:pointer;
+}
+.keyscope input:checked{background:var(--text);border-color:var(--text)}
+/* The tick is drawn rather than typed, so it lands on the same pixel at every
+   zoom level instead of riding on a font the browser chose. */
+.keyscope input:checked::before{
+  content:"";width:8px;height:8px;
+  background:var(--pane);
+  clip-path:polygon(14% 46%,0 60%,36% 96%,100% 22%,86% 10%,35% 68%);
+}
+.keyscope input:focus-visible{outline:2px solid var(--text);outline-offset:2px}
