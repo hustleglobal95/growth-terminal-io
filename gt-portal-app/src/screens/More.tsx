@@ -24,10 +24,14 @@ export function More() {
         <div className="wrap">
           <div className="morewrap">
 
-            <div className="chiprow">
-              <div className="chip"><i />{calibrationLabel(cal)}</div>
-              <div className="chip"><i />{creditsLabel(cred)}</div>
-            </div>
+            {/* Same rule as the sidebar: a chip appears when it has an answer,
+                rather than standing in the chrome saying "loading" forever. */}
+            {((cal && cal.totals) || (cred && typeof cred.balance === 'number')) && (
+              <div className="chiprow">
+                {cal && cal.totals && <div className="chip"><i />{calibrationLabel(cal)}</div>}
+                {cred && typeof cred.balance === 'number' && <div className="chip"><i />{creditsLabel(cred)}</div>}
+              </div>
+            )}
 
             <div className="searchpill" onClick={() => ctx && ctx.openPalette()}>
               <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>
