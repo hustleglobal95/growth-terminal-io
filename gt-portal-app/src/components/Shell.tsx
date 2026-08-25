@@ -103,6 +103,11 @@ export function Shell() {
   /* Collapsed is a preference, so it outlives the tab. A failed read means
      private mode, which is not an error worth surfacing. */
   const [rail, setRail] = useState(() => { try { return localStorage.getItem('gt.rail') === '1' } catch (e) { return false } })
+  /* Credits and calibration are diagnostics, not headlines. A standing "0 left"
+     above every screen reads as a dead account to anyone who does not already
+     know what it counts. They stay one click away, collapsed by default, and
+     the choice outlives the tab the way the rail does. */
+  const [meta, setMeta] = useState(() => { try { return localStorage.getItem('gt.meta') === '1' } catch (e) { return false } })
   const [msg, setMsg] = useState<string | null>(null)
   const loc = useLocation()
   const nav = useNavigate()
@@ -183,8 +188,15 @@ export function Shell() {
 
                 A readout that never resolves is worse than no readout: it is a
                 standing claim that the application is still trying. */}
-            {cal && cal.totals && <div className="chip"><i />{calibrationLabel(cal)}</div>}
-            {cred && typeof cred.balance === 'number' && <div className="chip"><i />{creditsLabel(cred)}</div>}
+            {((cal && cal.totals) || (cred && typeof cred.balance === 'number')) && (
+              <button type="button" className={'metatoggle' + (meta ? ' open' : '')} aria-expanded={meta}
+                onClick={() => setMeta(m => { try { localStorage.setItem('gt.meta', m ? '0' : '1') } catch (e) { /* private mode */ } return !m })}>
+                <svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true"><path d="M3.5 2L6.5 5L3.5 8" /></svg>
+                Credits and calibration
+              </button>
+            )}
+            {meta && cal && cal.totals && <div className="chip"><i />{calibrationLabel(cal)}</div>}
+            {meta && cred && typeof cred.balance === 'number' && <div className="chip"><i />{creditsLabel(cred)}</div>}
           </div>
           <div className="searchpill" onClick={() => setPal(true)}>
             <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>
