@@ -4806,3 +4806,50 @@ main{scrollbar-gutter:stable}
 @media(min-width:761px){
   .shell.railed .side .metatoggle{display:none}
 }
+
+/* ─── SCAN TABLE CRAFT ──────────────────────────────────────────────────────
+   Measured on the live Analyses list: row pitch 40.9px, grid
+   686px / 78px / 96px / 118px, the constraint title set at 13.5px and the
+   severity beside it at 12px, left aligned, while the date at the far right
+   was right aligned. Three different alignments across four columns, and about
+   400px of empty space between the end of a title and the number that decides
+   whether the title is worth opening.
+
+   A person triaging twenty rows reads down a column, not across a row. That
+   only works when the column has an edge to read against and the figures line
+   up under each other. So the numeric cells align right onto the same edge as
+   the date, the metric type matches the title rather than sitting a size
+   below it, and the title stops at a measure instead of stretching to fill. */
+
+.grow .m.num{
+  text-align:right;
+  font-size:13.5px;
+  color:var(--text);
+  font-variant-numeric:lining-nums tabular-nums;
+}
+/* The header has to travel with the cell or the column stops being a column. */
+.grow.ghrow .m.num{text-align:right}
+
+/* An absent severity is a real answer and should read as one: quiet, aligned
+   with the digits above and below it, and not mistaken for a list bullet. */
+.grow .m.num:empty::after,
+.grow .m.num.none{color:var(--faint)}
+
+/* The title stops at a comfortable measure. The space to its right is then
+   margin the layout chose, rather than slack the grid could not spend. */
+.grow .n{max-width:62ch}
+
+/* Density. 40.9px of pitch for a 13.5px line is generous for a surface whose
+   job is twenty rows at a glance. This lands near 38px, which keeps the row
+   comfortably tappable while fitting more of the list above the fold. */
+.gsb .grow.act,
+.gsb .grow.ghrow{padding-top:8px;padding-bottom:8px}
+
+/* Status sits between the title and the figures, so it reads as a label on the
+   row rather than a fourth thing to measure. */
+.grow .gst{font-size:11.5px}
+
+@media(max-width:760px){
+  /* The measure cap is a desktop concern. On a phone the column is the screen. */
+  .grow .n{max-width:none}
+}
