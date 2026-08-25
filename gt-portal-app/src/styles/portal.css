@@ -4613,3 +4613,19 @@ main{scrollbar-gutter:stable}
    weight 500 reads as shouted rather than emphasised, and it was the only
    place in the app where body copy carried no measure at all. */
 .bgrow b{max-width:var(--prose)}
+
+/* ---- and the loading state stops performing -------------------------------
+   The skeleton rows carried a gradient sweeping across them left to right,
+   once every 1.15 seconds, forever. That is the loading pattern of a consumer
+   feed, and it is the most animated thing in a product whose whole argument
+   is restraint: while any list was loading, the screen was in motion.
+
+   A skeleton says "something is coming here". It does not need to shimmer to
+   say it. A flat tint at the shape and size of the row says it, and says it
+   without asking to be watched. */
+.skel{
+  background:#F1F0ED;
+  background-image:none;
+  animation:none;
+  border-radius:2px;
+}
