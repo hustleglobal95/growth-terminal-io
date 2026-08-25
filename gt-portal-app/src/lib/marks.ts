@@ -16,7 +16,41 @@ export type MarkColor = 'yellow' | 'pink' | 'blue' | 'green'
  *  column of its own: the engine stores the anchor as an opaque blob and
  *  hands it back untouched, so a new way of drawing a mark costs no schema
  *  change and no second trip through the backend. */
-export type MarkStyle = 'highlight' | 'underline'
+export type MarkStyle =
+  | 'highlight'
+  | 'underline'
+  | 'strike'
+  /* Verdicts are not decoration. This product's whole claim is that the engine
+     states something in advance and is graded on it afterwards, so the reader
+     needs a way to record a position on a sentence, not just a colour they
+     liked. Agree, doubt and ask are the three positions somebody vetting a
+     diagnosis actually takes, and they survive a reload because they ride in
+     the anchor blob the engine already stores untouched. */
+  | 'agree'
+  | 'doubt'
+  | 'ask'
+
+export const VERDICTS: MarkStyle[] = ['agree', 'doubt', 'ask']
+export const isVerdict = (s: MarkStyle | undefined): boolean =>
+  !!s && VERDICTS.indexOf(s) >= 0
+
+export const STYLE_LABEL: Record<MarkStyle, string> = {
+  highlight: 'Marker',
+  underline: 'Underline',
+  strike: 'Struck out',
+  agree: 'Agreed',
+  doubt: 'Doubted',
+  ask: 'Question'
+}
+
+/** The class a painted mark carries. One place, so the painter and the
+ *  stylesheet can never drift apart. */
+export function markClass(color: MarkColor, style: MarkStyle): string {
+  if (isVerdict(style)) return 'edmk vd ' + style
+  if (style === 'underline') return 'edmk c' + color + ' und'
+  if (style === 'strike') return 'edmk c' + color + ' str'
+  return 'edmk c' + color
+}
 
 /** Three strings, not offsets. Offsets break the moment anything upstream of
  *  the selection changes by a character, and they fail silently in the worst
@@ -276,7 +310,8 @@ function paintRange(r: Range, id: string, color: MarkColor, style: MarkStyle): n
     const piece = from > 0 ? node.splitText(from) : node
     if (to - from < piece.data.length) piece.splitText(to - from)
     const el = document.createElement('mark')
-    el.className = 'edmk c' + color + (style === 'underline' ? ' und' : '')
+    el.className = markClass(color, style)
+    if (isVerdict(style)) el.setAttribute('data-verdict', style)
     el.setAttribute('data-mark', id)
     piece.parentNode?.insertBefore(el, piece)
     el.appendChild(piece)
@@ -310,7 +345,7 @@ export function repaint(root: Element, marks: Mark[]): string[] {
   for (const m of hl) {
     const r = findAnchor(root, m.anchor as Anchor)
     if (!r) { lost.push(m.id); continue }
-    const style: MarkStyle = m.anchor && m.anchor.style === 'underline' ? 'underline' : 'highlight'
+    const style: MarkStyle = (m.anchor && m.anchor.style) || 'highlight'
     if (paintRange(r, m.id, m.color || 'yellow', style) === 0) lost.push(m.id)
   }
   return lost
@@ -434,5 +469,5 @@ export function rangeFromStroke(root: Element, points: { x: number; y: number }[
 export function anchorFromRange(root: Element, r: Range, style: MarkStyle): Anchor | null {
   const a = anchorFromSelection(root, r)
   if (!a) return null
-  return style === 'underline' ? { ...a, style } : a
+  return style === 'highlight' ? a : { ...a, style }
 }
