@@ -175,7 +175,12 @@ export function Shell() {
             <img className="marklogo" src="/logo-mark-60.png" srcSet="/logo-mark-60.png 2x, /logo-mark-90.png 3x" alt="" />Growth Terminal
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-            {bill && (
+            {/* A trial has a deadline attached, so it stays in the chrome where
+                somebody on the last day of it will see it. "Plan: internal" is
+                the billing-bypass state: no deadline, no balance, no action, and
+                to anyone who does not run this account it reads as a staging
+                build. It goes down with the other diagnostics. */}
+            {bill && !bill.bypassed && (
               <div className={'chip' + (trialDaysLeft(bill) !== null ? ' warn' : '')}>
                 <i />{planLabel(bill)}
               </div>
@@ -188,13 +193,14 @@ export function Shell() {
 
                 A readout that never resolves is worse than no readout: it is a
                 standing claim that the application is still trying. */}
-            {((cal && cal.totals) || (cred && typeof cred.balance === 'number')) && (
+            {((bill && bill.bypassed) || (cal && cal.totals) || (cred && typeof cred.balance === 'number')) && (
               <button type="button" className={'metatoggle' + (meta ? ' open' : '')} aria-expanded={meta}
                 onClick={() => setMeta(m => { try { localStorage.setItem('gt.meta', m ? '0' : '1') } catch (e) { /* private mode */ } return !m })}>
                 <svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true"><path d="M3.5 2L6.5 5L3.5 8" /></svg>
-                Credits and calibration
+                Account status
               </button>
             )}
+            {meta && bill && bill.bypassed && <div className="chip"><i />{planLabel(bill)}</div>}
             {meta && cal && cal.totals && <div className="chip"><i />{calibrationLabel(cal)}</div>}
             {meta && cred && typeof cred.balance === 'number' && <div className="chip"><i />{creditsLabel(cred)}</div>}
           </div>
