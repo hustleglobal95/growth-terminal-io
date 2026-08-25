@@ -345,7 +345,17 @@ export async function liveRoot<T>(path: string, init?: RequestInit): Promise<T> 
     if (!quiet) window.location.assign('/login')
     throw new Error('Signed out.')
   }
-  if (!res.ok) throw new Error('Request failed (' + res.status + ')')
+  if (!res.ok) {
+    /* The engine refuses a commitment with a reason worth reading, not a
+       status code. Surface it the way the portal surface already does. */
+    let msg = 'Request failed (' + res.status + ')'
+    try {
+      const eb = await res.json()
+      const m = eb && eb.error && eb.error.message ? eb.error.message : eb && eb.message
+      if (typeof m === 'string' && m) msg = m
+    } catch { /* keep the status message */ }
+    throw new Error(msg)
+  }
   if (res.status === 204) return null as unknown as T
   return stripDashes(await res.json()) as T
 }
