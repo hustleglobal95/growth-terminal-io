@@ -1126,21 +1126,27 @@ export function LiveDetail({ id }: { id: string }) {
                *  opens.
                *
                *  It sits last on purpose. A disclaimer at the top is a hedge
-               *  that asks to be believed less; a disclaimer at the foot is a
-               *  note on method, which is what this is. The product already
-               *  states its falsifiers and its calibration record in the
-               *  sections above, so this is consistent with the argument the
-               *  screen is already making rather than a retreat from it. */}
+               *  that asks to be believed less; a note on method at the foot is
+               *  part of the argument, which is what this is.
+               *
+               *  The first draft of this said the analysis "is wrong some of
+               *  the time". True, and the weakest possible way to say it. This
+               *  product's entire claim is that it grades itself afterwards and
+               *  publishes the score, which is the thing none of its
+               *  competitors do. Written as a confession that reads as a
+               *  liability; written as instrumentation it reads as the reason
+               *  to trust the number. Same fact, and the legal weight sits on
+               *  estimate, on no guarantee of outcome, on not advice, and on
+               *  the decision remaining the reader's. Not on self criticism. */}
               <Section id="basis" title="Basis of this analysis" qualifier="how to read it">
                 <p className="gbody">This analysis is produced by an automated system reading the
-                  figures in the data you supplied. It is an estimate, not a measurement, and it is
-                  wrong some of the time. The calibration record in your workspace reports how often,
-                  and the section above states in advance what would prove this particular reading
+                  figures you supplied, and it is an estimate. Every prediction it makes is recorded
+                  and graded against what actually happened, and your calibration record reports that
+                  score. The section above states in advance what would prove this particular reading
                   wrong.</p>
-                <p className="gbody">It is business analysis and not accounting, legal, tax or
+                <p className="gbody">It is business analysis, not accounting, legal, tax or
                   investment advice, and it is not a guarantee of any financial outcome. Decisions
-                  about budget, headcount or spend remain yours, and are worth checking against your
-                  own records and advisers before you act on them.</p>
+                  about budget, headcount and spend remain yours.</p>
               </Section>
 
               {/* Mounted last so the sections it reaches into already exist. */}
