@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Palette } from './Palette'
 import { onToast } from '../lib/bus'
+import { LegalFooter } from './LegalFooter'
 import { useMe, useCalibration, useCredits, useBilling, calibrationLabel, creditsLabel, planLabel, trialDaysLeft, workspaceLabel, initials } from '../lib/liveData'
 import { clearWorkspace } from '../lib/api'
 
@@ -206,7 +207,13 @@ export function Shell() {
           <UserCard />
         </aside>
 
-        <main><Outlet context={{ openPalette: () => setPal(true) }} /></main>
+        <main>
+          <Outlet context={{ openPalette: () => setPal(true) }} />
+          {/* Below the screen, not inside it, so every route carries the
+              operating entity and the policies without any screen having to
+              remember to. */}
+          <LegalFooter />
+        </main>
       </div>
 
       {pal && <Palette close={() => setPal(false)} go={p => { setPal(false); nav(p) }} />}
