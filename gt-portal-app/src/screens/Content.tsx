@@ -146,7 +146,13 @@ export function Content() {
             <div className="gstats">
               <div className="gstat">
                 <span className="k">Accounts connected</span>
-                <Fig value={social.st === 'loading' ? '·' : accountCount} accent={accountCount === 0} />
+                {/* The figure was rendered in the accent when the count was
+                    zero, which put the product's primary colour on the absence
+                    of a thing rather than on the thing to do about it. Orange
+                    means "this is the next action" everywhere else in the app,
+                    and it cannot also mean "this is empty" without meaning
+                    neither. The caption underneath already says it in words. */}
+                <Fig value={social.st === 'loading' ? '·' : accountCount} />
                 <span className="c">{accountCount === 0 ? 'nothing can publish yet' : 'able to receive posts'}</span>
               </div>
               <div className="gstat">
