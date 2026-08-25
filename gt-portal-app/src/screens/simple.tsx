@@ -63,17 +63,16 @@ function LatestNotes() {
   )
 }
 
-/** Quick actions: the same shortcuts already reachable from the sidebar and
- *  each screen's own header, surfaced as a rail so they are one click away
- *  without opening the nav. Every entry calls the exact same handler the
- *  primary UI already uses; nothing here is new functionality.
+/** The rail: what is running right now, and what has been published since the
+ *  last visit. Both are things the screen beside it does not say, which is the
+ *  only reason a second column is worth its width.
  *
- *  Exported because Teams mounts it too. A screen that does not own the new
- *  analysis dialog passes no handler and the entry navigates to the screen
- *  that does, rather than being hidden: a shortcut list that changes length
- *  from page to page is harder to use than one that does not move. */
-export function QuickActions({ onNew, live }: { onNew?: () => void; live?: { running: number } }) {
-  const nav = useNavigate()
+ *  It kept its name from when it also carried a shortcut list. That list was
+ *  four entries, all of them already on screen, and it is gone.
+ *
+ *  Exported because Agents and Teams mount it too. The live block is optional
+ *  and only passed by a screen that has nothing else saying the same number. */
+export function QuickActions({ live }: { live?: { running: number } }) {
   return (
     <aside className="rail">
       {live && (
@@ -83,15 +82,17 @@ export function QuickActions({ onNew, live }: { onNew?: () => void; live?: { run
         </div>
       )}
       <LatestNotes />
-      <div className="blk">
-        <div className="rt">Quick actions</div>
-        <nav className="jump">
-          <a href="#" onClick={e => { e.preventDefault(); if (onNew) onNew(); else nav('/analyses') }}><i />New analysis</a>
-          <a href="#" onClick={e => { e.preventDefault(); nav('/businesses') }}><i />Businesses</a>
-          <a href="#" onClick={e => { e.preventDefault(); nav('/teams') }}><i />Teams</a>
-          <a href="#" onClick={e => { e.preventDefault(); nav('/api-keys') }}><i />API</a>
-        </nav>
-      </div>
+      {/* Quick actions used to sit here: New analysis, Businesses, Teams, API.
+          Every one of them was already on screen. Businesses, Teams and API are
+          in the sidebar four hundred pixels to the left, visible at the same
+          moment, and New analysis is the primary button in the header. So the
+          rail was showing a person four things they could see, twice, and it
+          was doing it on every screen that mounts a rail, which meant the rail
+          never changed and stopped being read.
+
+          A rail earns its column by carrying what the screen it is standing
+          next to cannot: what is running right now, and what has been written
+          since the last visit. That is what is left. */}
     </aside>
   )
 }
@@ -161,7 +162,11 @@ export function Overview() {
       <Header title="Overview">
         <button className="btn p" onClick={() => setNa(true)}>New analysis</button>
       </Header>
-      <Canvas rail={<QuickActions onNew={() => setNa(true)} live={{ running: s ? s.runningAnalyses : 0 }} />}>
+      {/* No live block in the rail here. The workspace strip six inches to the
+          left of it already carries "Running now" and the same figure, so the
+          rail was repeating the label and the number on the one screen where
+          both were visible at once. It stays on Analyses, which has no strip. */}
+      <Canvas rail={<QuickActions />}>
         <div className="gwrap">
           <div className="ghead">
             <h1>{'Good ' + daypart() + (fn ? ', ' + fn : '') + '.'}</h1>
@@ -353,7 +358,7 @@ export function Analyses() {
       <Header title="Analyses">
         <button className="btn p" onClick={() => setNa(true)}>New analysis</button>
       </Header>
-      <Canvas rail={<QuickActions onNew={() => setNa(true)} live={{ running: all.filter(a => a.st === 'Running').length }} />}>
+      <Canvas rail={<QuickActions live={{ running: all.filter(a => a.st === 'Running').length }} />}>
         <div className="gwrap">
           <Section
             title="Analyses"
