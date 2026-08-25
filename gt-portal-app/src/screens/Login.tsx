@@ -6,33 +6,48 @@ import { SignIn, SignUp } from '@clerk/clerk-react'
 
 /** Clerk, wearing the same clothes as the rest of the product.
  *
- *  These values were left over from the dark theme, so the first thing anyone
- *  saw was a near black card floating on a white page, in an app that is white
- *  everywhere else. The numbers below are not new: they are the tokens in
- *  portal.css. Primary is --amber, which the white theme redefines to black,
- *  so the sign in button matches .btn.p rather than inventing a colour. The
- *  card gets the same hairline and radius as every other surface, --border on
- *  --card at --r, so it reads as one of ours.
+ *  This is the first screen anyone sees, and until now it was built from
+ *  different parts than the application behind it. Measured against
+ *  portal.css: it was set in Inter while the product is Instrument Sans, its
+ *  controls were 42px tall with 10 to 12px corners against the app's 38px and
+ *  4px, and its primary button was black while every primary button inside is
+ *  Growth Orange. The note that used to sit here claimed --amber resolves to
+ *  black in the light theme. It does not. It is #F97316, and it has been for
+ *  as long as the light theme has existed, so the claim was carrying a
+ *  mismatch rather than explaining one.
  *
- *  Orange stays where it belongs, on errors, as --alert. It is not the button.
+ *  Somebody signed in on one design and landed in another. Every value below
+ *  is now the token the rest of the product uses, written out because Clerk
+ *  takes literals rather than custom properties.
+ *
+ *  Signal Orange stays on errors as colorDanger. It is a different orange from
+ *  the button on purpose: the button is the product's, the error is the
+ *  brand's alert, and they are never the same object.
  *
  *  colorInputForeground is load bearing: Clerk defaults input text to black,
  *  which was invisible on the old dark field. It is spelled out here so the
  *  next person to change the palette sees it. */
 const CLERK_LOOK = {
   variables: {
-    colorPrimary: '#000000',
+    /* --amber, the product's primary. */
+    colorPrimary: '#F97316',
     colorPrimaryForeground: '#FFFFFF',
+    /* --pane and --text. */
     colorBackground: '#FFFFFF',
-    colorForeground: '#000000',
-    colorMutedForeground: '#6E6E6E',
+    colorForeground: '#0F0F0E',
+    /* --muted. */
+    colorMutedForeground: '#5A564F',
     colorInput: '#FFFFFF',
-    colorInputForeground: '#000000',
-    colorBorder: 'rgba(0,0,0,.14)',
+    colorInputForeground: '#0F0F0E',
+    /* --border2. */
+    colorBorder: 'rgba(15,15,14,.16)',
+    /* Signal Orange, the brand's alert. */
     colorDanger: '#FC5802',
-    colorShimmer: 'rgba(0,0,0,.05)',
-    borderRadius: '12px',
-    fontFamily: '"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif'
+    colorShimmer: 'rgba(15,15,14,.05)',
+    /* --r. The product is a ruled interface, not a rounded one. */
+    borderRadius: '4px',
+    /* --sans. */
+    fontFamily: '"Instrument Sans","Helvetica Neue",Arial,sans-serif'
   },
   elements: {
     /* The page writes its own heading, so Clerk's is hidden rather than
@@ -45,22 +60,32 @@ const CLERK_LOOK = {
     rootBox: { width: '100%' },
     cardBox: { width: '100%', border: 'none', boxShadow: 'none' },
     card: { background: 'transparent', boxShadow: 'none', padding: '0', gap: '18px' },
+    /* 38px and 4px are .btn. The controls on this screen are the controls in
+       the product, at the same height and with the same corner. */
     socialButtonsBlockButton: {
-      borderColor: 'rgba(0,0,0,.14)',
-      borderRadius: '10px',
-      height: '42px'
+      borderColor: 'rgba(15,15,14,.16)',
+      borderRadius: '4px',
+      height: '38px',
+      boxShadow: 'none'
     },
-    formFieldInput: { borderRadius: '10px', height: '42px' },
+    formFieldInput: {
+      borderRadius: '4px',
+      height: '38px',
+      borderColor: 'rgba(15,15,14,.16)',
+      boxShadow: 'none'
+    },
     formButtonPrimary: {
       textTransform: 'none' as const,
       fontWeight: 600,
       letterSpacing: '-.01em',
-      borderRadius: '10px',
-      height: '42px',
-      boxShadow: 'none'
+      borderRadius: '4px',
+      height: '38px',
+      /* .btn.p is a flat fill inside a hairline. No gradient, no glow. */
+      backgroundImage: 'none',
+      boxShadow: 'inset 0 0 0 1px rgba(150,58,6,.30)'
     },
     footer: { background: 'transparent' },
-    footerActionLink: { color: '#000000', fontWeight: 600 }
+    footerActionLink: { color: '#0F0F0E', fontWeight: 600 }
   }
 }
 
