@@ -4898,9 +4898,11 @@ main{scrollbar-gutter:stable}
    control rather than as navigation. */
 .wslay{display:inline-flex;gap:1px;padding:2px;border-radius:5px;background:rgba(15,15,14,.05)}
 .wsl{
+  display:inline-flex;align-items:center;justify-content:center;
   background:none;border:0;border-radius:3px;
-  font:inherit;font-size:12px;font-weight:500;color:var(--muted);
-  padding:4px 10px;cursor:pointer;transition:color .12s var(--ease),background .12s var(--ease);
+  font:inherit;color:var(--muted);
+  width:28px;height:24px;padding:0;cursor:pointer;
+  transition:color .12s var(--ease),background .12s var(--ease);
 }
 .wsl:hover{color:var(--text)}
 .wsl.on{background:var(--card);color:var(--text);box-shadow:0 0 0 1px var(--border)}
