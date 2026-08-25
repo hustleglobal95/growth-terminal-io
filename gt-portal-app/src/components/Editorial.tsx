@@ -434,11 +434,11 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
       <div className="edui edkit" role="toolbar" aria-label="Markup tools">
         <div className="edseg">
           <button className={'edtool' + (style === 'highlight' ? ' on' : '')} aria-pressed={style === 'highlight'}
-            title="Marker" onClick={() => setStyle('highlight')}><Marker /></button>
+            data-tip="Marker" aria-label="Marker" onClick={() => setStyle('highlight')}><Marker /></button>
           <button className={'edtool' + (style === 'underline' ? ' on' : '')} aria-pressed={style === 'underline'}
-            title="Pen, underlines" onClick={() => setStyle('underline')}><PenNib /></button>
+            data-tip="Underline" aria-label="Underline" onClick={() => setStyle('underline')}><PenNib /></button>
           <button className={'edtool' + (style === 'strike' ? ' on' : '')} aria-pressed={style === 'strike'}
-            title="Strike out. This does not apply to us" onClick={() => setStyle('strike')}><Strike /></button>
+            data-tip="Strike out" aria-label="Strike out" onClick={() => setStyle('strike')}><Strike /></button>
         </div>
 
         {/* Verdicts. A colour says you looked at a sentence. A verdict says
@@ -446,34 +446,36 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
             the engine makes a claim in advance and somebody grades it. */}
         <div className="edseg edverd">
           <button className={'edtool vd agree' + (style === 'agree' ? ' on' : '')} aria-pressed={style === 'agree'}
-            title="Agree with this" onClick={() => setStyle('agree')}><Tick /></button>
+            data-tip="Agree" aria-label="Agree with this" onClick={() => setStyle('agree')}><Tick /></button>
           <button className={'edtool vd doubt' + (style === 'doubt' ? ' on' : '')} aria-pressed={style === 'doubt'}
-            title="Doubt this" onClick={() => setStyle('doubt')}><Bang /></button>
+            data-tip="Doubt" aria-label="Doubt this" onClick={() => setStyle('doubt')}><Bang /></button>
           <button className={'edtool vd ask' + (style === 'ask' ? ' on' : '')} aria-pressed={style === 'ask'}
-            title="Ask about this" onClick={() => setStyle('ask')}><Query /></button>
+            data-tip="Ask" aria-label="Ask about this" onClick={() => setStyle('ask')}><Query /></button>
         </div>
         <div className={'edinks' + (isVerdict(style) ? ' off' : '')}>
           {COLORS.map(([key, label]) => (
             <button key={key} className={'edswatch c' + key + (color === key ? ' on' : '')}
-              title={label} aria-label={label} aria-pressed={color === key}
+              data-tip={label} aria-label={label} aria-pressed={color === key}
               onClick={() => setColor(key)} />
           ))}
         </div>
         <button className={'edtool' + (draw ? ' on' : '')} aria-pressed={draw}
-          title={draw ? 'Drawing. Tap to go back to selecting' : 'Draw over the text instead of selecting it'}
+          data-tip={draw ? 'Stop drawing' : 'Draw'}
+          aria-label={draw ? 'Stop drawing' : 'Draw over the text instead of selecting it'}
           onClick={() => { setDraw(!draw); setPop(null) }}><Scribble /></button>
         <button className={'edtool' + (focus ? ' on' : '')} aria-pressed={focus}
-          title={focus ? 'Showing only what you marked. Tap to show everything' : 'Dim everything you did not mark'}
+          data-tip={focus ? 'Show everything' : 'Focus on marks'}
+          aria-label={focus ? 'Show everything' : 'Dim everything you did not mark'}
           onClick={() => setFocus(!focus)}><Focus /></button>
         <button className={'edtool' + (pad ? ' on' : '')} aria-pressed={pad}
-          title="Notepad" onClick={() => setPad(!pad)}><Pad /></button>
+          data-tip="Notepad" aria-label="Notepad" onClick={() => setPad(!pad)}><Pad /></button>
       </div>
 
       {pop && !draw && (
         <div className="edui edpop" role="toolbar" aria-label="Ink"
           style={{ left: pop.x, top: pop.y }}>
           {COLORS.map(([key, label]) => (
-            <button key={key} className={'edswatch c' + key} title={label} aria-label={label}
+            <button key={key} className={'edswatch c' + key} data-tip={label} aria-label={label}
               onMouseDown={e => e.preventDefault()}
               onClick={() => void highlight(key)} />
           ))}
