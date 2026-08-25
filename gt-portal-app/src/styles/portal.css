@@ -5084,3 +5084,37 @@ body.edfocus .edmk.vd.ask{color:#1F4E8C}
   .edtool[data-tip]::after,.edtool[data-tip]::before,
   .edswatch[data-tip]::after,.edswatch[data-tip]::before{display:none}
 }
+
+/* ─── MARK UP: MOVE IT, SHUT IT ─────────────────────────────────────────────
+   A toolbar pinned to the bottom of the screen is in the way of whatever is at
+   the bottom of the screen, and on this page that is often the paragraph
+   somebody is reading. So it moves, and it shuts, and it remembers both,
+   because a reader who drags it aside once should not have to do it again
+   tomorrow.
+
+   Free floating is a class rather than a rewrite: the kit keeps its default
+   position until somebody moves it, and only then does the inline position
+   take over. Nobody who is happy with where it sits has to think about it. */
+
+.edkit{align-items:center}
+.edkit.free{position:fixed;margin:0}
+
+.edgrip{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:16px;height:26px;padding:0;margin-right:2px;
+  background:none;border:0;border-radius:3px;
+  color:var(--faint);cursor:grab;touch-action:none;
+  transition:color .12s var(--ease),background .12s var(--ease);
+}
+.edgrip:hover{color:var(--muted);background:rgba(255,255,255,.06)}
+.edgrip:active{cursor:grabbing}
+.edgrip:focus-visible{outline:2px solid var(--pane);outline-offset:1px}
+
+/* Collapsed, the kit is a handle and a way back. It stays legible as the same
+   object rather than turning into a different one. */
+.edkit.shut{gap:2px;padding-left:5px;padding-right:5px}
+.edshut svg{transition:transform .14s var(--ease)}
+
+@media(prefers-reduced-motion:reduce){
+  .edgrip,.edshut svg{transition:none}
+}
