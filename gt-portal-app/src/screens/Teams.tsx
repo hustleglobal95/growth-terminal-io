@@ -195,6 +195,21 @@ export function Teams() {
     setUpdatesOpen(false)
   }
 
+  /* The number beside each lens. Computed from the same cut the lens itself
+     uses, so the badge and the list can never disagree.
+
+     This sits above every early return on purpose. It was below them, which
+     meant the hook ran only once the workspace had loaded and not at all while
+     it was loading or failed, and React counts hooks per render. That is a
+     blank page, not a warning. */
+  const viewCounts = useMemo(() => {
+    const out = {} as Record<WorkViewName, number>
+    WORK_VIEWS.forEach(v => {
+      out[v] = d ? cutFor(v, d, now, me ? (me.name || '') : '').items.length : 0
+    })
+    return out
+  }, [d, now, me])
+
   if (DEMO) return (
     <div className="scr on">
       <Header title="Teams" />
@@ -252,15 +267,6 @@ export function Teams() {
 
   const open = openId ? d.tickets.find(t => t.id === openId) || null : null
   const pendingApprovals = d.approvals.filter(a => a.status === 'pending')
-  /* The number beside each lens. Computed from the same cut the lens itself
-     uses, so the badge and the list can never disagree. */
-  const viewCounts = useMemo(() => {
-    const out = {} as Record<WorkViewName, number>
-    WORK_VIEWS.forEach(v => {
-      out[v] = d ? cutFor(v, d, now, me ? (me.name || '') : '').items.length : 0
-    })
-    return out
-  }, [d, now, me])
 
   /* Assignee is a plain string on the tickets table, not a member id, so the
      picker offers the names of real members and stores what it is given. */
