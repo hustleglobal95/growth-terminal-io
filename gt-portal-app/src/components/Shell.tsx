@@ -174,8 +174,16 @@ export function Shell() {
                 <i />{planLabel(bill)}
               </div>
             )}
-            <div className="chip"><i />{calibrationLabel(cal)}</div>
-            <div className="chip"><i />{creditsLabel(cred)}</div>
+            {/* A chip renders when it has an answer. The plan chip has always
+                worked this way; the other two printed "loading" and then, when
+                the request failed, kept printing it. The hook caches nothing on
+                failure and notifies nobody, so "Credits: loading" was permanent
+                in the chrome of every screen in the product, on every visit.
+
+                A readout that never resolves is worse than no readout: it is a
+                standing claim that the application is still trying. */}
+            {cal && cal.totals && <div className="chip"><i />{calibrationLabel(cal)}</div>}
+            {cred && typeof cred.balance === 'number' && <div className="chip"><i />{creditsLabel(cred)}</div>}
           </div>
           <div className="searchpill" onClick={() => setPal(true)}>
             <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>
