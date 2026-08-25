@@ -5118,3 +5118,18 @@ body.edfocus .edmk.vd.ask{color:#1F4E8C}
 @media(prefers-reduced-motion:reduce){
   .edgrip,.edshut svg{transition:none}
 }
+
+/* The verdict, applied straight from the selection popover under its own name.
+   Asking somebody who has just chosen "agree" to also choose a colour is a
+   question with no right answer. */
+.edverdgo{
+  background:none;border:0;border-radius:4px;
+  font:inherit;font-size:12px;font-weight:600;letter-spacing:.01em;
+  padding:5px 10px;cursor:pointer;color:var(--pane);
+  transition:opacity .12s var(--ease);
+}
+.edverdgo:hover{opacity:.86}
+.edverdgo:focus-visible{outline:2px solid var(--pane);outline-offset:1px}
+.edverdgo.agree{background:#1F6B45}
+.edverdgo.doubt{background:var(--amber)}
+.edverdgo.ask{background:#1F4E8C}
