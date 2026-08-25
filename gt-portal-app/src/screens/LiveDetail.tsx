@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { recordRecent } from '../lib/memory'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DEMO } from '../config'
 import { api, AnalysisDetail } from '../lib/api'
@@ -656,6 +657,19 @@ export function LiveDetail({ id }: { id: string }) {
     return ws
   })
   const plannedWeeks = phaseWeekMap.reduce((n, ws) => n + ws.length, 0)
+
+  /* Recorded on open rather than on render of the list, because a thing you
+     scrolled past is not a thing you were working on. The headline is used as
+     the label because it is the sentence the person came here to read, and on
+     this workspace it is the only thing that tells two analyses apart. */
+  useEffect(() => {
+    if (!id || !d || !headline) return
+    recordRecent({
+      id,
+      title: headline,
+      qualifier: d.businessName && d.businessName !== 'Untitled business' ? d.businessName : ''
+    })
+  }, [id, d, headline])
 
   const startedAt = d?.createdAt ? new Date(d.createdAt).getTime() : 0
   const planMeta: PlanMeta = {

@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DEMO, CREDIT_BUNDLES, SHEET_PRODUCTS } from '../config'
 import { api, data, AnalysisRow, ApiKeyRow, ADDON_SCOPES, SCOPE_HELP, secretOf, startCheckout, checkoutConfigured, Purchase } from '../lib/api'
 import { rememberCheckout } from './Billing'
 import { useMe, useAnalyses, useOverview, useBusinesses, useAccounts, useCredits, accountName, businessLabel, firstName } from '../lib/liveData'
 import { toast, noCredits } from '../lib/bus'
+import { recents, lastSeen, stampSeen, ago, RecentItem } from '../lib/memory'
 import { BLOG_POSTS, BLOG_URL } from '../lib/blogPosts'
 import { NewAnalysis } from '../components/NewAnalysis'
 import { OvBars, Spark } from '../components/charts'
@@ -131,6 +132,26 @@ export function Overview() {
   const fn = firstName(me)
   const s = ov ? ov.stats : null
   const acts = ov ? ov.recentActivity : []
+  /* What this browser remembers. The engine has no idea who looked at what or
+     when, and it should not: this is a fact about one person at one machine.
+     Read before the stamp is written, or the window is zero and the answer is
+     permanently "nothing changed". */
+  const since = useMemo(() => lastSeen(), [])
+  const mine = useMemo(() => recents(), [ov])
+  useEffect(() => { stampSeen() }, [])
+
+  const moved = useMemo(() => {
+    if (!ov || since == null) return null
+    const fresh = acts.filter(a => {
+      const t = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      return t > since
+    })
+    const done = fresh.filter(a => a.type === 'analysis' && (a.status || '').toLowerCase() === 'complete').length
+    const failed = fresh.filter(a => a.type === 'analysis' && (a.status || '').toLowerCase() === 'failed').length
+    const snaps = fresh.filter(a => a.type === 'snapshot').length
+    return { done, failed, snaps, total: fresh.length }
+  }, [ov, acts, since])
+
   const subline = DEMO
     ? 'One analysis completed today. One workbook is waiting on credits.'
     : s
@@ -173,6 +194,76 @@ export function Overview() {
             <h1>{'Good ' + daypart() + (fn ? ', ' + fn : '') + '.'}</h1>
             {subline && <p>{subline}</p>}
           </div>
+
+          {/* Above the counters, because a total is the same number every
+              morning and nobody makes a decision from one. What moved is the
+              only thing on this screen that is different than yesterday. */}
+          <Section
+            title="Since you last looked"
+            qualifier={since == null ? 'first visit' : ago(since)}
+            flush
+          >
+            <div className="gsb">
+              {since == null && (
+                <p className="sfine" style={{ margin: 0 }}>
+                  This is the first visit recorded on this browser. From now on this
+                  reports what moved between one visit and the next.
+                </p>
+              )}
+              {since != null && moved && moved.total === 0 && (
+                <p className="sfine" style={{ margin: 0 }}>
+                  Nothing has moved since then. No analysis finished, none failed, and
+                  no workbook arrived.
+                </p>
+              )}
+              {since != null && moved && moved.total > 0 && (
+                <div className="gstats">
+                  {moved.done > 0 && (
+                    <div className="gstat">
+                      <span className="k">Finished</span>
+                      <Fig value={moved.done} />
+                      <span className="c">{moved.done === 1 ? 'analysis completed' : 'analyses completed'}</span>
+                    </div>
+                  )}
+                  {moved.failed > 0 && (
+                    <div className="gstat">
+                      <span className="k">Failed</span>
+                      <Fig value={moved.failed} accent />
+                      <span className="c">{moved.failed === 1 ? 'run needs a look' : 'runs need a look'}</span>
+                    </div>
+                  )}
+                  {moved.snaps > 0 && (
+                    <div className="gstat">
+                      <span className="k">Arrived</span>
+                      <Fig value={moved.snaps} />
+                      <span className="c">{moved.snaps === 1 ? 'workbook received' : 'workbooks received'}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              {!ov && <p className="sfine" style={{ margin: 0 }}>Reading the workspace.</p>}
+            </div>
+          </Section>
+
+          {/* The way back to a specific thing. Without it every return trip
+              goes through the full list and a scan of rows that mostly read
+              the same sentence with a different date on the end. */}
+          {mine.length > 0 && (
+            <Section
+              title="Pick up where you left off"
+              qualifier={mine.length + (mine.length === 1 ? ' analysis' : ' analyses')}
+              flush
+            >
+              <div className="glist">
+                {mine.map((r: RecentItem) => (
+                  <Row key={r.id} cols="minmax(0,1fr) 130px" onClick={() => nav('/analyses/' + r.id)}>
+                    <span className="n">{r.title}{r.qualifier && <span className="sub">{r.qualifier}</span>}</span>
+                    <span className="f rowend"><span className="dt">{ago(r.seenAt)}</span></span>
+                  </Row>
+                ))}
+              </div>
+            </Section>
+          )}
 
           <Section
             title="Workspace"
@@ -286,7 +377,17 @@ function constraintCell(a: AnalysisRow): string {
 export function Analyses() {
   const nav = useNavigate()
   const [q, setQ] = useState('')
-  const [f, setF] = useState('all')
+  /* The status pill is a filter like any other, and a filter that resets on
+     every visit is one nobody uses twice. The group filters below already
+     persisted; this one did not, so anyone working a single slice reselected
+     it every morning. */
+  const [f, setFState] = useState(() => {
+    try { return localStorage.getItem('gt.filters.analyses.status') || 'all' } catch (e) { return 'all' }
+  })
+  const setF = (v: string) => {
+    setFState(v)
+    try { localStorage.setItem('gt.filters.analyses.status', v) } catch (e) { /* private mode */ }
+  }
   const [na, setNa] = useState(false)
   const [busy, setBusy] = useState(false)
   const an = useAnalyses()
