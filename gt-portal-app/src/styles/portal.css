@@ -4947,3 +4947,83 @@ main{scrollbar-gutter:stable}
   .wsviews{width:100%}
   .wslay{margin-left:auto}
 }
+
+/* ─── MARK UP KIT ───────────────────────────────────────────────────────────
+   Three additions, and each one exists because of what this product is rather
+   than because a toolbar looked bare.
+
+   Strike, because a reader vetting a diagnosis needs a way to say "this does
+   not apply to us" that is not a colour they will fail to remember the meaning
+   of a week later.
+
+   Verdicts, because the entire claim of the engine is that it states something
+   in advance and gets graded on it afterwards. A yellow highlight says a
+   person looked at a sentence. Agree, doubt and ask say what they thought,
+   which is the record worth keeping.
+
+   Focus, because after a long read the fastest way back to what you kept is to
+   turn everything else down. */
+
+.edmk.str{
+  background:none;
+  text-decoration:line-through;
+  text-decoration-thickness:1.5px;
+  text-decoration-color:currentColor;
+  opacity:.62;
+}
+.edmk.cyellow.str{color:#8A6A00}
+.edmk.cpink.str{color:#9A2C55}
+.edmk.cblue.str{color:#1F4E8C}
+.edmk.cgreen.str{color:#1F6B45}
+
+/* A verdict is drawn as a rule under the words plus a small mark after them.
+   It reads as annotation rather than as ink, which is what it is. */
+.edmk.vd{
+  background:none;
+  box-shadow:inset 0 -2px 0 currentColor;
+  padding-bottom:1px;
+}
+.edmk.vd::after{
+  content:attr(data-verdict);
+  display:inline-block;margin-left:5px;
+  font-size:9.5px;font-weight:600;letter-spacing:.02em;
+  text-transform:uppercase;vertical-align:2px;opacity:.75;
+}
+.edmk.vd.agree{color:#1F6B45}
+.edmk.vd.doubt{color:var(--amber)}
+.edmk.vd.ask{color:#1F4E8C}
+
+/* Verdict nibs carry their own colour so the toolbar says what each one means
+   before it is pressed. */
+.edtool.vd.agree{color:#1F6B45}
+.edtool.vd.doubt{color:var(--amber)}
+.edtool.vd.ask{color:#1F4E8C}
+.edtool.vd.on{background:currentColor}
+.edtool.vd.agree.on,.edtool.vd.doubt.on,.edtool.vd.ask.on{color:#FFFFFF}
+.edtool.vd.agree.on{background:#1F6B45}
+.edtool.vd.doubt.on{background:var(--amber)}
+.edtool.vd.ask.on{background:#1F4E8C}
+
+.edseg.edverd{margin-left:2px}
+
+/* Ink has no meaning while a verdict nib is selected, so it steps back rather
+   than sitting there implying it still applies. */
+.edinks.off{opacity:.34;pointer-events:none}
+
+/* Focus. Everything that is not a mark, and not the chrome of the layer, turns
+   down. Marks keep their own colour so the page reads as your reading of it. */
+body.edfocus .wrap p,
+body.edfocus .wrap li,
+body.edfocus .wrap .v,
+body.edfocus .wrap .gsub{color:var(--faint);transition:color .18s var(--ease)}
+body.edfocus .edmk{color:var(--text)}
+body.edfocus .edmk.vd.agree{color:#1F6B45}
+body.edfocus .edmk.vd.doubt{color:var(--amber)}
+body.edfocus .edmk.vd.ask{color:#1F4E8C}
+
+.edcopy{display:inline-flex;align-items:center;gap:6px}
+.edcopy svg{flex:0 0 auto}
+
+@media(prefers-reduced-motion:reduce){
+  body.edfocus .wrap p,body.edfocus .wrap li{transition:none}
+}
