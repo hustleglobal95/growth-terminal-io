@@ -4135,3 +4135,32 @@ body{font-size:16px}
 
   .jump a{min-height:44px;padding:0 10px}
 }
+
+/* ---------- setup surfaces, brought into the section grammar ----------
+ *
+ *  The app runs two heading systems. The analysis surface uses .gsh: a hairline
+ *  under the band, a 12 pixel title, and a mono qualifier. Connections, Brand,
+ *  Agents, Feed and ContentSetup use .shead and .setupcard, which have no rule
+ *  under the heading, a sans hint, and a 2 pixel box.
+ *
+ *  Nothing here changes a component. It brings the second system to the first,
+ *  so the screens read as one product rather than two builds.
+ */
+
+/* Section 13: hairlines before containers. A 2 pixel border is a box, and a box
+   around a form on a white ground is a container doing a rule's job. */
+.setupcard{border-width:1px}
+
+/* The band rule is the single strongest signal that a heading is a section
+   heading. .gsh has it and .shead never did. */
+.shead{padding-bottom:11px;border-bottom:1px solid var(--border)}
+
+/* The qualifier is mono because it counts, states or measures something. That
+   is the same reason the analysis surface sets it in mono. */
+.shead .hint{font:400 10.5px/1.4 var(--mono);color:var(--faint);letter-spacing:0}
+
+@media(max-width:760px){
+  /* The stacked heading keeps the rule, and the qualifier keeps the mono. */
+  .shead{padding-bottom:9px}
+  .shead .hint{font-size:10.5px}
+}
