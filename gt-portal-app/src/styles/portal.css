@@ -4457,3 +4457,159 @@ main{scrollbar-gutter:stable}
   font-weight:600;
   box-shadow:inset 0 0 0 1px var(--border2);
 }
+
+/* ===========================================================================
+   ONE MEASURE FOR PROSE
+   ---------------------------------------------------------------------------
+   Measured on the live app, counting characters per line:
+
+     Feed, the line under the headline          182 characters
+     Connections, the line under the headline   143
+     Connections, the fine print                139 and 118
+     Content, the line under the headline       117
+
+   A line of type is readable to about seventy five characters and comfortable
+   at sixty. Past a hundred the eye loses the start of the next line and has to
+   hunt for it, which is why nobody sets a book that way and why no console
+   sets a caption that way either.
+
+   The app already knew this. It has .ssub set to 62ch and has had it all
+   along. The lines above are the ones that were never given a class, so they
+   inherited the width of the column, which is 1066 pixels. This gives them
+   the measure the product had already chosen for itself.
+   =========================================================================== */
+:root{ --prose:62ch }
+
+.wrap p:not([class]),
+.wrap li:not([class]),
+.greet p,
+.ghead p,
+.sfine,
+.gsb p:not([class]){
+  max-width:var(--prose);
+}
+
+/* ---- and one rhythm under a headline -------------------------------------
+   Five pixels between a 22px headline and the sentence under it, on four
+   screens. The descenders of one nearly touch the ascenders of the other, so
+   the two read as one accidental block rather than a title and its subtitle.
+   Eleven is the gap the rest of the product uses between a heading and its
+   body, and it is what the pair needed to separate. */
+.greet p,.ghead p{ margin-top:11px }
+.greet{ padding:22px 0 6px }
+
+/* ===========================================================================
+   ONE MOTION SYSTEM
+   ---------------------------------------------------------------------------
+   Counted in this file before this block: eight keyframe sets and about thirty
+   distinct transition declarations. Four of the keyframes are the same idea,
+   fade up, written four times at four different distances and durations:
+
+     rise        14px over 620ms
+     lgfadein     8px over 700ms
+     updin       10px over 340ms
+     gt-tab-in    5px over 260ms
+
+   And rise was applied to every direct child of the canvas, so every block on
+   every screen slid up fourteen pixels on every navigation. That is a landing
+   page transition running inside a workstation. It also costs real time: a
+   620ms entrance means the screen you asked for is still arriving two thirds
+   of a second after you clicked, which is the difference between software
+   that feels fast and software that feels expensive to use.
+
+   An instrument does not animate arriving. It is there. Motion is spent on
+   one thing only: telling you something changed that you did not change
+   yourself. So the entrances become a short fade with no travel, and every
+   state change in the product runs at one duration on one curve.
+   =========================================================================== */
+
+/* Nothing slides. A screen fades in over one tenth of a second, which is long
+   enough not to flash and short enough not to be a transition. */
+@keyframes gt-in{from{opacity:0}to{opacity:1}}
+
+.gt-tab-in,
+.scr.on .wrap>*,
+.view.on,
+.lgsay,
+.emptyblock{
+  animation:gt-in 110ms linear both;
+}
+
+/* One duration, one curve, for everything that changes state under the
+   cursor or the keyboard. */
+.btn,.btn.p,.btn.g,.ract,.iconbtn,.fchip,.searchpill,.seg button,
+.nav a,.jump a,.trow,.grow,.bizrowi,.introw,.minirows li,.tmline,.tmtile,
+.railnote,.railmore,.dghead,.card,.tile,.lvpanel,.tmstat,.bizcard,.tbl,.dgcard{
+  transition:background-color 110ms ease, color 110ms ease, box-shadow 110ms ease, border-color 110ms ease;
+}
+
+/* The two pulses that are left mark something genuinely in flight: a run
+   working, and the brand agent reading. They are slowed and shallowed so they
+   read as a heartbeat rather than a blink, and they stop entirely when the
+   operating system asks them to. */
+@keyframes gt-beat{0%,100%{opacity:.45}50%{opacity:1}}
+.lvpulse{animation:gt-beat 2.4s ease-in-out infinite;transform:none}
+.brload i{animation:gt-beat 2.4s ease-in-out infinite}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:1ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:1ms !important;
+  }
+}
+
+/* ===========================================================================
+   ONE FOCUS RING
+   ---------------------------------------------------------------------------
+   The product had five focus treatments, and five is the same as none: a ring
+   in rgba(0,0,0,.55), a ring in --text, an amber ring on every button, a three
+   pixel halo on some inputs in three different colours including Signal Orange
+   on the sign in card, and, on five inputs, outline:none with nothing but a
+   border darkening in its place.
+
+   That last group is the one that matters. .tminput, .keyinput, .brin,
+   .vfynote and the note textarea cancelled the ring outright, so a person
+   driving the workspace from the keyboard could not see where they were. A
+   portal sold to an operator who expects scrutiny has to be operable without
+   a mouse, and has to look operable, which means the ring is always the same
+   and is never absent.
+
+   Amber is not the focus colour. Amber is the primary action, and a ring that
+   borrows it makes every focused control look like the thing to press.
+   =========================================================================== */
+:focus-visible{ outline:2px solid var(--text); outline-offset:2px; border-radius:2px }
+
+/* Flush surfaces take the ring inside their own edge so it is not clipped by
+   the row or cell above. */
+.trow:focus-visible,.grow:focus-visible,.bizrowi:focus-visible,.introw:focus-visible,
+.minirows li:focus-visible,.tmline:focus-visible,.dghead:focus-visible,
+.nav a:focus-visible,.morelist a:focus-visible{
+  outline:2px solid var(--text); outline-offset:-2px;
+}
+
+/* Buttons keep the ring outside, in ink rather than amber. */
+.btn:focus-visible,.ract:focus-visible,.iconbtn:focus-visible,
+.fchip:focus-visible,.searchpill:focus-visible,.seg button:focus-visible,
+.tmtile:focus-visible,.why:focus-visible,.railnote:focus-visible,.railmore:focus-visible{
+  outline:2px solid var(--text); outline-offset:2px;
+}
+
+/* Text fields get the ring too, in place of the coloured halo, and the five
+   that cancelled it get it back. */
+.setupcard input:focus-visible,.namodal input:focus-visible,.namodal textarea:focus-visible,
+.tminput:focus-visible,.tmsel:focus-visible,.keyinput:focus-visible,.brin:focus-visible,
+.vfynote:focus-visible,.ednote textarea:focus-visible,.searchin input:focus-visible,
+.logincard input:focus-visible{
+  outline:2px solid var(--text); outline-offset:1px;
+  border-color:var(--border2);
+  box-shadow:none;
+}
+
+/* ---- and the requirement rows, which are sentences, not values -----------
+   Both entries in "What Instagram requires" are full sentences set in the
+   product's medium weight and left to run the width of the card, which is 718
+   pixels, about a hundred and ten characters. A sentence that long set in
+   weight 500 reads as shouted rather than emphasised, and it was the only
+   place in the app where body copy carried no measure at all. */
+.bgrow b{max-width:var(--prose)}
