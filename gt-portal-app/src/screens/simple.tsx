@@ -362,8 +362,12 @@ export function Analyses() {
               ...(q || f !== 'all' || narrowed > 0
                 ? [{ label: 'Clear filters', onClick: () => { setQ(''); setF('all'); setFilters({}) } }]
                 : []),
-              { label: busy ? 'Refreshing' : 'Refresh', onClick: refresh, disabled: busy },
-              { label: 'New analysis', onClick: () => setNa(true) }
+              /* "New analysis" was listed here too, sixty pixels below the
+                 primary button in the header that does the same thing, and a
+                 third time in the rail. One action, offered three times, reads
+                 as an interface that is not sure which one is real. It stays
+                 where it belongs, which is the header. */
+              { label: busy ? 'Refreshing' : 'Refresh', onClick: refresh, disabled: busy }
             ]}
             flush
           >
