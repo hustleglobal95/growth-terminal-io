@@ -124,8 +124,20 @@ export function Content() {
         <div className="gwrap">
 
           <div className="ghead">
-            <h1>The engine posts every day. You feed the bank.</h1>
-            <p>On-brand posts built from what you feed it, published to the accounts you have connected, on a schedule you set once.</p>
+            {/* This used to read "The engine posts every day. You feed the
+                bank." Two short declaratives with a matched cadence is the
+                shape of a slogan, and a slogan belongs on the site that sells
+                the product, not inside the workstation somebody has already
+                bought and signed into. Nobody standing in a console at nine in
+                the morning needs to be sold the console.
+
+                The three content engine screens now say what each of them
+                governs, in the same shape: what the engine has to work with
+                (Feed), what it writes and where it goes (here), and where it
+                is allowed to post (Connections). */}
+            <h1>What the engine writes, and where it goes.</h1>
+            <p>Every post is drafted against the brand record you confirmed and published to
+              the accounts you have connected, on a schedule you set once.</p>
           </div>
 
           {/* On brand means something specific, and this is where it is

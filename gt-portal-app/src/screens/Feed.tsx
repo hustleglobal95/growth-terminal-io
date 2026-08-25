@@ -58,7 +58,12 @@ export function Feed() {
         <div className="wrap">
 
           <div className="greet">
-            <h1>You feed it thoughts. It makes the posts.</h1>
+            {/* Was "You feed it thoughts. It makes the posts." Same slogan
+                cadence as the Content headline it was written next to. The
+                sentence under it already says exactly this, accurately and in
+                the product's own voice, so the headline stops competing with
+                it and names the screen instead. */}
+            <h1>What the engine has to work with.</h1>
             <p>One line is a suggestion. The engine shapes it against your brand record, renders
               it in your colours, and puts it in the queue. It does not invent things to say
               for {label}.</p>

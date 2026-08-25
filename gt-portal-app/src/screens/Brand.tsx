@@ -5,7 +5,7 @@
  *
  *  It shows the empties. A review screen that hides the fields the model
  *  could not fill looks finished and is not, and the customer discovers the
- *  gap later, in an assistant's answer, in front of their own client. Empty
+ *  gap later, in an agent's answer, in front of their own client. Empty
  *  fields are listed with the others and counted in the header.
  *
  *  Every drafted field carries the sentence it was read from, and the page it
@@ -126,7 +126,7 @@ export function Brand() {
       const saved = await saveBrand(stamped)
       setRecord(saved || stamped)
       setStep('saved')
-      toast('Brand record saved. Your assistants read this now.')
+      toast('Brand record saved. Every agent you build reads this now.')
     } catch (e) {
       toast(e instanceof Error ? e.message : 'That did not save.')
     } finally {
@@ -211,7 +211,7 @@ function Point({ biz, slug, setSlug, url, setUrl, err, busy, onRun }: {
     <div className="setupcard">
       <h2>Point it at your site.</h2>
       <p className="ssub">It reads your public pages and drafts a record of what your business
-        is. You correct it on the next screen. This is the record every assistant you build
+        is. You correct it on the next screen. This is the record every agent you build
         after this one reads, so it is worth the ten minutes.</p>
 
       <label className="lbl" htmlFor="bbiz">Business this record is for</label>
@@ -276,12 +276,16 @@ function Review({ record, stat, pagesRead, dropped, saved, busy, onUpdate, onSav
     <>
       {saved && (
         <div className="setupcard">
-          <h2>This is what your assistants read.</h2>
+          {/* Agent, not assistant. Section 08 lists assistant under Avoid,
+              and this screen was the last place in the product still using it:
+              six times, including the button below, on the screen every
+              customer walks during setup. */}
+          <h2>This is what your agents read.</h2>
           <p className="ssub">Confirmed by {record.provenance.confirmedBy || 'someone on this account'}.
-            Every assistant you build for this business is briefed on the confirmed lines below and
-            on nothing else. Change a line here and the next assistant you build picks it up.</p>
+            Every agent you build for this business is briefed on the confirmed lines below and
+            on nothing else. Change a line here and the next agent you build picks it up.</p>
           <div className="act">
-            <button className="btn p" onClick={onAgents}>Build an assistant on it</button>
+            <button className="btn p" onClick={onAgents}>Build an agent on it</button>
             <button className="btn g" onClick={onRedo}>Read the site again</button>
           </div>
         </div>
@@ -330,7 +334,7 @@ function Review({ record, stat, pagesRead, dropped, saved, busy, onUpdate, onSav
           {!stat.ready && (
             <span className="stephint">
               Confirm the name, the one line, what you sell, who it is for and what it must never
-              say. Those five are what an assistant cannot work without.
+              say. Those five are what an agent cannot work without.
             </span>
           )}
           <button className="btn p" disabled={!stat.ready || busy} onClick={onSave}>
