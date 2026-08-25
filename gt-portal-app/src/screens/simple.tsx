@@ -9,6 +9,7 @@ import { BLOG_POSTS, BLOG_URL } from '../lib/blogPosts'
 import { NewAnalysis } from '../components/NewAnalysis'
 import { OvBars, Spark } from '../components/charts'
 import { Section, Row, Empty as SecEmpty, Fig, Status } from '../components/Section'
+import { Execution } from '../components/Execution'
 import { FilterBar, FilterGroup, FilterState, groupFrom, matches, loadFilters, saveFilters, activeCount } from '../components/Filters'
 
 export function Header({ title, children }: { title: string; children?: React.ReactNode }) {
@@ -205,6 +206,11 @@ export function Overview() {
               </div>
             </div>
           </Section>
+
+          {/* Above what happened, because what has not happened yet is the
+              thing a person can still do something about. Renders nothing at
+              all when no plan is running. */}
+          <Execution />
 
           <Section
             title="Latest activity"
