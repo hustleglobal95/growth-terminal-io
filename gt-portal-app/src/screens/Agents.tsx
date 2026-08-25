@@ -190,7 +190,9 @@ function BrandFirst() {
         is, who it is for, how it sounds and what it must never say. You correct it line by
         line, next to the sentence each line was read from. Nothing it drafts counts until you
         confirm it.</p>
-      <p className="agentnote">Every assistant you build after this one is briefed from that
+      {/* Agent, not assistant. Section 08 lists assistant under Avoid, and the
+          navigation label this screen sits under is already Agents. */}
+      <p className="agentnote">Every agent you build after this one is briefed from that
         record, so it is the only time you have to answer these questions.</p>
       {/* The card does not invite a click into a wall. With no brand route on
           the engine the screen behind this one can only explain itself, so

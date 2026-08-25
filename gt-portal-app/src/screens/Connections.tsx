@@ -139,7 +139,11 @@ export function Connections() {
   return (
     <div className="scr on">
       <Header title="Connections">
-        {socialConfigured() && (
+        {/* The empty state carries this same action, with the explanation
+            attached. Rendering it here as well put two identical orange
+            buttons in one viewport, which breaks the one-signal-per-view
+            rule and makes the reader choose between two identical doors. */}
+        {socialConfigured() && !(state && accounts.length === 0) && (
           <button className="btn p" disabled={busy} onClick={connect}>
             {accounts.length ? 'Connect another' : 'Connect Instagram and Facebook'}
           </button>
