@@ -4164,3 +4164,25 @@ body{font-size:16px}
   .shead{padding-bottom:9px}
   .shead .hint{font-size:10.5px}
 }
+
+/* ---------- headings break where a person would break them ----------
+ *
+ *  Chromium balances a heading across its lines when asked, and does nothing
+ *  when not. Left alone, "Where the engine is allowed to post." dropped the
+ *  word post onto a line of its own, and the field note titles in the rail
+ *  stranded Rating the same way. One orphan word reads as a text box that was
+ *  never looked at.
+ *
+ *  balance for headings, which are short enough for the browser to solve.
+ *  pretty for paragraphs, where the browser only guards the last line and
+ *  the cost of balancing a long block would not be worth paying.
+ */
+h1,h2,h3,
+.ghl,.gsh .t,.shead h2,.setupcard h2,
+.emptypage h2,.errcard h2{
+  text-wrap:balance;
+}
+
+p,.ssub,.sfine,.agentnote,.emptypage p{
+  text-wrap:pretty;
+}
