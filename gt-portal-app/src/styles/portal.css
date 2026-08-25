@@ -4677,3 +4677,51 @@ main{scrollbar-gutter:stable}
   .lflinks{gap:14px}
   .lflinks a{min-height:44px;display:inline-flex;align-items:center}
 }
+
+/* ===========================================================================
+   THE FLUSH SECTIONS SHARE ONE LEFT DATUM
+   ---------------------------------------------------------------------------
+   In a flush section the rules run edge to edge and only the text is inset,
+   which is what makes a run of sections read as one ruled document rather than
+   a stack of boxes. The inset is 26px, set by .gsb and matched by .gtwo and
+   .gwc. Measured on the live analysis surface, two sections were not on it:
+
+     Evidence          text at 275   correct, this is the datum
+     Watch conditions  text at 275   correct
+     Decision gates    text at 269   six pixels left
+     The plan          text at 249   twenty six pixels left, flush to the edge
+
+   The plan was the visible one. Its timeline carries no horizontal padding at
+   all, so the week labels sat hard against the canvas edge while every heading
+   above them started a centimetre in, and the eye reads that as the section
+   sliding out of the page.
+
+   The padding goes on the timeline's two children rather than on the timeline
+   itself, because the plan head carries a rule that has to keep running the
+   full width like every other rule in a flush section. Indent the container
+   and the rule indents with it.
+
+   The week column is a 118px gutter inside .plan, so its own inset is 118 plus
+   the 26 that everything else gets.
+
+   The rail moves with it. The vertical line down the timeline is an absolutely
+   positioned pseudo element on .plan, so it is measured from the padding edge
+   and does not travel when the padding changes. Left at 96 it stayed put while
+   the content moved, and the phase nodes came off it by twenty six pixels: a
+   row of dots floating beside their own line. Measured after: rail at 371,
+   node centre at 372, which is the same one pixel relationship it had before
+   anything moved.
+   =========================================================================== */
+.gsb.flush .lvtimeline > .lvplanhead{padding-left:26px;padding-right:26px}
+.gsb.flush .lvtimeline > .plan{padding-left:144px;padding-right:26px}
+.gsb.flush .lvtimeline > .plan::before{left:122px}
+
+/* Six pixels is not a rounding error when the section above and below are both
+   on 26 and this one is on 20. */
+.ggate{padding-left:26px;padding-right:26px}
+
+@media(max-width:760px){
+  .gsb.flush .lvtimeline > .lvplanhead{padding-left:16px;padding-right:16px}
+  .gsb.flush .lvtimeline > .plan{padding-left:16px;padding-right:16px}
+  .ggate{padding-left:16px;padding-right:16px}
+}
