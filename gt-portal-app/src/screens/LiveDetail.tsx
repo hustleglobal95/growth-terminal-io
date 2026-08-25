@@ -13,6 +13,7 @@ import {
 } from '../lib/planCommits'
 import { toast } from '../lib/bus'
 import { Editorial } from '../components/Editorial'
+import { Verified } from '../components/Verified'
 import { Detail } from './Detail'
 import { Why } from '../components/Why'
 import { Section, Row } from '../components/Section'
@@ -1152,6 +1153,8 @@ export function LiveDetail({ id }: { id: string }) {
                *  to trust the number. Same fact, and the legal weight sits on
                *  estimate, on no guarantee of outcome, on not advice, and on
                *  the decision remaining the reader's. Not on self criticism. */}
+              <Verified analysisId={id} />
+
               <Section id="basis" title="Basis of this analysis" qualifier="how to read it">
                 <p className="gbody">This analysis is produced by an automated system reading the
                   figures you supplied, and it is an estimate. Every prediction it makes is recorded
