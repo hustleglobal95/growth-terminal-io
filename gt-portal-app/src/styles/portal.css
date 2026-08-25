@@ -4110,3 +4110,28 @@ body{font-size:16px}
   .ghl{font-size:24px}
   .gimpact .f{font-size:27px}
 }
+
+/* ---------- 44 pixel touch targets on the phone ----------
+ *
+ *  Section 13 asks for at least 44 by 44 CSS pixels and section 18 tests
+ *  accessibility against WCAG 2.2 AA. Three controls never got there: filter
+ *  chips stopped at 38, section header verbs sat at roughly 20, and jump list
+ *  entries at roughly 30. A 20 pixel target on a phone is a control you aim at
+ *  rather than press, and missing it on a section header scrolls the page.
+ *
+ *  Padding does the work, not font size, so the reading stays exactly where
+ *  the type scale put it and only the hit area grows.
+ */
+@media(max-width:760px){
+  /* Both dimensions, not just height. A one word chip like All was 41 wide. */
+  .fchip{min-height:44px;min-width:44px;padding:0 14px;
+    display:inline-flex;align-items:center;justify-content:center}
+
+  /* The verbs are the section's actions. They keep their quiet weight and
+     gain a real target, which makes the header band taller on a phone. That
+     is the correct trade: the header is where the actions live. */
+  .gsh .v{min-height:44px;padding:0 11px;display:inline-flex;align-items:center;
+    font-size:12px}
+
+  .jump a{min-height:44px;padding:0 10px}
+}
