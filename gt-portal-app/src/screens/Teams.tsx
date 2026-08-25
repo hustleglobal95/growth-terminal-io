@@ -18,14 +18,18 @@
  *  Adding the columns brings them straight back.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Header, QuickActions } from './simple'
+import { Header } from './simple'
 import { DEMO } from '../config'
 import { toast } from '../lib/bus'
 import { useAccounts, useBusinesses, useMe } from '../lib/liveData'
 import { api } from '../lib/api'
-import { TodayView, BoardView, BoardHandlers } from './TeamsBoard'
+import { BoardHandlers } from './TeamsBoard'
 import { UpdatesPanel, UpdatesPill, useLiveUpdates } from './TeamsUpdates'
 import { DelegateView, DelegateHandlers } from './TeamsDelegate'
+import {
+  WorkSwitcher, WorkView as WorkList, ApprovalInbox, TeamRail,
+  WORK_VIEWS, WorkView as WorkViewName, SetupView, Layout, cutFor
+} from './TeamsWork'
 import { lastSeen, markSeen, unseen } from '../lib/teamSeen'
 import { Role, ROLES, PERMS, roleOf, setRoleOf, viewAs, setViewAs, effectiveRole } from '../lib/teamData'
 import {
@@ -34,8 +38,12 @@ import {
   fetchTeam, teamApi, memberLabel, initialsOf, stageProgress, parseTs, buildActivity
 } from '../lib/teamLive'
 
-const TABS = ['Today', 'Board', 'Team', 'Tickets', 'History', 'Business Assignment', 'Activity', 'Collaboration', 'Approvals'] as const
-type Tab = typeof TABS[number]
+/* The nine tabs that used to sit across the top of this page are gone. They
+   were five arrangements of tickets plus two configuration screens plus two
+   workflow states, all presented as peers, which is why the page could not
+   say what mattered. Work is now one list under a lens switcher, setup and
+   the record are demoted below a rule, and approvals are an inbox. See
+   TeamsWork for the surface itself. */
 
 const fmtTs = (ts: number) => ts
   ? new Date(ts).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
@@ -79,7 +87,31 @@ export function Teams() {
      answer. */
   const [accFailed, setAccFailed] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [tab, setTab] = useState<Tab>('Today')
+  /* The page opens on your work. It used to open on five counters reading
+     zero, which is the worst first impression a tool can make and was the
+     default state. The lens is remembered, because somebody who lives in
+     Needs attention should not reselect it every morning. */
+  const [view, setViewState] = useState<WorkViewName>(() => {
+    try {
+      const v = localStorage.getItem('gt.teams.view')
+      return (WORK_VIEWS as readonly string[]).indexOf(v || '') >= 0 ? (v as WorkViewName) : 'Mine'
+    } catch (e) { return 'Mine' }
+  })
+  const setView = (v: WorkViewName) => {
+    setViewState(v)
+    try { localStorage.setItem('gt.teams.view', v) } catch (e) { /* private mode */ }
+  }
+  const [layout, setLayoutState] = useState<Layout>(() => {
+    try { return localStorage.getItem('gt.teams.layout') === 'Board' ? 'Board' : 'List' } catch (e) { return 'List' }
+  })
+  const setLayout = (l: Layout) => {
+    setLayoutState(l)
+    try { localStorage.setItem('gt.teams.layout', l) } catch (e) { /* private mode */ }
+  }
+  /* Setup and the record are not lenses on the work, so they are not a sixth
+     option in the switcher. Opening one puts the work surface aside; closing
+     it brings the work back exactly where it was. */
+  const [setup, setSetup] = useState<SetupView | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
   const [invite, setInvite] = useState(false)
   const [newTicket, setNewTicket] = useState(false)
@@ -220,6 +252,15 @@ export function Teams() {
 
   const open = openId ? d.tickets.find(t => t.id === openId) || null : null
   const pendingApprovals = d.approvals.filter(a => a.status === 'pending')
+  /* The number beside each lens. Computed from the same cut the lens itself
+     uses, so the badge and the list can never disagree. */
+  const viewCounts = useMemo(() => {
+    const out = {} as Record<WorkViewName, number>
+    WORK_VIEWS.forEach(v => {
+      out[v] = d ? cutFor(v, d, now, me ? (me.name || '') : '').items.length : 0
+    })
+    return out
+  }, [d, now, me])
 
   /* Assignee is a plain string on the tickets table, not a member id, so the
      picker offers the names of real members and stores what it is given. */
@@ -563,8 +604,9 @@ export function Teams() {
     <div className="scr on">
       <Header title="Teams">
         <UpdatesPill count={updatesOpen ? 0 : newEvents.length} onClick={() => setUpdatesOpen(true)} />
-        {(tab === 'Tickets' || tab === 'Today') && <button className="btn p" onClick={() => setNewTicket(true)}>New ticket</button>}
-        {tab === 'Team' && perms.manageTeam && <button className="btn p" onClick={() => setInvite(true)}>Invite member</button>}
+        {setup === 'Team' && perms.manageTeam
+          ? <button className="btn p" onClick={() => setInvite(true)}>Invite member</button>
+          : <button className="btn p" onClick={() => setNewTicket(true)}>New ticket</button>}
       </Header>
       {/* The rail, same as Overview and Analyses.
           Every screen in the portal now holds its content to one column width,
@@ -574,27 +616,32 @@ export function Teams() {
           edge to edge and the cards still line up with every other screen. */}
       <div className="canvas">
         <div className="wrap">
-          <div className="tmtabs">
-            {TABS.map(t => (
-              <button key={t} className={'tmtab' + (t === tab ? ' on' : '')} onClick={() => setTab(t)}>{t}
-                {t === 'Approvals' && pendingApprovals.length > 0 && <span className="tmbadge">{pendingApprovals.length}</span>}
-              </button>
-            ))}
-          </div>
-          {tab === 'Today' && <TodayView d={d} now={now} myName={me ? (me.name || '') : ''} h={boardHandlers} />}
-          {tab === 'Board' && <BoardView d={d} now={now} h={boardHandlers} />}
-          {tab === 'Team' && <TeamTab />}
-          {tab === 'Tickets' && <TicketsTab />}
-          {tab === 'History' && <HistoryTab />}
-          {tab === 'Business Assignment' && (
+          <WorkSwitcher
+            view={setup ? null : view} setView={setView}
+            layout={layout} setLayout={setLayout}
+            setup={setup} setSetup={setSetup}
+            counts={viewCounts} />
+
+          {!setup && (
+            <>
+              {/* Anything waiting on this person, above whatever lens they
+                  chose, because a decision somebody else is blocked on
+                  outranks the list you came to read. */}
+              <ApprovalInbox items={pendingApprovals} h={boardHandlers} />
+              <WorkList view={view} layout={layout} d={d} now={now}
+                myName={me ? (me.name || '') : ''} h={boardHandlers} />
+            </>
+          )}
+
+          {setup === 'Team' && <TeamTab />}
+          {setup === 'Business assignment' && (
             <DelegateView d={d} biz={bizList} now={now} h={boardHandlers}
               dh={delegateHandlers} canAssign={perms.assign} />
           )}
-          {tab === 'Activity' && <ActivityTab />}
-          {tab === 'Collaboration' && <CollabTab />}
-          {tab === 'Approvals' && <ApprovalsTab />}
+          {setup === 'Activity' && <ActivityTab />}
+          {setup === 'Collaboration' && <CollabTab />}
         </div>
-        <QuickActions />
+        <TeamRail d={d} now={now} myName={me ? (me.name || '') : ''} />
       </div>
 
       {open && <TicketDrawer t={open} canComment={perms.comment} busy={busy}
@@ -616,7 +663,7 @@ export function Teams() {
       {updatesOpen && (
         <UpdatesPanel items={newEvents} now={now} workspaceName={d.accountName}
           onDismiss={clearUpdates}
-          onOpenActivity={() => { clearUpdates(); setTab('Activity') }} />
+          onOpenActivity={() => { clearUpdates(); setSetup('Activity') }} />
       )}
 
       {newTicket && <TicketModal projects={bizList} seedProject={seedProject}
@@ -635,7 +682,7 @@ export function Teams() {
       {askApproval && <ApprovalModal businesses={bizList}
         seed={askApproval === true ? null : askApproval}
         onClose={() => setAskApproval(null)}
-        onCreate={f => void run(() => teamApi.requestApproval(d.accountId, f).then(() => { setAskApproval(null); setTab('Approvals') }), 'Approval requested.')} />}
+        onCreate={f => void run(() => teamApi.requestApproval(d.accountId, f).then(() => { setAskApproval(null); setSetup(null) }), 'Approval requested.')} />}
     </div>
   )
 }

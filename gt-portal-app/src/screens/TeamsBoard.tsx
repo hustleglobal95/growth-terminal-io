@@ -230,10 +230,17 @@ function WorkloadCard({ loads, now, h }: {
 
 /* -------------------------------------------------------------- Board */
 
-export function BoardView({ d, now, h }: { d: TeamData; now: number; h: BoardHandlers }) {
+export function BoardView({ d, now, h, filter: outer }: {
+  d: TeamData; now: number; h: BoardHandlers
+  /* The lens the work surface is on. The board's own two controls compose
+     with it rather than replacing it, so switching layout keeps the same
+     set of tickets rather than silently widening it back to everything. */
+  filter?: (t: TeamTicket) => boolean
+}) {
   const [who, setWho] = useState('')
   const [risky, setRisky] = useState(false)
   const filter = (t: TeamTicket) => {
+    if (outer && !outer(t)) return false
     if (who && t.assignee.trim() !== who) return false
     if (risky && !riskOf(t, now)) return false
     return true
