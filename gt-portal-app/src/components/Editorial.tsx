@@ -4,7 +4,7 @@ import { toast } from '../lib/bus'
 import {
   Mark, MarkColor, MarkStyle, Anchor, COLORS, SECTIONS, sectionLabel,
   VERDICTS, isVerdict, STYLE_LABEL,
-  listMarks, createMark, patchMark, removeMark,
+  listMarks, createMark, patchMark, removeMark, localMarks, saveLocalMarks,
   anchorFromSelection, anchorFromRange, rangeFromStroke, repaint, unpaint
 } from '../lib/marks'
 
@@ -153,9 +153,16 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
     setReady(false)
     listMarks(analysisId)
       .then(rows => { if (alive) { setMarks(rows); setStored(true); setReady(true) } })
-      .catch(() => { if (alive) { setMarks([]); setStored(false); setReady(true) } })
+      .catch(() => { if (alive) { setMarks(localMarks(analysisId)); setStored(false); setReady(true) } })
     return () => { alive = false }
   }, [analysisId])
+
+  /* Whenever the engine is not holding the marks, this browser is. Written on
+     every change so a reload does not throw the reader's work away. */
+  useEffect(() => {
+    if (!ready || stored) return
+    saveLocalMarks(analysisId, marks)
+  }, [ready, stored, marks, analysisId])
 
   useEffect(() => {
     if (!on) { setHosts([]); return }
@@ -205,7 +212,7 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
          anything is being kept, which is the honest pair of statements. */
       if (optimistic) setMarks(m => m.concat(optimistic))
       setStored(false)
-      toast('Marks are not saving right now. Yours will last until you leave the page.')
+      toast('Marks are not reaching the engine. Yours are being kept in this browser instead.')
     } finally { busy.current = false }
   }, [stored])
 
@@ -386,8 +393,11 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
       lines.push('-'.repeat(label.length))
       for (const q of quotes) {
         const a = q.anchor as Anchor
-        const verdict = isVerdict(a.style) ? ' [' + STYLE_LABEL[a.style as MarkStyle] + ']' : ''
-        lines.push('  "' + (a.quote || '').trim() + '"' + verdict)
+        /* Every nib but the plain marker changes what the quote means, so
+           each one is named. A struck-out passage pasted bare would read as
+           kept, which is the opposite of what the reader decided. */
+        const nib = a.style && a.style !== 'highlight' ? ' [' + STYLE_LABEL[a.style as MarkStyle] + ']' : ''
+        lines.push('  "' + (a.quote || '').trim() + '"' + nib)
         if (q.body) lines.push('    Note: ' + q.body.trim())
       }
       for (const n of sectionNotes) lines.push('  Note: ' + (n.body || '').trim())
@@ -648,8 +658,8 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
         </div>
 
         {!stored && (
-          <p className="edwarn">Marks are not being saved. The storage route is not live yet, so
-            anything you mark here lasts until you leave the page.</p>
+          <p className="edwarn">The storage route is not live on the engine yet, so these marks are
+            kept in this browser. They survive a reload on this device and are not shared with anyone else.</p>
         )}
         {lost > 0 && (
           <p className="edwarn">{lost === 1 ? 'One mark could not be placed' : lost + ' marks could not be placed'} and
