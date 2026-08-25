@@ -398,6 +398,78 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
       () => toast('Could not reach the clipboard.'))
   }, [buildBrief, marks])
 
+  /* Where the kit sits, and whether it is open. Both are the reader's, not the
+     product's, so both are remembered. A toolbar that returns to the middle of
+     the screen every session is one somebody drags out of the way every
+     session.
+
+     The position is clamped on restore as well as on drag. A window that was
+     wide yesterday and narrow today would otherwise hand back a toolbar parked
+     off the right edge, and a tool you cannot reach is worse than one in the
+     wrong place. */
+  const [kitPos, setKitPos] = useState<{ x: number; y: number } | null>(() => {
+    try {
+      const raw = localStorage.getItem('gt.markup.pos')
+      const p = raw ? JSON.parse(raw) : null
+      return p && typeof p.x === 'number' && typeof p.y === 'number' ? p : null
+    } catch (e) { return null }
+  })
+  const [shut, setShut] = useState(() => {
+    try { return localStorage.getItem('gt.markup.shut') === '1' } catch (e) { return false }
+  })
+  const drag = useRef<{ dx: number; dy: number } | null>(null)
+
+  const clamp = useCallback((x: number, y: number) => {
+    const w = 380, h = 52, pad = 8
+    return {
+      x: Math.max(pad, Math.min(x, window.innerWidth - w - pad)),
+      y: Math.max(pad, Math.min(y, window.innerHeight - h - pad))
+    }
+  }, [])
+
+  const toggleShut = useCallback(() => {
+    setShut(v => {
+      try { localStorage.setItem('gt.markup.shut', v ? '0' : '1') } catch (e) { /* private mode */ }
+      return !v
+    })
+  }, [])
+
+  /* Pointer events rather than mouse events, so a pen and a finger drag the
+     kit the same way a cursor does, and capture so a fast drag that leaves the
+     handle does not drop the toolbar mid-air. */
+  const onGrab = useCallback((e: React.PointerEvent) => {
+    const host = (e.currentTarget as HTMLElement).parentElement
+    if (!host) return
+    const r = host.getBoundingClientRect()
+    drag.current = { dx: e.clientX - r.left, dy: e.clientY - r.top }
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    e.preventDefault()
+  }, [])
+
+  const onDragMove = useCallback((e: React.PointerEvent) => {
+    if (!drag.current) return
+    const next = clamp(e.clientX - drag.current.dx, e.clientY - drag.current.dy)
+    setKitPos(next)
+  }, [clamp])
+
+  const onDrop = useCallback((e: React.PointerEvent) => {
+    if (!drag.current) return
+    drag.current = null
+    ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
+    setKitPos(p => {
+      if (p) { try { localStorage.setItem('gt.markup.pos', JSON.stringify(p)) } catch (err) { /* private mode */ } }
+      return p
+    })
+  }, [])
+
+  /* A saved position from a wider window is corrected once, on mount, rather
+     than left to strand the kit off screen. */
+  useEffect(() => {
+    if (!kitPos) return
+    const fixed = clamp(kitPos.x, kitPos.y)
+    if (fixed.x !== kitPos.x || fixed.y !== kitPos.y) setKitPos(fixed)
+  }, [])
+
   if (!on) return null
 
   const pins = marks.filter(m => m.kind === 'pin')
@@ -431,7 +503,32 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
       </svg>
 
       {/* The kit itself. */}
-      <div className="edui edkit" role="toolbar" aria-label="Markup tools">
+      <div className={'edui edkit' + (shut ? ' shut' : '') + (kitPos ? ' free' : '')}
+        role="toolbar" aria-label="Markup tools"
+        style={kitPos ? { left: kitPos.x, top: kitPos.y, bottom: 'auto', transform: 'none' } : undefined}>
+
+        {/* The handle. It is the one part of the kit that is not a tool, so it
+            reads as texture rather than as a button, and it is what the whole
+            thing hangs from when somebody moves it out of their way. */}
+        <button className="edgrip" aria-label="Move the toolkit"
+          onPointerDown={onGrab} onPointerMove={onDragMove}
+          onPointerUp={onDrop} onPointerCancel={onDrop}>
+          <svg viewBox="0 0 8 16" width="8" height="15" aria-hidden="true" fill="currentColor">
+            <circle cx="2.4" cy="4" r="1" /><circle cx="5.6" cy="4" r="1" />
+            <circle cx="2.4" cy="8" r="1" /><circle cx="5.6" cy="8" r="1" />
+            <circle cx="2.4" cy="12" r="1" /><circle cx="5.6" cy="12" r="1" />
+          </svg>
+        </button>
+
+        <button className="edtool edshut" data-tip={shut ? 'Show the tools' : 'Collapse'}
+          aria-label={shut ? 'Show the tools' : 'Collapse the toolkit'}
+          aria-expanded={!shut} onClick={toggleShut}>
+          <svg {...ico} style={{ transform: shut ? 'rotate(180deg)' : undefined }}>
+            <path d="M10 4L6 8l4 4" />
+          </svg>
+        </button>
+
+        {!shut && <>
         <div className="edseg">
           <button className={'edtool' + (style === 'highlight' ? ' on' : '')} aria-pressed={style === 'highlight'}
             data-tip="Marker" aria-label="Marker" onClick={() => setStyle('highlight')}><Marker /></button>
@@ -469,6 +566,7 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
           onClick={() => setFocus(!focus)}><Focus /></button>
         <button className={'edtool' + (pad ? ' on' : '')} aria-pressed={pad}
           data-tip="Notepad" aria-label="Notepad" onClick={() => setPad(!pad)}><Pad /></button>
+        </>}
       </div>
 
       {pop && !draw && (
