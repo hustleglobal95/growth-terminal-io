@@ -4725,3 +4725,50 @@ main{scrollbar-gutter:stable}
   .gsb.flush .lvtimeline > .plan{padding-left:16px;padding-right:16px}
   .ggate{padding-left:16px;padding-right:16px}
 }
+
+/* ===========================================================================
+   EXECUTION
+   ---------------------------------------------------------------------------
+   The rows say what the workspace owes. They are built on the same grammar as
+   the analyses list, because they are the same kind of object: a list of
+   things with a state, where the subject carries the weight and the metadata
+   recedes.
+
+   One departure. Everywhere else in the product a status is neutral, because
+   a table where every row is green is a texture rather than a signal. Here it
+   is the opposite: a plan that has let weeks go by uncommitted is the single
+   thing this section exists to say, and it is rare rather than universal. So
+   amber marks a slipped plan and nothing else in the row competes with it.
+   A plan that is on schedule says so in words and stays quiet.
+   =========================================================================== */
+.xlist{display:flex;flex-direction:column}
+.xrow{
+  display:grid;
+  grid-template-columns:118px minmax(0,1.05fr) minmax(0,1.5fr) auto;
+  align-items:baseline;gap:16px;
+  width:100%;text-align:left;
+  padding:11px 26px;
+  border:0;border-bottom:1px solid var(--border);
+  background:transparent;cursor:pointer;font:inherit;
+  transition:background-color 110ms ease;
+}
+.xrow:last-child{border-bottom:0}
+.xrow:hover{background:rgba(15,15,14,.028)}
+.xrow:focus-visible{outline:2px solid var(--text);outline-offset:-2px}
+
+.xwk{font:500 11px/1.3 var(--mono);color:var(--muted);letter-spacing:0;white-space:nowrap}
+.xwk em{font-style:normal;color:var(--faint)}
+.xbiz{font-size:12.5px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xstate{font-size:12.5px;color:var(--muted);min-width:0}
+.xstate.behind{color:var(--amber);font-weight:500}
+.xstate.due{color:var(--text)}
+.xcount{font:400 11px/1.3 var(--mono);color:var(--faint);letter-spacing:0;white-space:nowrap;text-align:right}
+
+@media(max-width:900px){
+  .xrow{grid-template-columns:96px minmax(0,1fr);row-gap:5px}
+  .xstate,.xcount{grid-column:2}
+  .xcount{text-align:left}
+}
+@media(max-width:760px){
+  .xrow{padding:12px 16px;min-height:44px}
+}
