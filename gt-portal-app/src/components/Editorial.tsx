@@ -265,12 +265,22 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
     catch (e) { toast(e instanceof Error ? e.message : 'Could not remove that mark.') }
   }
 
-  const highlight = async (ink: MarkColor) => {
+  /* The anchor the popover carries is built from the selection alone, so it
+     knows where the words are and nothing about how they should be drawn. The
+     nib has to be attached here, at the moment the mark is made.
+
+     Without this, every mark taken from a text selection came out a plain
+     highlight no matter which nib was chosen. Underline had that defect from
+     the start and it was invisible, because a yellow highlight is exactly what
+     somebody reaching for a highlighter expects to see. Strike and the three
+     verdicts made it obvious. */
+  const highlight = async (ink: MarkColor, asStyle?: MarkStyle) => {
     if (!pop) return
     const { sectionId, anchor } = pop
+    const nib = asStyle || style
     setPop(null)
     window.getSelection()?.removeAllRanges()
-    await addMark(sectionId, anchor, ink)
+    await addMark(sectionId, nib === 'highlight' ? anchor : { ...anchor, style: nib }, ink)
   }
 
   /* ---------------- the pen ---------------- */
@@ -569,10 +579,22 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
         </>}
       </div>
 
+      {/* What the popover offers depends on the nib. Ink is a real question
+          for a marker and a meaningless one for a verdict: nobody choosing
+          "agree" cares whether it is blue. So a verdict is applied straight
+          from the popover under its own name, and the four colours are only
+          offered when a colour is what the mark is made of. */}
       {pop && !draw && (
-        <div className="edui edpop" role="toolbar" aria-label="Ink"
+        <div className="edui edpop" role="toolbar"
+          aria-label={isVerdict(style) ? 'Verdict' : 'Ink'}
           style={{ left: pop.x, top: pop.y }}>
-          {COLORS.map(([key, label]) => (
+          {isVerdict(style) ? (
+            <button className={'edverdgo ' + style}
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => void highlight(color)}>
+              {STYLE_LABEL[style]}
+            </button>
+          ) : COLORS.map(([key, label]) => (
             <button key={key} className={'edswatch c' + key} data-tip={label} aria-label={label}
               onMouseDown={e => e.preventDefault()}
               onClick={() => void highlight(key)} />
