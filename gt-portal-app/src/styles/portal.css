@@ -4186,3 +4186,152 @@ h1,h2,h3,
 p,.ssub,.sfine,.agentnote,.emptypage p{
   text-wrap:pretty;
 }
+
+/* ===========================================================================
+   THE FLAT PASS
+   ---------------------------------------------------------------------------
+   Nvidia, Palantir, Rocket Lab, Linear, SpaceX. Not one of them lights a
+   control from above. Their surfaces are flat planes separated by hairlines,
+   and the only thing allowed to stand off the page is the one thing you are
+   meant to do next.
+
+   What was here before built every control the way a physical key is built:
+   two gradient stops, an inset highlight, a bevel line along the bottom, a
+   contact shadow, an ambient shadow, and on the primary an orange glow thrown
+   onto the page underneath it. Six layers, on every button, chip, segment and
+   search pill in the product.
+
+   Depth is how a website asks to be clicked. An instrument does not ask. It
+   is also, precisely, the "startup playfulness" the logo brief rules out, and
+   it was arriving through the controls instead of through the mark.
+
+   So: flat fill, hairline edge, colour change on press, nothing moves.
+   =========================================================================== */
+
+/* Every lift in the app becomes the hairline it was standing in for. One
+   change rather than thirty, because the tokens are where the lift lives. */
+:root{
+  --lift-1:0 0 0 1px var(--border);
+  --lift-2:0 0 0 1px var(--border2);
+  --lift-edge:0 0 0 0 rgba(0,0,0,0);
+}
+
+/* ---- primary. One flat amber, one darker amber, one darker still. ------- */
+.btn.p{background:var(--amber);box-shadow:inset 0 0 0 1px rgba(150,58,6,.30)}
+.btn.p:hover{background:#FB6A0A;box-shadow:inset 0 0 0 1px rgba(150,58,6,.30)}
+.btn.p:active:not(:disabled){background:#E2610C;box-shadow:inset 0 0 0 1px rgba(150,58,6,.38)}
+
+/* ---- everything else that can be pressed shares one treatment ----------- */
+.btn.g,.ract,.iconbtn,.fchip,.searchpill{
+  background:var(--card);
+  box-shadow:inset 0 0 0 1px var(--border2);
+}
+.btn.g:hover,.ract:hover,.iconbtn:hover,.fchip:hover,.searchpill:hover{
+  background:var(--s2);
+  box-shadow:inset 0 0 0 1px var(--border2);
+}
+.btn.g:active:not(:disabled),.ract:active,.iconbtn:active,.fchip:active{
+  background:var(--s3);
+  box-shadow:inset 0 0 0 1px var(--border2);
+}
+/* A filter that is on is a switch that has been thrown. It reads as one
+   because of the tint, not because it is pressed into a hole. */
+.fchip.on{background:var(--tint);color:var(--amber);box-shadow:inset 0 0 0 1px var(--aborder)}
+
+.seg{background:var(--s2);box-shadow:inset 0 0 0 1px var(--border)}
+.seg button.on,.seg .thumb{background:var(--card);box-shadow:inset 0 0 0 1px var(--border2)}
+
+/* Nothing travels. A control that moves under the cursor is a control that
+   is performing, and none of the references let theirs perform. */
+.btn:active:not(:disabled),
+.ract:active,.iconbtn:active,.fchip:active,.searchpill:active{transform:none}
+
+/* The pane is an edge, not an object floating over a desktop. */
+@media(min-width:761px){
+  .shell{box-shadow:0 1px 2px rgba(15,15,14,.05)}
+}
+
+/* A modal is the one thing that genuinely sits above the page, so it keeps a
+   shadow. One, not three. */
+.stake,.namodal,.updcard{box-shadow:0 0 0 1px var(--border2), 0 18px 44px -22px rgba(15,15,14,.34)}
+
+/* ===========================================================================
+   ONE ACCENT PER VIEW
+   ---------------------------------------------------------------------------
+   Counted on the live app: five orange marks on Overview and nine on the API
+   screen, plus eight green status dots in a table where every row was green.
+   A colour that appears on every row is not a signal, it is a texture, and
+   the brand allows amber two to five percent of the surface precisely so that
+   when it does appear it means something.
+
+   What keeps the accent: the active item in the nav, and the single primary
+   action on the screen. Everything else gives it back.
+   =========================================================================== */
+
+/* The three chips in the sidebar chrome carried pulsing amber dots on every
+   screen in the product. A plan, a calibration count and a credit balance are
+   readouts, not alarms. They get a neutral tick, and amber returns only when
+   a chip is actually flagging something, which today is a trial running out. */
+.side .chip i{width:2px;height:10px;border-radius:0;background:var(--line2);animation:none}
+.side .chip.warn i{background:var(--amber)}
+.stat.ok i{animation:none}
+@media(prefers-reduced-motion:reduce){ .side .chip i,.stat.ok i{animation:none} }
+
+/* Four bullets in front of four words. The list reads as a list without
+   them, and they were the only marks in the rail competing with the nav. */
+.jump a i{display:none}
+
+/* Four credit bundles are peers. Four identical primary buttons made none of
+   them the action and spent the accent four times, on the one screen that
+   already has a real primary in "Create key". */
+.buycard .btn.p{background:var(--card);color:var(--text);box-shadow:inset 0 0 0 1px var(--border2)}
+.buycard .btn.p:hover{background:var(--s2);color:var(--text)}
+.buycard .btn.p:active:not(:disabled){background:var(--s3)}
+
+/* Status is a word. Green is kept for the case it was meant for, which is a
+   verified outcome standing next to unverified ones, and a table where every
+   row says Complete is not that case. The tick stays so the column aligns. */
+.gst::before{width:2px;height:9px;border-radius:0}
+.gst.ok::before{background:var(--line2)}
+.gst.run::before{background:var(--amber)}
+
+/* ===========================================================================
+   THE THIRD PARTY CONTROL SITS INSIDE THE FRAME
+   ---------------------------------------------------------------------------
+   The voice widget anchors itself position:fixed with inset:0 and a z-index of
+   1000, so it escaped the card it was mounted in and floated over the middle
+   of the canvas, carrying its own shadow, its own radius and its own wordmark.
+   It was the only foreign object on a customer screen.
+
+   A transform on the mount makes the mount a containing block, which is what
+   fixed positioning resolves against, so the widget lands inside it without
+   anybody having to reach into somebody else's shadow DOM. Measured on the
+   live page: 330 by 152 leaves their control an even 32px on all four sides.
+   =========================================================================== */
+.agentcard{padding:16px 18px 20px;background:var(--card);box-shadow:inset 0 0 0 1px var(--border)}
+.agentmount{
+  position:relative;
+  transform:translateZ(0);
+  display:block;
+  width:100%;
+  max-width:330px;
+  height:152px;
+  min-height:0;
+  margin-top:16px;
+  border:1px solid var(--border);
+  background:var(--s2);
+  overflow:hidden;
+}
+
+/* ===========================================================================
+   A FAILURE READS LIKE THE REST OF THE DOCUMENT
+   ---------------------------------------------------------------------------
+   Teams fails to load its workspace and says so in a centred block, which is
+   the only centred text in the application. Centred text in a left aligned
+   product is what a broken page looks like, so the one screen that most needs
+   to say "this is on our side, not yours" was saying the opposite with its
+   layout.
+   =========================================================================== */
+.emptyblock{align-items:flex-start;text-align:left;padding:30px 26px;gap:9px}
+.emptyblock b{font-size:15px;font-weight:600;letter-spacing:-.018em}
+.emptyblock span{max-width:58ch}
