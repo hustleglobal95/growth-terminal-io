@@ -4416,3 +4416,44 @@ main{scrollbar-gutter:stable}
   clip-path:polygon(14% 46%,0 60%,36% 96%,100% 22%,86% 10%,35% 68%);
 }
 .keyscope input:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+
+/* ===========================================================================
+   THE SUBJECT OF A ROW IS THE HEAVIEST THING IN IT
+   ---------------------------------------------------------------------------
+   In the analyses list the constraint was set at weight 400 and the date at
+   weight 500, so the heaviest thing in every row was when it happened rather
+   than what it found. Scanning the list you read a column of dates and had to
+   go back for the finding.
+
+   The constraint is why the row exists. It takes the weight, and the date goes
+   back to being metadata, which is what a date on a list of findings is.
+   =========================================================================== */
+.grow .n{font-weight:500}
+.grow .f,.grow .f .dt{font-weight:400;color:var(--muted)}
+.ghrow .m{font-weight:500}
+
+/* The last two decorative dots in the product, carried over from the strip:
+   a green one on every completed item and an amber one wearing a glow ring.
+   Same rule as everywhere else. Amber marks the thing that is happening; a
+   finished item is a word, not a colour. */
+.gstripc .v i.dot{width:2px;height:9px;border-radius:0}
+.gstripc .v i.dot.ok{background:var(--line2)}
+.gstripc .v i.dot.run{background:var(--amber);box-shadow:none}
+
+/* ===========================================================================
+   A FILTER SET TO ALL IS NOT FILTERING
+   ---------------------------------------------------------------------------
+   Two chips reading "All", both tinted amber, on a list showing everything.
+   The accent was marking the absence of a choice, in two places, on the screen
+   whose one real accent is the primary button in the header.
+
+   The default chip still reads as the selected one, because it is. It reads
+   that way in weight and fill rather than in colour, and amber comes back the
+   moment a filter is actually narrowing the view, where it is worth something.
+   =========================================================================== */
+.gfgroup > button.fchip.on:first-of-type{
+  background:var(--s3);
+  color:var(--text);
+  font-weight:600;
+  box-shadow:inset 0 0 0 1px var(--border2);
+}
