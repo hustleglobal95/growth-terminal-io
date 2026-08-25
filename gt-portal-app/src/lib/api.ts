@@ -127,7 +127,7 @@ export async function resolveWorkspace(uid?: string | null): Promise<string | nu
   return withoutAuthRedirect(async () => {
   try {
     const me = await live<{ workspaceId?: string; workspace?: string }>('/me')
-    const id = me.workspaceId || me.workspace || ''
+    const id = bareWorkspaceId(me.workspaceId || me.workspace || '')
     if (UUID.test(id)) { setWorkspaceId(id, uid); return id }
     lastResolveTrace.push('/me answered, but with no workspace id')
   } catch (e) {
@@ -150,8 +150,86 @@ export async function resolveWorkspace(uid?: string | null): Promise<string | nu
     lastResolveTrace.push('accounts: ' + m)
   }
 
+  /* Third source: an id this browser already has, confirmed by the engine.
+   *
+   *  Both routes above are one endpoint each, and on the day /portal/accounts
+   *  started answering 500 that was the whole product: nobody could open any
+   *  screen, because the only question the portal could not answer was which
+   *  workspace it was standing in.
+   *
+   *  A browser that has ever resolved a workspace still has the id in storage.
+   *  Until now that id was thrown away whenever the owner stamp beside it was
+   *  missing or belonged to somebody else, because a stamp this code writes
+   *  itself is not evidence of anything: it is the client believing the client.
+   *  Throwing it away was right. Asking somebody else about it is better.
+   *
+   *  /me scopes to the header it is given and answers with the workspace that
+   *  header actually resolves to, or null when it resolves to nothing for this
+   *  token. Measured against the engine: a real id comes back as itself, and a
+   *  well formed id that is not this caller's comes back null. So the stored id
+   *  is offered as a question rather than used as an answer, and it is adopted
+   *  only when the engine names it back. That is not a guess. It is the same
+   *  confirmation the other two routes provide, asked through a door that is
+   *  still open.
+   *
+   *  This cannot help a browser that has never resolved a workspace. Nothing
+   *  client side can, and it should not try. */
+  const held = getWorkspaceId()
+  const heldStamp = workspaceOwner()
+  /* If the id carries a stamp naming somebody else, it is not offered at all.
+   *
+   *  The check below asks the engine whether an id resolves for this token, and
+   *  every scoped route in the product already depends on the engine enforcing
+   *  exactly that on X-Workspace-Id. But "already depends on it" is an argument,
+   *  not a test, and the one case where being wrong would matter is a browser
+   *  that holds a previous person's workspace because their sign out did not
+   *  finish. That case is identifiable from here without asking anybody: the
+   *  stamp beside the id names a different user. So it is refused outright,
+   *  and the question is only ever asked about an id with no stamp or this
+   *  user's own. */
+  const heldIsSomeoneElses = !!heldStamp && !!uid && heldStamp !== uid
+  if (heldIsSomeoneElses) lastResolveTrace.push('a stored workspace belongs to another sign in and was not used')
+  if (held && UUID.test(held) && !heldIsSomeoneElses) {
+    try {
+      const me = await live<{ workspaceId?: string; workspace?: string }>(
+        '/me', { headers: { 'X-Workspace-Id': held } }
+      )
+      const named = bareWorkspaceId(me.workspaceId || me.workspace || '')
+      if (UUID.test(named) && named === held) {
+        setWorkspaceId(held, uid)
+        return held
+      }
+      /* The engine did not name it back, so it is not adopted.
+       *
+       *  It is also not deleted. A null here means "not confirmed", and the
+       *  two reasons for that are "this id is not yours" and "the engine is
+       *  having the same bad afternoon that sent us down here in the first
+       *  place". Those are indistinguishable from this side, and deleting on
+       *  the second one would burn the only recovery state the browser has,
+       *  permanently, at exactly the moment it is needed. An unconfirmed id
+       *  costs one request per reload. A deleted one costs the workspace. */
+      lastResolveTrace.push('the stored workspace was not confirmed by the engine')
+    } catch (e) {
+      const m = e instanceof Error ? e.message : 'failed'
+      if (m === 'Signed out.') lastWasUnauthenticated = true
+      lastResolveTrace.push('stored workspace check: ' + m)
+    }
+  }
+
   return null
   })
+}
+
+/** The engine writes a workspace as "acct-<uuid>" in some answers and as a
+ *  bare uuid in others. The portal stores and sends the bare form, which is
+ *  what X-Workspace-Id expects, so anything read back is normalised here.
+ *
+ *  This is not cosmetic. /me answers with the prefixed form, and the id it
+ *  returned was being tested against a bare uuid pattern, so that route could
+ *  never have resolved a workspace even on a day it was reachable without the
+ *  header. The one live path was doing the work of two. */
+function bareWorkspaceId(v: string): string {
+  return (v || '').trim().replace(/^acct[-_]/i, '')
 }
 
 /** Why the last resolution came up empty. Kept so the screen that reports the
