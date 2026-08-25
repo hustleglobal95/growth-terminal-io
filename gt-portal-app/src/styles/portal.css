@@ -2323,9 +2323,13 @@ body{
    fill on the other. A grey fill is also a weak way to say "selected" when the
    page behind it is already warm grey.
    --------------------------------------------------------------------------- */
+/* The uppercase monospaced treatment that used to live here is gone with the
+   tab bar it styled. It broke the type system, Inter everywhere and sentence
+   case, on the one screen a team was meant to live in, and made a workstation
+   read like a developer tool. The rule is kept for any tab bar left elsewhere,
+   in the product's own type rather than against it. */
 .tmtab{
-  font-family:var(--mono);font-size:10px;font-weight:500;
-  letter-spacing:.07em;text-transform:uppercase;
+  font-size:12.5px;font-weight:500;letter-spacing:0;text-transform:none;
   border-radius:4px;padding:7px 11px;
   border-color:var(--border);
   transition:color .18s var(--ease),background .18s var(--ease),border-color .18s var(--ease);
@@ -4852,4 +4856,92 @@ main{scrollbar-gutter:stable}
 @media(max-width:760px){
   /* The measure cap is a desktop concern. On a phone the column is the screen. */
   .grow .n{max-width:none}
+}
+
+/* ─── TEAMS WORK SURFACE ────────────────────────────────────────────────────
+   Nine uppercase monospaced tabs used to sit across the top of this page. They
+   broke the type system on the one screen a team was supposed to live in, and
+   worse, they presented five arrangements of tickets, two configuration
+   screens and two workflow states as nine equal peers. A page with nine equal
+   destinations has no opinion about what you should do, so it hands that
+   decision back on every visit.
+
+   What replaces them is a hierarchy. The lens you are working through sits at
+   the top in the same type as everything else in the product. Setup and the
+   record sit under a rule, smaller and quieter, because you touch them
+   monthly and not daily. */
+
+.wsw{margin:14px 0 16px}
+.wswrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+.wsviews{display:flex;gap:2px;flex-wrap:wrap}
+.wsv{
+  display:inline-flex;align-items:center;gap:7px;
+  background:none;border:0;border-radius:4px;
+  font:inherit;font-size:13.5px;font-weight:500;
+  color:var(--muted);padding:6px 10px;cursor:pointer;
+  transition:color .12s var(--ease),background .12s var(--ease);
+}
+.wsv:hover{color:var(--text);background:rgba(15,15,14,.04)}
+.wsv.on{color:var(--text);background:rgba(15,15,14,.06);font-weight:600}
+.wsv:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+
+/* The count beside a lens is a readout, not a badge shouting for attention.
+   It is the same neutral as the label until the lens is the one you are on. */
+.wsn{
+  font-size:11.5px;font-weight:500;color:var(--faint);
+  font-variant-numeric:lining-nums tabular-nums;
+}
+.wsv.on .wsn{color:var(--muted)}
+
+/* Layout is a property of the list, not another place to go, so it reads as a
+   control rather than as navigation. */
+.wslay{display:inline-flex;gap:1px;padding:2px;border-radius:5px;background:rgba(15,15,14,.05)}
+.wsl{
+  background:none;border:0;border-radius:3px;
+  font:inherit;font-size:12px;font-weight:500;color:var(--muted);
+  padding:4px 10px;cursor:pointer;transition:color .12s var(--ease),background .12s var(--ease);
+}
+.wsl:hover{color:var(--text)}
+.wsl.on{background:var(--card);color:var(--text);box-shadow:0 0 0 1px var(--border)}
+.wsl:focus-visible{outline:2px solid var(--text);outline-offset:1px}
+
+/* Under the rule. Configuration and the record are not peers of the work. */
+.wssetup{
+  display:flex;gap:2px;flex-wrap:wrap;
+  margin-top:9px;padding-top:9px;border-top:1px solid var(--border);
+}
+.wss{
+  background:none;border:0;border-radius:4px;
+  font:inherit;font-size:12px;font-weight:400;color:var(--faint);
+  padding:4px 8px;cursor:pointer;transition:color .12s var(--ease),background .12s var(--ease);
+}
+.wss:hover{color:var(--muted);background:rgba(15,15,14,.03)}
+.wss.on{color:var(--text);background:rgba(15,15,14,.06);font-weight:500}
+.wss:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+
+/* The approvals inbox. One accent on the page, and this is where it goes:
+   somebody else is blocked until this is decided. */
+.wsinbox{box-shadow:inset 2px 0 0 var(--amber)}
+
+/* Rail readouts. Small rows, figures right, aligned on one edge so the column
+   can be read down rather than across. */
+.wsmini{display:flex;flex-direction:column;gap:1px;margin-top:8px}
+.wsmr{
+  display:flex;align-items:baseline;gap:10px;
+  padding:5px 0;border-top:1px solid var(--border);
+}
+.wsmr:first-child{border-top:0}
+.wsmr span{flex:1 1 auto;min-width:0;font-size:12.5px;color:var(--muted)}
+.wsmr b{
+  font-size:13.5px;font-weight:600;color:var(--text);
+  font-variant-numeric:lining-nums tabular-nums;
+}
+.wsmr.warn b{color:var(--text)}
+.wsmr.bad b{color:var(--amber)}
+.wsnote{margin-top:9px;display:block;line-height:1.5}
+
+@media(max-width:760px){
+  .wsviews{width:100%}
+  .wslay{margin-left:auto}
 }
