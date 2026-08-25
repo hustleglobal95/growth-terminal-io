@@ -1115,6 +1115,34 @@ export function LiveDetail({ id }: { id: string }) {
                 </Section>
               )}
 
+              {/* The basis of the reading, stated at the foot of the reading.
+               *
+               *  This surface names a constraint, puts a number on what moving
+               *  it is worth, and writes a twelve week plan against it. People
+               *  reallocate budget and headcount on the strength of that. What
+               *  it actually is, is a model's inference from the numbers that
+               *  were uploaded, and the honest thing is to say so in the same
+               *  place the conclusion is read rather than in a policy nobody
+               *  opens.
+               *
+               *  It sits last on purpose. A disclaimer at the top is a hedge
+               *  that asks to be believed less; a disclaimer at the foot is a
+               *  note on method, which is what this is. The product already
+               *  states its falsifiers and its calibration record in the
+               *  sections above, so this is consistent with the argument the
+               *  screen is already making rather than a retreat from it. */}
+              <Section id="basis" title="Basis of this analysis" qualifier="how to read it">
+                <p className="gbody">This analysis is produced by an automated system reading the
+                  figures in the data you supplied. It is an estimate, not a measurement, and it is
+                  wrong some of the time. The calibration record in your workspace reports how often,
+                  and the section above states in advance what would prove this particular reading
+                  wrong.</p>
+                <p className="gbody">It is business analysis and not accounting, legal, tax or
+                  investment advice, and it is not a guarantee of any financial outcome. Decisions
+                  about budget, headcount or spend remain yours, and are worth checking against your
+                  own records and advisers before you act on them.</p>
+              </Section>
+
               {/* Mounted last so the sections it reaches into already exist. */}
               <Editorial analysisId={id} on={markup} />
             </>
