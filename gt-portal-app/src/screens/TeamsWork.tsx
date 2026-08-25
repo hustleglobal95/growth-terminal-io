@@ -74,6 +74,26 @@ export function cutFor(view: WorkView, d: TeamData, now: number, myName: string)
   }
 }
 
+/* Two shapes drawn on the same 14px grid with the same hairline, so switching
+   between them reads as one control changing state rather than two icons
+   swapping. Stroke inherits the button's colour, which is what makes the
+   pressed state legible without a second accent. */
+const ListIcon = () => (
+  <svg viewBox="0 0 14 14" width="13" height="13" aria-hidden="true"
+    fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+    <path d="M2 3.5h10M2 7h10M2 10.5h10" />
+  </svg>
+)
+
+const BoardIcon = () => (
+  <svg viewBox="0 0 14 14" width="13" height="13" aria-hidden="true"
+    fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round">
+    <rect x="1.6" y="2.2" width="3.2" height="9.6" rx="1" />
+    <rect x="5.9" y="2.2" width="3.2" height="6.4" rx="1" />
+    <rect x="10.2" y="2.2" width="2.2" height="8" rx="1" />
+  </svg>
+)
+
 /** The switcher. A lens is not a place, so these do not look like tabs and do
  *  not sit in a bar of nine. Setup and the record live under the rule, which
  *  is the whole point: they are not peers of the work. */
@@ -102,9 +122,18 @@ export function WorkSwitcher({ view, setView, layout, setLayout, setup, setSetup
         <span className="sp" />
         {view && (
           <div className="wslay" role="group" aria-label="Layout">
+            {/* Icons rather than words. Layout is the one control on this page
+                a person uses without reading it, and two shapes, rows against
+                columns, say rows against columns faster than the words do. The
+                name stays on the button for anyone who needs it: a title for a
+                hover, an accessible label for a screen reader, and a pressed
+                state so the choice is announced rather than implied by fill. */}
             {(['List', 'Board'] as Layout[]).map(l => (
               <button key={l} className={'wsl' + (layout === l ? ' on' : '')}
-                aria-pressed={layout === l} onClick={() => setLayout(l)}>{l}</button>
+                aria-pressed={layout === l} aria-label={l + ' layout'} title={l}
+                onClick={() => setLayout(l)}>
+                {l === 'List' ? <ListIcon /> : <BoardIcon />}
+              </button>
             ))}
           </div>
         )}
