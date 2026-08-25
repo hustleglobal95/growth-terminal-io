@@ -4629,3 +4629,51 @@ main{scrollbar-gutter:stable}
   animation:none;
   border-radius:2px;
 }
+
+/* ===========================================================================
+   THE LEGAL FOOT
+   ---------------------------------------------------------------------------
+   Quiet by construction. This is the part of an interface that has to be
+   present and findable without ever competing for attention: an operating
+   entity, the policies, and the platform disclosures Meta's terms require
+   wherever the integration is offered.
+
+   It sits below the screen rather than inside it, separated by the same
+   hairline every other section is separated by, and set at the smallest size
+   in the product because nobody reads it until they need it and then they
+   need to find it immediately.
+   =========================================================================== */
+.legalfoot{
+  /* display is stated because a global footer rule elsewhere in this file sets
+     footers to flex, which laid the disclosure line beside the links instead of
+     under them. Measured before and after rather than assumed. */
+  display:block;
+  border-top:1px solid var(--border);
+  margin-top:44px;
+  padding:20px 26px 30px;
+}
+.lfrow{
+  display:flex;align-items:baseline;justify-content:space-between;
+  gap:20px;flex-wrap:wrap;
+}
+.lfent{
+  font-size:11.5px;font-weight:500;color:var(--muted);
+  letter-spacing:-.004em;
+}
+.lflinks{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+.lflinks a{
+  font-size:11.5px;color:var(--faint);text-decoration:none;
+}
+.lflinks a:hover{color:var(--text);text-decoration:underline;text-underline-offset:2px}
+.lfnote{
+  margin-top:10px;
+  font-size:10.5px;line-height:1.55;color:var(--faint);
+  max-width:var(--prose);
+}
+
+@media(max-width:760px){
+  .legalfoot{padding:18px 16px calc(96px + env(safe-area-inset-bottom))}
+  .lfrow{flex-direction:column;gap:9px}
+  .lflinks{gap:14px}
+  .lflinks a{min-height:44px;display:inline-flex;align-items:center}
+}
