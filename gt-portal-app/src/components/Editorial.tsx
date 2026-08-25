@@ -350,16 +350,11 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
     await save(() => createMark(analysisId, { kind: 'note', sectionId, body: text }), optimistic)
   }
 
-  if (!on) return null
-
-  const pins = marks.filter(m => m.kind === 'pin')
-  const notes = marks.filter(m => m.kind === 'note')
-  const inked = marks.filter(m => m.kind === 'highlight' && m.anchor)
-
-  const path = stroke && stroke.pts.length > 1
-    ? 'M' + stroke.pts.map(p => p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' L')
-    : ''
-
+  /* Both of these sit above the early return below on purpose. A hook that
+     runs only when the layer is open runs a different number of times than one
+     that does not, and React counts hooks per render, so the page goes blank
+     the moment somebody presses Mark up. This is the second time I made that
+     mistake today, so it is written down here rather than remembered. */
   /* Marking is only half the job. Somebody vetting an analysis is usually on
      their way to writing to a client, a partner or their own team, and until
      now everything they kept lived on a page they would have to go back to and
@@ -402,6 +397,17 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
       () => toast(n === 1 ? 'One passage copied.' : n + ' passages copied.'),
       () => toast('Could not reach the clipboard.'))
   }, [buildBrief, marks])
+
+  if (!on) return null
+
+  const pins = marks.filter(m => m.kind === 'pin')
+  const notes = marks.filter(m => m.kind === 'note')
+  const inked = marks.filter(m => m.kind === 'highlight' && m.anchor)
+
+  const path = stroke && stroke.pts.length > 1
+    ? 'M' + stroke.pts.map(p => p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' L')
+    : ''
+
 
   return (
     <>
