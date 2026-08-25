@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { toast } from '../lib/bus'
 import {
   Mark, MarkColor, MarkStyle, Anchor, COLORS, SECTIONS, sectionLabel,
+  VERDICTS, isVerdict, STYLE_LABEL,
   listMarks, createMark, patchMark, removeMark,
   anchorFromSelection, anchorFromRange, rangeFromStroke, repaint, unpaint
 } from '../lib/marks'
@@ -46,6 +47,24 @@ function PenNib() {
 }
 function Scribble() {
   return <svg {...ico}><path d="M2.2 9.6c2-3.4 3.6-3.4 4.4-1.2.8 2.2 2 2.6 3-.2.7-2 2.2-2.2 4.2.4" /></svg>
+}
+function Strike() {
+  return <svg {...ico}><path d="M2.6 8h10.8" /><path d="M11.4 4.6C10.6 3.4 9.4 3 8 3 6.2 3 5 3.9 5 5.2c0 1.2 1 1.9 3 2.4" /><path d="M4.9 11.2c.7 1.3 1.9 1.8 3.4 1.8 1.9 0 3.1-.9 3.1-2.2 0-.9-.5-1.5-1.6-2" /></svg>
+}
+function Tick() {
+  return <svg {...ico}><path d="M3 8.4l3 3L13 4.6" /></svg>
+}
+function Query() {
+  return <svg {...ico}><path d="M5.9 5.9a2.1 2.1 0 113.1 1.9c-.6.4-1 .8-1 1.6v.4" /><path d="M8 12.6h.01" /></svg>
+}
+function Bang() {
+  return <svg {...ico}><path d="M8 3.4v5.4" /><path d="M8 12.4h.01" /></svg>
+}
+function Focus() {
+  return <svg {...ico}><circle cx="8" cy="8" r="2.2" /><path d="M8 1.6v1.8M8 12.6v1.8M1.6 8h1.8M12.6 8h1.8" /></svg>
+}
+function Copy() {
+  return <svg {...ico}><rect x="5.4" y="5.4" width="8" height="8" rx="1.4" /><path d="M10.6 5.4V4a1.4 1.4 0 00-1.4-1.4H4A1.4 1.4 0 002.6 4v5.2A1.4 1.4 0 004 10.6h1.4" /></svg>
 }
 function Pad() {
   return <svg {...ico}><rect x="3" y="2.4" width="10" height="11.2" rx="1.6" /><path d="M5.6 5.8h4.8M5.6 8.4h4.8M5.6 11h2.8" /></svg>
@@ -120,6 +139,10 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
   const [color, setColor] = useState<MarkColor>('yellow')
   const [draw, setDraw] = useState(false)
   const [pad, setPad] = useState(false)
+  /* Focus dims everything nobody marked. After a long read it is the fastest
+     way back to the sentences you kept, and it is a reading mode rather than a
+     mark, so it is not written anywhere. */
+  const [focus, setFocus] = useState(false)
   const [stroke, setStroke] = useState<Stroke | null>(null)
 
   const busy = useRef(false)
@@ -153,6 +176,13 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
     }
     setLost(missing)
   }, [on, marks, hosts])
+
+  useEffect(() => {
+    const cls = 'edfocus'
+    if (on && focus) document.body.classList.add(cls)
+    else document.body.classList.remove(cls)
+    return () => { document.body.classList.remove(cls) }
+  }, [on, focus])
 
   useEffect(() => () => {
     SECTIONS.forEach(s => { const el = sectionEl(s[0]); if (el) unpaint(el) })
@@ -330,6 +360,49 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
     ? 'M' + stroke.pts.map(p => p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' L')
     : ''
 
+  /* Marking is only half the job. Somebody vetting an analysis is usually on
+     their way to writing to a client, a partner or their own team, and until
+     now everything they kept lived on a page they would have to go back to and
+     retype. This assembles what they marked, in the order the page presents
+     it, grouped by section, with verdicts and notes attached, and puts it on
+     the clipboard as plain text that pastes cleanly into an email.
+
+     It is built from the marks themselves rather than from the DOM, so a
+     passage that could not be repainted is simply absent rather than wrong. */
+  const buildBrief = useCallback((): string => {
+    const lines: string[] = []
+    for (const [id, label] of SECTIONS) {
+      const here = marks.filter(m => m.sectionId === id)
+      const quotes = here.filter(m => m.kind === 'highlight' && m.anchor && m.anchor.quote)
+      const sectionNotes = here.filter(m => m.kind !== 'highlight' && m.body)
+      if (!quotes.length && !sectionNotes.length) continue
+
+      lines.push(label)
+      lines.push('-'.repeat(label.length))
+      for (const q of quotes) {
+        const a = q.anchor as Anchor
+        const verdict = isVerdict(a.style) ? ' [' + STYLE_LABEL[a.style as MarkStyle] + ']' : ''
+        lines.push('  "' + (a.quote || '').trim() + '"' + verdict)
+        if (q.body) lines.push('    Note: ' + q.body.trim())
+      }
+      for (const n of sectionNotes) lines.push('  Note: ' + (n.body || '').trim())
+      lines.push('')
+    }
+    if (!lines.length) return ''
+    lines.unshift('')
+    lines.unshift('Marked in Growth Terminal')
+    return lines.join('\n').trimEnd() + '\n'
+  }, [marks])
+
+  const copyBrief = useCallback(() => {
+    const text = buildBrief()
+    if (!text) { toast('Nothing marked yet.'); return }
+    const n = marks.filter(m => m.kind === 'highlight' && m.anchor).length
+    navigator.clipboard?.writeText(text).then(
+      () => toast(n === 1 ? 'One passage copied.' : n + ' passages copied.'),
+      () => toast('Could not reach the clipboard.'))
+  }, [buildBrief, marks])
+
   return (
     <>
       {hosts.map(id => {
@@ -358,8 +431,22 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
             title="Marker" onClick={() => setStyle('highlight')}><Marker /></button>
           <button className={'edtool' + (style === 'underline' ? ' on' : '')} aria-pressed={style === 'underline'}
             title="Pen, underlines" onClick={() => setStyle('underline')}><PenNib /></button>
+          <button className={'edtool' + (style === 'strike' ? ' on' : '')} aria-pressed={style === 'strike'}
+            title="Strike out. This does not apply to us" onClick={() => setStyle('strike')}><Strike /></button>
         </div>
-        <div className="edinks">
+
+        {/* Verdicts. A colour says you looked at a sentence. A verdict says
+            what you thought of it, which is the thing this product is for:
+            the engine makes a claim in advance and somebody grades it. */}
+        <div className="edseg edverd">
+          <button className={'edtool vd agree' + (style === 'agree' ? ' on' : '')} aria-pressed={style === 'agree'}
+            title="Agree with this" onClick={() => setStyle('agree')}><Tick /></button>
+          <button className={'edtool vd doubt' + (style === 'doubt' ? ' on' : '')} aria-pressed={style === 'doubt'}
+            title="Doubt this" onClick={() => setStyle('doubt')}><Bang /></button>
+          <button className={'edtool vd ask' + (style === 'ask' ? ' on' : '')} aria-pressed={style === 'ask'}
+            title="Ask about this" onClick={() => setStyle('ask')}><Query /></button>
+        </div>
+        <div className={'edinks' + (isVerdict(style) ? ' off' : '')}>
           {COLORS.map(([key, label]) => (
             <button key={key} className={'edswatch c' + key + (color === key ? ' on' : '')}
               title={label} aria-label={label} aria-pressed={color === key}
@@ -369,6 +456,9 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
         <button className={'edtool' + (draw ? ' on' : '')} aria-pressed={draw}
           title={draw ? 'Drawing. Tap to go back to selecting' : 'Draw over the text instead of selecting it'}
           onClick={() => { setDraw(!draw); setPop(null) }}><Scribble /></button>
+        <button className={'edtool' + (focus ? ' on' : '')} aria-pressed={focus}
+          title={focus ? 'Showing only what you marked. Tap to show everything' : 'Dim everything you did not mark'}
+          onClick={() => setFocus(!focus)}><Focus /></button>
         <button className={'edtool' + (pad ? ' on' : '')} aria-pressed={pad}
           title="Notepad" onClick={() => setPad(!pad)}><Pad /></button>
       </div>
@@ -389,6 +479,10 @@ export function Editorial({ analysisId, on }: { analysisId: string; on: boolean 
           <div className="edpadhead">
             <b>Notepad</b>
             <span className="hint">{inked.length} marked, {notes.length} noted</span>
+            <button className="ract edcopy" onClick={copyBrief}
+              title="Copy everything you marked, as text you can paste into an email">
+              <Copy />Copy as brief
+            </button>
             <button className="ract" onClick={() => setPad(false)}>Close</button>
           </div>
           <div className="edpadbody">
