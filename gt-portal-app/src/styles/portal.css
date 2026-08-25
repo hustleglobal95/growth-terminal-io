@@ -5027,3 +5027,60 @@ body.edfocus .edmk.vd.ask{color:#1F4E8C}
 @media(prefers-reduced-motion:reduce){
   body.edfocus .wrap p,body.edfocus .wrap li{transition:none}
 }
+
+/* ─── MARK UP: NAME THE TOOL ────────────────────────────────────────────────
+   A row of eleven glyphs is a row of eleven guesses until somebody tells you
+   what they are. The browser's own tooltip does tell you, about a second
+   later, in a font that belongs to the operating system rather than to this
+   product, and on a touch screen not at all.
+
+   So the name is given here instead, from the same data attribute the
+   collapsed sidebar already uses for exactly this reason. One source for the
+   name, one behaviour across the product, and it appears on keyboard focus as
+   well as on hover, because somebody tabbing through the kit needs the label
+   more than somebody with a mouse does. */
+
+.edtool[data-tip],.edswatch[data-tip]{position:relative}
+
+.edtool[data-tip]::after,
+.edswatch[data-tip]::after{
+  content:attr(data-tip);
+  position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);
+  background:var(--text);color:var(--pane);
+  font-size:11.5px;font-weight:500;line-height:1;white-space:nowrap;
+  padding:5px 8px;border-radius:4px;
+  opacity:0;pointer-events:none;
+  transition:opacity .12s var(--ease);
+  z-index:90;
+}
+/* The little tail, so the label points at the tool it names rather than
+   floating above the whole row. */
+.edtool[data-tip]::before,
+.edswatch[data-tip]::before{
+  content:'';
+  position:absolute;left:50%;bottom:calc(100% + 4px);transform:translateX(-50%);
+  border:4px solid transparent;border-top-color:var(--text);
+  opacity:0;pointer-events:none;
+  transition:opacity .12s var(--ease);
+  z-index:90;
+}
+.edtool[data-tip]:hover::after,.edtool[data-tip]:focus-visible::after,
+.edtool[data-tip]:hover::before,.edtool[data-tip]:focus-visible::before,
+.edswatch[data-tip]:hover::after,.edswatch[data-tip]:focus-visible::after,
+.edswatch[data-tip]:hover::before,.edswatch[data-tip]:focus-visible::before{opacity:1}
+
+/* A verdict nib already paints its own colour through ::after when it is a
+   mark in the text. In the toolbar it is a button, so the label wins. */
+.edtool.vd[data-tip]::after{content:attr(data-tip);color:var(--pane)}
+
+@media(prefers-reduced-motion:reduce){
+  .edtool[data-tip]::after,.edtool[data-tip]::before,
+  .edswatch[data-tip]::after,.edswatch[data-tip]::before{transition:none}
+}
+
+/* Touch has no hover, so the label would never arrive. Nothing is lost: the
+   accessible name is still on every button for anyone using assistive tech. */
+@media(hover:none){
+  .edtool[data-tip]::after,.edtool[data-tip]::before,
+  .edswatch[data-tip]::after,.edswatch[data-tip]::before{display:none}
+}
