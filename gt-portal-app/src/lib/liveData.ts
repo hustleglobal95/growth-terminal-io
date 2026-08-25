@@ -79,10 +79,24 @@ useAnalyses.refresh = async (): Promise<void> => {
   }
 }
 
-/** First name for greetings: "Kevin Gonzalez" becomes "Kevin". */
+/** First name for greetings: "Kevin Gonzalez" becomes "Kevin".
+ *
+ *  Clerk hands back whatever the account has, and for an account signed up
+ *  with a handle rather than a name that is the handle. The workspace front
+ *  page was therefore greeting people in 29px type by their login, which is
+ *  the largest piece of text in the product reading like a debug value.
+ *
+ *  A name is something a person chose to be called. A handle is not, so when
+ *  what comes back does not look like one the greeting drops the name and
+ *  stands on its own, which it reads perfectly well without. */
 export function firstName(me: Me | null): string | null {
   if (!me || !me.name) return null
-  return me.name.split(' ')[0]
+  const first = me.name.trim().split(/\s+/)[0]
+  if (!first) return null
+  if (/[0-9_.@-]/.test(first)) return null
+  if (first.length < 2 || first.length > 20) return null
+  if (first !== first[0].toUpperCase() + first.slice(1)) return null
+  return first
 }
 
 /** Initials for the avatar chip: "Kevin Gonzalez" becomes "KG". */
