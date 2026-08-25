@@ -131,6 +131,28 @@ function normalize(r: RawMark): Mark {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Local fallback                                                      */
+/* ------------------------------------------------------------------ */
+
+/** The engine has no marks route mounted, so every write returns 404 and a
+ *  reader's work disappears on reload. Until the route is live, marks are
+ *  kept in this browser, keyed by analysis. This is a fallback, not the
+ *  destination: it is one device, one browser, and it is not shared. */
+const LKEY = (analysisId: string): string => 'gt.marks.' + analysisId
+
+export function localMarks(analysisId: string): Mark[] {
+  try {
+    const raw = localStorage.getItem(LKEY(analysisId))
+    const rows = raw ? JSON.parse(raw) : []
+    return Array.isArray(rows) ? (rows as RawMark[]).map(normalize) : []
+  } catch { return [] }
+}
+
+export function saveLocalMarks(analysisId: string, rows: Mark[]): void {
+  try { localStorage.setItem(LKEY(analysisId), JSON.stringify(rows)) } catch { /* private mode */ }
+}
+
 export async function listMarks(analysisId: string): Promise<Mark[]> {
   const rows = await live<RawMark[]>(base(analysisId))
   return Array.isArray(rows) ? rows.map(normalize) : []
