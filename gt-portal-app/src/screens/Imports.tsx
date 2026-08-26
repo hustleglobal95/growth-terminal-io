@@ -521,7 +521,7 @@ export function Imports() {
 
               <div className="vfnums">
                 <div>
-                  <span className="lbl">At {measured.diagnostic.headline.period} {PERIOD_LABEL[def.period]}</span>
+                  <span className="lbl">Through {PERIOD_LABEL[def.period].replace(/s$/, '')} {measured.diagnostic.headline.period}</span>
                   <b>{pct(measured.diagnostic.headline.rate)}</b>
                   <span className="hint">{n(measured.diagnostic.headline.retained)} of {n(measured.diagnostic.headline.denominator)}</span>
                 </div>
@@ -548,6 +548,14 @@ export function Imports() {
 
               <p className="pgintro">{measured.diagnostic.severity_reason}</p>
 
+              <p className="hint" style={{ display: 'block', marginTop: 4 }}>
+                Each cell counts members active inside that column's own window
+                {measured.matrix.cohorts.length
+                  ? ': ' + measured.matrix.cohorts[0].cells.map(c => c.windowStart + ' to ' + c.period).join(', ')
+                  : ''}. The windows are not the same width, so read down a column rather than
+                across a row. Cohorts are only ever compared to each other down one column,
+                where every cohort gets the same window.
+              </p>
               <div className="rtwrap">
                 <RetentionHeatmap matrix={measured.matrix} minCohortSize={MIN_COHORT} />
               </div>
