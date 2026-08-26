@@ -5142,6 +5142,7 @@ body.edfocus .edmk.vd.ask{color:#1F4E8C}
 .vfwrap>*{background:var(--card);padding:18px 20px}
 .vfpromise{display:flex;flex-direction:column;gap:7px}
 .vfempty{padding:18px 20px}
+.vfwrap>.vfempty{max-width:none}
 .vfact{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px}
 
 .vfverdict{display:flex;flex-direction:column;gap:18px}
