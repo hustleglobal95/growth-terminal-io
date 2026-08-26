@@ -15,6 +15,7 @@ import { Teams } from './screens/Teams'
 import { Content } from './screens/Content'
 import { ContentSetup } from './screens/ContentSetup'
 import { AnalysisRoute } from './screens/LiveDetail'
+import { Imports } from './screens/Imports'
 import { More } from './screens/More'
 import { Login, Signup } from './screens/Login'
 import { ClerkProvider, useAuth } from '@clerk/clerk-react'
@@ -60,6 +61,10 @@ const router = createBrowserRouter([
       { path: '/api-keys', element: <ApiKeys /> },
       { path: '/teams', element: <Teams /> },
       { path: '/agents', element: <Agents /> },
+      /* Event logs in. Under Setup rather than beside Analyses, because raw
+         ingestion is plumbing and the reporting screens should stay about
+         what the data says rather than about where it came from. */
+      { path: '/imports', element: <Imports /> },
       /* The brand agent sits under agents because that is what it is: the
          first one a customer sets up, and the one every later assistant is
          briefed from. */
