@@ -92,20 +92,39 @@ html{background:var(--page)}
    elevation, which is why it does not break the no-shadow rule: nothing here
    is pretending to float.
    --------------------------------------------------------------------------- */
-input:not([type=checkbox]):not([type=radio]):not([type=file]),
-textarea,
-select{
+/* Wrapped in :where() on purpose, so this carries zero specificity.
+   A field in this app is sometimes the input itself and sometimes a wrapper
+   with the input sitting bare inside it, as `.searchin` does. A normal
+   selector here outspecified `.searchin input{border:0}` and drew a second
+   border inside the first one. At zero specificity, anything that has already
+   decided how it wants to look still wins. */
+:where(input:not([type=checkbox]):not([type=radio]):not([type=file]),
+       textarea,
+       select){
   background:var(--recess);
   border:1px solid var(--border2);
   box-shadow:inset 0 1px 1px rgba(15,15,14,.045);
 }
-input:not([type=checkbox]):not([type=radio]):not([type=file]):focus,
-textarea:focus,
-select:focus{
+:where(input:not([type=checkbox]):not([type=radio]):not([type=file]),
+       textarea,
+       select):focus{
   background:var(--s1);
   border-color:var(--aborder);
   box-shadow:inset 0 1px 1px rgba(15,15,14,.03), 0 0 0 3px var(--tint);
   outline:none;
+}
+
+/* The composed fields, where the wrapper is the thing you see. */
+.searchin{
+  background:var(--recess);
+  border-color:var(--border2);
+  box-shadow:inset 0 1px 1px rgba(15,15,14,.045);
+  transition:background 120ms var(--ease),border-color 120ms var(--ease),box-shadow 120ms var(--ease);
+}
+.searchin:focus-within{
+  background:var(--s1);
+  border-color:var(--aborder);
+  box-shadow:inset 0 1px 1px rgba(15,15,14,.03), 0 0 0 3px var(--tint);
 }
 
 
