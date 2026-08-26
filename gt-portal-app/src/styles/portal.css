@@ -5370,6 +5370,10 @@ body.edfocus .edmk.vd.ask{color:#1F4E8C}
    column mapping above it, because it is the same act: naming what a column or
    an event means before anything is computed from it. */
 .impsel{min-width:210px;max-width:280px}
+
+/* A note about how to read the table above it, not a paragraph of the report.
+   It sat at body size once and outweighed the finding it was annotating. */
+.rtnote{margin:6px 0 0;font-size:12.5px;line-height:1.6;color:var(--faint);max-width:86ch}
 @media (max-width:760px){.impsel{min-width:0;max-width:none;width:100%}}
 
 /* Return events. A list of buttons rather than checkboxes: the state that
