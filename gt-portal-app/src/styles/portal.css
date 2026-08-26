@@ -5264,3 +5264,109 @@ body.edfocus .edmk.vd.ask{color:#1F4E8C}
       color .18s var(--ease),box-shadow .18s var(--ease),opacity .18s var(--ease);
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Cohort retention                                                    */
+/* ------------------------------------------------------------------ */
+
+.rtwrap{display:flex;flex-direction:column;gap:12px}
+.rtscroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+
+.rtmap{border-collapse:collapse;width:100%;min-width:620px;font-variant-numeric:tabular-nums}
+.rtmap th,.rtmap td{padding:7px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.rtmap th{font-size:11px;font-weight:500;color:var(--faint);letter-spacing:.005em;text-align:right}
+.rtmap th.rtc{text-align:left}
+.rtmap td.rtc{text-align:left;font-size:12.5px;color:var(--muted)}
+.rtmap td.rtn,.rtmap th.rtn{text-align:right;font-size:12.5px}
+.rtmap td.rtsize{color:var(--faint)}
+.rtmap tbody tr:last-child td{border-bottom:1px solid var(--line)}
+.rtmap tbody tr.thin td{opacity:.5}
+.rtmap tbody tr:hover td.rtc{color:var(--text)}
+
+/* A shaded cell carries its own background from the component, so the only
+   thing the sheet sets is the shape it sits in. */
+.rtcell{font-weight:500}
+.rtnone{color:var(--faint)}
+
+/* Not yet observable. Deliberately not a zero, not a blank, and not a colour
+   from the scale: a short rule that reads as "no reading" at a glance. */
+.rtdash{display:inline-block;width:14px;height:1px;background:var(--line2);vertical-align:middle}
+
+.rtmap tfoot td{border-bottom:0;border-top:1px solid var(--line2);font-weight:600;font-size:12.5px}
+
+.rtlegend{display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+.rtkey{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted)}
+.rtkey.rtmuted{color:var(--faint);margin-left:auto}
+.rtswatch{width:14px;height:12px;border-radius:2px;border:1px solid var(--line)}
+.rtread{font-size:12.5px;color:var(--muted);margin:0}
+
+.rtcurve svg{width:100%;height:auto;display:block;overflow:visible}
+.rtgrid{stroke:var(--line);stroke-width:1}
+.rtthread{fill:none;stroke:var(--line2);stroke-width:1;stroke-linejoin:round}
+.rtpooled{fill:none;stroke:var(--amber);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.rtpoint{fill:var(--amber)}
+.rtend{fill:var(--amber);font-size:12px;font-weight:600;font-family:inherit;font-variant-numeric:tabular-nums}
+.rtaxis{fill:var(--faint);font-size:10.5px;font-family:inherit;font-variant-numeric:tabular-nums}
+
+@media (max-width:760px){
+  .rtmap th,.rtmap td{padding:6px 9px}
+  .rtlegend .rtmuted{margin-left:0}
+}
+
+/* ------------------------------------------------------------------ */
+/* Event import                                                        */
+/* ------------------------------------------------------------------ */
+
+.impdrop{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  min-height:188px;margin-top:22px;padding:26px;cursor:pointer;
+  border:1px dashed var(--border2);border-radius:12px;background:var(--card);
+  transition:background .18s var(--ease),border-color .18s var(--ease);
+}
+.impdrop:hover,.impdrop.over{background:var(--tint);border-color:var(--aborder)}
+.impdrop b{font-size:15px;font-weight:600;letter-spacing:-.012em}
+.impdrop span{font-size:12.5px;color:var(--muted)}
+.impdrop input{display:none}
+.impdrop:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+.impcols{margin-top:22px;display:flex;flex-direction:column;gap:8px}
+.impcols .glist2{margin:0}
+
+.impmap{display:flex;flex-direction:column;gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.impmaprow{background:var(--card);padding:13px 18px;display:flex;align-items:center;gap:16px}
+.impmaprow .t{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.impmaprow .t b{font-size:13.5px;font-weight:600}
+.impmaprow .t span{font-size:12px;color:var(--faint)}
+.impmaprow select{flex:0 0 auto;min-width:190px;max-width:46%}
+
+.imppre td.rtc{font-size:12.5px;color:var(--text);max-width:230px;overflow:hidden;text-overflow:ellipsis}
+.imppre th.rtc{text-align:left}
+
+.impevents{margin-top:22px;display:flex;flex-direction:column;gap:9px}
+.impchips{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.impchips .chip b{margin-left:7px;font-variant-numeric:tabular-nums;color:var(--faint);font-weight:500}
+
+.impwarn{margin-top:22px;display:flex;flex-direction:column;gap:9px}
+.impfail{margin-top:8px;padding:13px 16px;border:1px solid var(--line);border-radius:10px;
+  background:var(--recess);display:flex;flex-direction:column;gap:7px}
+.impfail .glist2{margin:0;font-variant-numeric:tabular-nums}
+
+/* The closed state. Quiet rather than alarming: nothing has gone wrong, there
+   is simply not enough history yet, and the wording says which. */
+.impgate{margin-top:6px;padding:20px 22px;border:1px solid var(--line);border-radius:12px;
+  background:var(--recess);display:flex;flex-direction:column;gap:11px;opacity:.92}
+.impgate b{font-size:14px;font-weight:600;letter-spacing:-.01em}
+.impgate .glist2{margin:0}
+.impgate .gbody{color:var(--muted)}
+
+/* The 80ch reading measure carried the divider with it, so inside these
+   panels every rule stopped short of the edge and read as unfinished. These
+   items are single sentences rather than paragraphs, so the measure is not
+   doing any work here and the rule spans the panel instead. */
+.impfail .glist2 li,.impgate .glist2 li,.impwarn>.glist2 li{max-width:none}
+
+@media (max-width:760px){
+  .impmaprow{flex-direction:column;align-items:stretch;gap:9px}
+  .impmaprow select{max-width:none;width:100%}
+}
