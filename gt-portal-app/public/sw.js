@@ -33,7 +33,18 @@
    The new logo shipped on the 24th and every browser that had already opened
    the app kept handing back the old one, phones included, where an installed
    copy has no reason to ever ask again. Renaming the cache is the eviction. */
-const SHELL = 'gt-shell-v4';
+/* v5. The mark changed again, and v4's own note is the reason this line exists.
+
+   Every logo asset in this cache is precached by URL and served cache first,
+   so a returning browser keeps handing back whatever it stored the first time
+   it opened the app. The lockup, the mark and the whole icon set were replaced
+   on the 26th: the favicons and app icons moved off the amber tile onto the
+   ink ground, and the in-app mark lost its coloured tile entirely. None of
+   that reaches a browser that already holds v4 until the cache is renamed.
+
+   Renaming is the eviction. There is no other lever, because activate only
+   deletes caches whose name is not SHELL. */
+const SHELL = 'gt-shell-v5';
 
 /* Only a real, successful, same origin response is worth keeping. An opaque,
    redirected or error response is passed through to the page and dropped. */
