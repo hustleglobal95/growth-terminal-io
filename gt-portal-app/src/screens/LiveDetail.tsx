@@ -646,6 +646,7 @@ export function LiveDetail({ id }: { id: string }) {
   if (acc.evidence && epLimitations.length > 0) jumps.push(['limits', 'What would prove this wrong'])
   if (acc.plan && gates.length > 0) jumps.push(['gates', 'Decision gates'])
   if (acc.plan && phases.length > 0) jumps.push(['plan', 'The plan'])
+  jumps.push(['verified', 'Whether it worked'])
 
   /* The week map the plan actually covers. Each phase owns the weeks its own
    * label names; the first phase to claim a week keeps it, so nothing is
