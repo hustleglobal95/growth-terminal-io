@@ -70,9 +70,21 @@ const DAY = 86_400_000
 
 export interface Cell {
   period: number
+  /** The checkpoint before this one, exclusive. A cell counts activity in
+   *  (windowStart, period]. For the first checkpoint the window opens at 0,
+   *  which is the member's own start. */
+  windowStart: number
   /** True when this cohort has been watched at least this long. */
   observable: boolean
-  /** Active in exactly this period. Null when not observable. */
+  /** Active anywhere in (windowStart, period]. Null when not observable.
+   *
+   *  This is an interval, not an instant, and that is the whole point. Counting
+   *  members active in exactly period 30 works for weeks and months and is
+   *  worthless for days: nobody logs in on precisely their thirtieth day, so
+   *  every daily checkpoint that is not a multiple of the customer's own
+   *  rhythm reads zero, and a chart of honest zeroes is indistinguishable from
+   *  total collapse. The checkpoints themselves define the buckets, so this
+   *  needs no invented constant. */
   retained: number | null
   /** Active in this period or any later one. Null when not observable. */
   rolling: number | null
@@ -256,22 +268,30 @@ export function computeRetention(
     let youngest = c
     for (const id of ids) { const t = startOf.get(id)!; if (t > youngest) youngest = t }
     const observed = periodsBetween(youngest, horizon, period)
-    const cells: Cell[] = checkpoints.map(p => {
+    const cells: Cell[] = checkpoints.map((p, i) => {
+      const windowStart = i === 0 ? 0 : checkpoints[i - 1]
       const observable = p <= observed
       if (!observable) {
-        return { period: p, observable, retained: null, rolling: null, denominator: ids.length, rate: null, rollingRate: null }
+        return { period: p, windowStart, observable, retained: null, rolling: null, denominator: ids.length, rate: null, rollingRate: null }
       }
-      let exact = 0
+      let inWindow = 0
       let rolling = 0
       for (const id of ids) {
         const set = hits.get(id)
         if (!set) continue
-        if (set.has(p)) exact += 1
-        for (const q of set) if (q >= p) { rolling += 1; break }
+        let hit = false
+        let later = false
+        for (const q of set) {
+          if (q > windowStart && q <= p) hit = true
+          if (q >= p) later = true
+          if (hit && later) break
+        }
+        if (hit) inWindow += 1
+        if (later) rolling += 1
       }
       return {
-        period: p, observable, retained: exact, rolling, denominator: ids.length,
-        rate: ids.length ? exact / ids.length : null,
+        period: p, windowStart, observable, retained: inWindow, rolling, denominator: ids.length,
+        rate: ids.length ? inWindow / ids.length : null,
         rollingRate: ids.length ? rolling / ids.length : null,
       }
     })

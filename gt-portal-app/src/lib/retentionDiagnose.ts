@@ -131,6 +131,30 @@ export function diagnose(
      *
      * So: take the requested checkpoint when it exists, otherwise the largest
      * one that at least two cohorts have actually been watched through. */
+  /* The headline and the trend read the ROLLING measure, not the per cell one.
+   *
+   * A cell counts activity inside its own window, and with milestone
+   * checkpoints those windows are not the same width: (14, 30] is sixteen days
+   * and (30, 60] is thirty. Within one column that is fine, and it is how the
+   * heatmap ramps and how cohorts are compared against each other. Across
+   * columns it is not: a curve built from unequal buckets rises with age and
+   * looks like retention improving when it is only the bucket getting wider.
+   *
+   * The tempting fix is to read the rolling measure instead, since it is
+   * monotonic and every column means the same thing. That trades one bias for
+   * a worse one. Rolling asks whether a member was active at this checkpoint
+   * OR LATER, and how much later there is depends on how long the cohort has
+   * been watched. A cohort three months old has almost no later, so its
+   * rolling rate is structurally lower than an identical cohort a year old,
+   * and comparing cohorts on it manufactures a decline out of nothing but age.
+   * That was caught by a scenario built to be flat, which the rolling version
+   * flagged as a significant slide.
+   *
+   * So the two measures are used where each is sound. Cohorts are compared to
+   * each other down a single column, where every cohort gets the same window,
+   * and that is the interval measure. Rolling stays available on the curve,
+   * where one cohort is read across its own checkpoints. Nothing is compared
+   * on a measure that is not comparable in that direction. */
   const answerable = matrix.overall.filter(o => o.cohorts >= 2 && o.denominator > 0)
   const head = matrix.overall.find(o => o.period === wanted)
     ?? answerable[answerable.length - 1]
@@ -192,15 +216,15 @@ export function diagnose(
     const drop = -trend.changePoints
     severity = Math.max(1, Math.min(10, Math.round(4 + drop * 20)))
     basis = 'measured_decline'
-    reason = `Period ${headlinePeriod} retention fell from ${(trend.earlyRate! * 100).toFixed(1)}% across ${trend.earlyCohorts[0]} to ${trend.earlyCohorts[trend.earlyCohorts.length - 1]} to ${(trend.recentRate! * 100).toFixed(1)}% across ${trend.recentCohorts[0]} to ${trend.recentCohorts[trend.recentCohorts.length - 1]}, a fall of ${(drop * 100).toFixed(1)} points against ${(trend.seriesStdDev! * 100).toFixed(1)} points of ordinary spread. Pooled, that is ${trend.recentCounts.retained} of ${trend.recentCounts.denominator} against ${trend.earlyCounts.retained} of ${trend.earlyCounts.denominator}, p = ${trend.pValue}.`
+    reason = `Retention through ${matrix.period} ${headlinePeriod} fell from ${(trend.earlyRate! * 100).toFixed(1)}% across ${trend.earlyCohorts[0]} to ${trend.earlyCohorts[trend.earlyCohorts.length - 1]} to ${(trend.recentRate! * 100).toFixed(1)}% across ${trend.recentCohorts[0]} to ${trend.recentCohorts[trend.recentCohorts.length - 1]}, a fall of ${(drop * 100).toFixed(1)} points against ${(trend.seriesStdDev! * 100).toFixed(1)} points of ordinary spread. Pooled, that is ${trend.recentCounts.retained} of ${trend.recentCounts.denominator} against ${trend.earlyCounts.retained} of ${trend.earlyCounts.denominator}, p = ${trend.pValue}.`
   } else if (head.rate !== null && head.cohorts > 0) {
     if (trend && trend.changePoints !== null && trend.changePoints < 0 && !trend.significant) {
-      refusals.push(`Period ${headlinePeriod} retention is ${(-trend.changePoints * 100).toFixed(1)} points lower in the recent cohorts than the early ones, but on these volumes that difference is within what chance produces (p = ${trend.pValue}). It is not being called a decline.`)
+      refusals.push(`Retention through ${matrix.period} ${headlinePeriod} is ${(-trend.changePoints * 100).toFixed(1)} points lower in the recent cohorts than the early ones, but on these volumes that difference is within what chance produces (p = ${trend.pValue}). It is not being called a decline.`)
     }
     const band = BANDS.find(b => head.rate! < b[0])
     severity = band ? band[1] : 2
     basis = 'level_against_band'
-    reason = `Period ${headlinePeriod} retention sits at ${(head.rate * 100).toFixed(1)}% (${head.retained} of ${head.denominator} across ${head.cohorts} cohorts). No decline could be measured, so this score comes from a published band rather than from this business's own history, and it should be read as a starting point rather than as a finding.`
+    reason = `Retention through ${matrix.period} ${headlinePeriod} sits at ${(head.rate * 100).toFixed(1)}% (${head.retained} of ${head.denominator} across ${head.cohorts} cohorts). No decline could be measured, so this score comes from a published band rather than from this business's own history, and it should be read as a starting point rather than as a finding.`
   } else {
     severity = 1
     basis = 'insufficient_data'
