@@ -24,11 +24,37 @@ import {
   ingest, mappingFrom, missingColumns, parseDelimited, readiness, suggestMapping,
   MIN_ACCOUNTS, MIN_SPAN_DAYS, type ImportedEvent, type Suggestion, type Table,
 } from '../lib/retentionImport'
+import {
+  DEFAULT_CHECKPOINTS, buildInputs, checkDefinition, eventCatalog, prune, suggestDefinition,
+  type Definition, type DefinitionCheck, type EventFact,
+} from '../lib/retentionDefine'
+import {
+  computeRetention, correlateSignals, rollingRetention,
+  type Grain, type Period, type RetentionMatrix, type RollingPoint, type SignalFinding,
+} from '../lib/retention'
+import { diagnose, type RetentionDiagnostic } from '../lib/retentionDiagnose'
+import { RetentionCurve, RetentionHeatmap } from '../components/RetentionHeatmap'
 import { toast } from '../lib/bus'
 
-type Stage = 'choose' | 'map' | 'report'
+type Stage = 'choose' | 'map' | 'report' | 'define' | 'result'
+
+const PERIOD_LABEL: Record<Period, string> = { day: 'days', week: 'weeks', month: 'months' }
+const GRAIN_LABEL: Record<Grain, string> = { account: 'per account', user: 'per person' }
+
+interface Measured {
+  matrix: RetentionMatrix
+  rolling: RollingPoint[]
+  signals: SignalFinding[]
+  diagnostic: RetentionDiagnostic
+}
 
 const n = (x: number): string => x.toLocaleString('en-US')
+
+const pct = (v: number | null): string => (v === null ? 'no reading' : Math.round(v * 100) + '%')
+
+/** A cohort smaller than this is drawn but never carries a verdict. Shared
+ *  with the matrix and the diagnosis so all three agree on what is too small. */
+const MIN_COHORT = 20
 
 export function Imports() {
   const [stage, setStage] = useState<Stage>('choose')
@@ -41,11 +67,14 @@ export function Imports() {
   const [gate, setGate] = useState<Readiness | null>(null)
   const [drag, setDrag] = useState(false)
   const [headerError, setHeaderError] = useState<string | null>(null)
+  const [def, setDef] = useState<Definition | null>(null)
+  const [measured, setMeasured] = useState<Measured | null>(null)
   const fileRef = useRef<HTMLInputElement | null>(null)
 
   const reset = useCallback(() => {
     setStage('choose'); setFileName(''); setTable(null); setSuggestions([])
     setMapping(null); setEvents([]); setReport(null); setGate(null); setHeaderError(null)
+    setDef(null); setMeasured(null)
   }, [])
 
   const take = useCallback(async (file: File) => {
@@ -92,6 +121,61 @@ export function Imports() {
   }, [table, mapping])
 
   const preview = useMemo(() => (table ? table.rows.slice(0, 4) : []), [table])
+
+  /* Everything below is the definition step. It runs entirely on the events
+     already parsed in this browser, so every number the customer sees while
+     choosing is measured from their own file rather than assumed. */
+
+  const catalog: EventFact[] = useMemo(
+    () => (def ? eventCatalog(events, def.grain) : []),
+    [events, def],
+  )
+
+  const check: DefinitionCheck | null = useMemo(
+    () => (def ? checkDefinition(events, def) : null),
+    [events, def],
+  )
+
+  const openDefine = useCallback(() => {
+    setDef(suggestDefinition(events, 'account'))
+    setStage('define')
+  }, [events])
+
+  const setGrain = useCallback((grain: Grain) => {
+    /* The grain changes what a member is, so the proposal is recomputed from
+       scratch rather than carried across. Keeping the old start event here is
+       how you end up measuring people against an account level event. */
+    setDef(suggestDefinition(events, grain))
+  }, [events])
+
+  const toggleReturn = useCallback((name: string) => {
+    setDef(d => {
+      if (!d) return d
+      const has = d.returnEvents.indexOf(name) >= 0
+      return { ...d, returnEvents: has ? d.returnEvents.filter(x => x !== name) : d.returnEvents.concat(name) }
+    })
+  }, [])
+
+  const measure = useCallback(() => {
+    if (!def || !check || !check.ok || !report) return
+    const d = prune(def, check)
+    const built = buildInputs(events, d)
+    const opts = {
+      period: d.period,
+      cohortPeriod: d.cohortPeriod,
+      returnEvents: d.returnEvents,
+      checkpoints: d.checkpoints,
+      observationHorizon: built.horizon ?? undefined,
+      minCohortSize: MIN_COHORT,
+      signalEvents: d.signalEvents,
+    }
+    const matrix = computeRetention(built.members, built.rows, opts)
+    const rolling = rollingRetention(matrix)
+    const signals = correlateSignals(built.members, built.rows, opts)
+    const diagnostic = diagnose(matrix, rolling, signals, opts)
+    setMeasured({ matrix, rolling, signals, diagnostic })
+    setStage('result')
+  }, [def, check, report, events])
 
   return (
     <div className="scr on">
@@ -281,7 +365,7 @@ export function Imports() {
                     <ul className="glist2">{gate.cautions.map((c, i) => <li key={i}>{c}</li>)}</ul>
                   )}
                   <div className="vfact">
-                    <button className="btn p" onClick={() => toast(n(events.length) + ' events ready. Choose the start and return events next.')}>
+                    <button className="btn p" onClick={openDefine}>
                       Choose the start and return events
                     </button>
                     <span className="hint">You pick which event starts a cohort and which counts as coming back. Retention is undefined until you do, and guessing on your behalf is how a report ends up measuring the wrong thing.</span>
@@ -296,6 +380,261 @@ export function Imports() {
                     than on your business, and a number nobody can trust is worse than no number.</p>
                 </div>
               )}
+            </>
+          )}
+
+          {stage === 'define' && def && check && (
+            <>
+              <div className="shead">
+                <h2>What counts as retention here</h2>
+                <span className="hint">{n(events.length)} events, {n(catalog.length)} event names</span>
+              </div>
+              <p className="pgintro">Two people can point this at the same file, answer these
+                questions differently, and get opposite answers. That is why nothing below is
+                filled in for you silently: every choice is a proposal you can see the numbers
+                behind, and the ones that cannot produce an honest matrix are refused outright.</p>
+
+              <div className="impmap">
+                <div className="impmaprow">
+                  <div>
+                    <b>A cohort is a group of</b>
+                    <span>{def.grain === 'account'
+                      ? 'Accounts. Every row in the file can join.'
+                      : 'People. Rows with an empty person column cannot join.'}</span>
+                  </div>
+                  <select className="keyinput impsel" value={def.grain}
+                    onChange={e => setGrain(e.target.value as Grain)}>
+                    <option value="account">Accounts</option>
+                    <option value="user">People</option>
+                  </select>
+                </div>
+
+                <div className="impmaprow">
+                  <div>
+                    <b>The clock starts at</b>
+                    <span>{def.startEvent
+                      ? 'guessed: this is the first thing ' + n(catalog.find(c => c.name === def.startEvent)?.firstFor ?? 0) + ' members ever did, please confirm'
+                      : 'nothing chosen yet'}</span>
+                  </div>
+                  <select className="keyinput impsel" value={def.startEvent}
+                    onChange={e => setDef({ ...def, startEvent: e.target.value })}>
+                    {catalog.map(c => (
+                      <option key={c.name} value={c.name}>
+                        {c.name} ({n(c.members)} {def.grain === 'account' ? 'accounts' : 'people'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="impmaprow">
+                  <div>
+                    <b>Measured in</b>
+                    <span>Checkpoints are counted in these. Cohorts are grouped by {def.cohortPeriod}.</span>
+                  </div>
+                  <select className="keyinput impsel" value={def.period}
+                    onChange={e => {
+                      const period = e.target.value as Period
+                      setDef({ ...def, period, checkpoints: DEFAULT_CHECKPOINTS[period].slice() })
+                    }}>
+                    <option value="day">Days</option>
+                    <option value="week">Weeks</option>
+                    <option value="month">Months</option>
+                  </select>
+                </div>
+
+                <div className="impmaprow">
+                  <div>
+                    <b>Cohorts grouped by</b>
+                    <span>Separate from the checkpoints on purpose. Grouping daily when most
+                      businesses sign one account a day gives cohorts of one.</span>
+                  </div>
+                  <select className="keyinput impsel" value={def.cohortPeriod}
+                    onChange={e => setDef({ ...def, cohortPeriod: e.target.value as Period })}>
+                    <option value="day">Day</option>
+                    <option value="week">Week</option>
+                    <option value="month">Month</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="shead" style={{ marginTop: 26 }}>
+                <h2>Coming back means any of these</h2>
+                <span className="hint">{def.returnEvents.length} of {catalog.length} selected</span>
+              </div>
+              <div className="impret">
+                {catalog.map(c => {
+                  const on = def.returnEvents.indexOf(c.name) >= 0
+                  const isStart = c.name === def.startEvent
+                  return (
+                    <button key={c.name} type="button"
+                      className={'impretrow' + (on ? ' on' : '') + (isStart ? ' off' : '')}
+                      disabled={isStart}
+                      onClick={() => toggleReturn(c.name)}>
+                      <span className="impretname">{c.name}</span>
+                      <span className="impretnum">{n(c.count)} times, {n(c.members)} {def.grain === 'account' ? 'accounts' : 'people'}</span>
+                      <span className="impretstate">{isStart ? 'starts the clock' : on ? 'counts' : 'ignored'}</span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {check.refusals.length > 0 && (
+                <div className="impgate">
+                  <b>This definition cannot produce an honest matrix.</b>
+                  <ul className="glist2">{check.refusals.map((r, i) => <li key={i}>{r}</li>)}</ul>
+                  <p className="gbody">Each of these describes a chart that would still draw. That
+                    is the reason for stopping here rather than after you have shown it to
+                    somebody.</p>
+                </div>
+              )}
+
+              {check.cautions.length > 0 && (
+                <div className="impwarn">
+                  <span className="lbl">Worth knowing before you read the result</span>
+                  <ul className="glist2">{check.cautions.map((c, i) => <li key={i}>{c}</li>)}</ul>
+                </div>
+              )}
+
+              <div className="vfnums" style={{ marginTop: 18 }}>
+                <div><span className="lbl">Members in a cohort</span><b>{n(check.facts.cohortMembers)}</b><span className="hint">fired {def.startEvent || 'nothing'}</span></div>
+                <div><span className="lbl">Return events fire</span><b>{n(check.facts.returnFires)}</b><span className="hint">times in the file</span></div>
+                <div><span className="lbl">Watched at most</span><b>{n(check.facts.maxObservablePeriods)}</b><span className="hint">{PERIOD_LABEL[def.period]}</span></div>
+                <div><span className="lbl">Rows in play</span><b>{n(check.facts.attributableRows)}</b><span className="hint">{n(check.facts.unattributedRows)} without a member</span></div>
+              </div>
+
+              <div className="vfact">
+                <button className="btn p" disabled={!check.ok} onClick={measure}>Measure retention</button>
+                <button className="ract" onClick={() => setStage('report')}>Back to the file</button>
+                <span className="hint">{check.ok
+                  ? 'Runs here in your browser. Nothing is sent anywhere and nothing is stored yet.'
+                  : 'Blocked until the refusals above are resolved.'}</span>
+              </div>
+            </>
+          )}
+
+          {stage === 'result' && measured && def && (
+            <>
+              <div className="shead">
+                <h2>{def.name}</h2>
+                <span className="hint">{GRAIN_LABEL[def.grain]}, measured in {PERIOD_LABEL[def.period]}</span>
+              </div>
+
+              <div className="vfnums">
+                <div>
+                  <span className="lbl">At {measured.diagnostic.headline.period} {PERIOD_LABEL[def.period]}</span>
+                  <b>{pct(measured.diagnostic.headline.rate)}</b>
+                  <span className="hint">{n(measured.diagnostic.headline.retained)} of {n(measured.diagnostic.headline.denominator)}</span>
+                </div>
+                <div>
+                  <span className="lbl">Severity</span>
+                  <b>{measured.diagnostic.retention_severity} of 10</b>
+                  <span className="hint">{measured.diagnostic.severity_basis === 'measured_decline'
+                    ? 'from a measured decline'
+                    : measured.diagnostic.severity_basis === 'level_against_band'
+                    ? 'from the level, not a decline'
+                    : 'not enough to judge'}</span>
+                </div>
+                <div>
+                  <span className="lbl">Confidence</span>
+                  <b>{measured.diagnostic.confidence_level}</b>
+                  <span className="hint">{n(measured.matrix.totals.cohorts)} cohorts</span>
+                </div>
+                <div>
+                  <span className="lbl">Members</span>
+                  <b>{n(measured.matrix.totals.members)}</b>
+                  <span className="hint">{n(measured.matrix.totals.events)} events counted</span>
+                </div>
+              </div>
+
+              <p className="pgintro">{measured.diagnostic.severity_reason}</p>
+
+              <div className="rtwrap">
+                <RetentionHeatmap matrix={measured.matrix} minCohortSize={MIN_COHORT} />
+              </div>
+
+              <div className="shead" style={{ marginTop: 26 }}>
+                <h2>The curve</h2>
+                <span className="hint">amber is the average across cohorts</span>
+              </div>
+              <div className="rtwrap">
+                <RetentionCurve matrix={measured.matrix} rolling={measured.rolling} minCohortSize={MIN_COHORT} />
+              </div>
+
+              {measured.diagnostic.trend && measured.diagnostic.trend.significant && (
+                <>
+                  <div className="shead" style={{ marginTop: 26 }}>
+                    <h2>The decline</h2>
+                    <span className="hint">clears both tests</span>
+                  </div>
+                  <div className="impfail">
+                    <span className="lbl">Early cohorts against recent</span>
+                    <ul className="glist2">
+                      <li>{pct(measured.diagnostic.trend.earlyRate)} ({n(measured.diagnostic.trend.earlyCounts.retained)} of {n(measured.diagnostic.trend.earlyCounts.denominator)}) in the earliest cohorts.</li>
+                      <li>{pct(measured.diagnostic.trend.recentRate)} ({n(measured.diagnostic.trend.recentCounts.retained)} of {n(measured.diagnostic.trend.recentCounts.denominator)}) in the most recent.</li>
+                      <li>Two proportion test p = {measured.diagnostic.trend.pValue === null ? 'no reading' : measured.diagnostic.trend.pValue.toFixed(4)}, and the drop clears the ordinary spread of the series.</li>
+                    </ul>
+                  </div>
+                </>
+              )}
+
+              {measured.diagnostic.watch_conditions.length > 0 && (
+                <>
+                  <div className="shead" style={{ marginTop: 26 }}>
+                    <h2>What would prove this wrong</h2>
+                    <span className="hint">checked against the next import</span>
+                  </div>
+                  <ul className="glist2">
+                    {measured.diagnostic.watch_conditions.map(w => (
+                      <li key={w.id}>
+                        {w.label}. {w.comparator === 'below' ? 'Falls below' : 'Rises above'}{' '}
+                        {Math.round(w.threshold * 100)}% at {w.period} {PERIOD_LABEL[def.period]}
+                        {w.observed === null
+                          ? ' and nothing is observable there yet.'
+                          : ', against ' + pct(w.observed) + ' now, so it is ' + (w.status === 'breached' ? 'already breached.' : 'holding.')}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              {measured.diagnostic.retention_signals.findings.length > 0 && (
+                <>
+                  <div className="shead" style={{ marginTop: 26 }}>
+                    <h2>Associated with staying</h2>
+                    <span className="hint">{measured.diagnostic.retention_signals.tested} tested</span>
+                  </div>
+                  <div className="impfail">
+                    <ul className="glist2">
+                      {measured.diagnostic.retention_signals.findings.slice(0, 6).map((f, i) => (
+                        <li key={i}>
+                          {f.eventName}: {pct(f.withSignal.rate)} of the {n(f.withSignal.total)} who did it,
+                          against {pct(f.withoutSignal.rate)} of the {n(f.withoutSignal.total)} who did not
+                          {f.withheld ? '. ' + f.withheld : f.significant ? '.' : ', which is inside chance.'}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="gbody">{measured.diagnostic.retention_signals.caveat}</p>
+                  </div>
+                </>
+              )}
+
+              {measured.diagnostic.refusals.length > 0 && (
+                <>
+                  <div className="shead" style={{ marginTop: 26 }}>
+                    <h2>What this does not claim</h2>
+                  </div>
+                  <ul className="glist2">
+                    {measured.diagnostic.refusals.map((r, i) => <li key={i}>{r}</li>)}
+                  </ul>
+                </>
+              )}
+
+              <div className="vfact" style={{ marginTop: 22 }}>
+                <button className="ract" onClick={() => setStage('define')}>Change the definition</button>
+                <span className="hint">This result lives in this browser tab. Storing a definition
+                  and running it against tomorrow's events needs the engine endpoints, which do not
+                  exist yet.</span>
+              </div>
             </>
           )}
         </div>
