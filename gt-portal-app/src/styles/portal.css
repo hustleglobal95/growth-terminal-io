@@ -5193,3 +5193,74 @@ body.edfocus .edmk.vd.ask{color:#1F4E8C}
   .vfgate{grid-template-columns:8px 1fr;grid-template-areas:"i t" ". s" ". r"}
   .vfgate .s{justify-self:start}
 }
+
+/* ===========================================================================
+   Craft pass: one voice.
+
+   An earlier decision put every small label into monospace, uppercase and wide
+   tracking, on the reasoning that it "makes a light interface feel like a
+   product rather than a document". On a screen this dense it does the
+   opposite: a typewriter face on counters, timestamps, section subtitles and
+   status chips reads as instrumentation left switched on, and the product
+   looks like somebody's admin panel rather than something a company pays for.
+
+   It also contradicts the portal's own written system, which asks for one
+   family everywhere, sentence case, and no tracked uppercase.
+
+   So the small type comes back into the text face. Monospace is kept for the
+   two places it is actually true: real code and real identifiers, where a
+   fixed advance carries meaning, and keycaps.
+
+   Figures that used monospace to line up get tabular numerals instead, which
+   is the correct tool and does not cost a second typeface.
+   =========================================================================== */
+
+.lbl{
+  font-family:var(--sans);font-size:11px;font-weight:500;
+  letter-spacing:.005em;text-transform:none;color:var(--faint);
+}
+.shead .lbl,.tmstat .lbl{font-size:11px}
+.tmkhead .lbl{font-size:11px}
+
+.tmstat span{
+  font-family:var(--sans);font-size:11.5px;font-weight:400;
+  letter-spacing:0;text-transform:none;color:var(--faint);margin-top:5px;
+}
+
+/* Status is read as a word, not as a stamp. */
+.pill{
+  font-family:var(--sans);font-size:11px;font-weight:500;
+  letter-spacing:.005em;text-transform:none;
+}
+
+/* Section subtitles sit beside a heading and should read as its continuation,
+   not as a machine annotation next to it. */
+.gsh .q,.shead .hint{
+  font:400 12.5px/1.4 var(--sans);color:var(--faint);letter-spacing:0;
+}
+
+.ggate .gh span,.gwch .w,.railnote .cat{
+  font-family:var(--sans);font-size:11.5px;font-weight:400;letter-spacing:0;
+}
+
+/* Numbers keep their column without keeping a second typeface. */
+.actd,.railnote .d,.buyrow .pr,.gstep .i,.xcount,.xwk,.tmkhead .tmnum{
+  font-family:var(--sans);letter-spacing:0;font-variant-numeric:tabular-nums;
+}
+.actd,.railnote .d,.xcount{font-size:11.5px}
+.gstep .i{font-size:11px;font-weight:500}
+.xwk{font-size:11.5px;font-weight:500}
+.buyrow .pr{font-size:13px;font-weight:500}
+.tmkhead .tmnum{font-size:11px;font-weight:500}
+
+/* Anything that is a real figure lines up by default. */
+.num,.figure,.stat b,.tmstat b,.vfnums .num,td.n,.kpi b{font-variant-numeric:tabular-nums}
+
+/* Motion: state changes settle rather than snap. Interactive surfaces only,
+   and never against a stated preference for less of it. */
+@media (prefers-reduced-motion:no-preference){
+  a,button,.btn,.chip,.pill,.row,.card,.tile,.gstep,.vfgate,.tmcard{
+    transition:background-color .18s var(--ease),border-color .18s var(--ease),
+      color .18s var(--ease),box-shadow .18s var(--ease),opacity .18s var(--ease);
+  }
+}
