@@ -128,7 +128,10 @@ export interface SignalFinding {
 
 const at = (d: string | Date): number => (d instanceof Date ? d.getTime() : Date.parse(d))
 
-function floorPeriod(ms: number, period: Period): number {
+/** Exported so the definition checker buckets cohorts exactly the way the
+ *  matrix will. A checker that groups differently from the thing it is
+ *  checking is worse than no checker. */
+export function floorPeriod(ms: number, period: Period): number {
   const d = new Date(ms)
   if (period === 'day') return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
   if (period === 'month') return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)

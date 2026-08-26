@@ -113,12 +113,37 @@ export function diagnose(
   opts: RetentionOptions & { headlinePeriod?: number } = { returnEvents: [] },
 ): RetentionDiagnostic {
   const refusals = [...matrix.unmeasured]
-  const headlinePeriod = opts.headlinePeriod ?? (matrix.period === 'day' ? 30 : 3)
+  const wanted = opts.headlinePeriod ?? (matrix.period === 'day' ? 30 : 3)
   const minSize = opts.minCohortSize ?? 20
 
-  const head = matrix.overall.find(o => o.period === headlinePeriod)
+  /* The headline is the first number anybody reads, so which checkpoint it
+     comes from is not a detail.
+     *
+     * The requested checkpoint is often absent: a weekly matrix asked for
+     * week 3 while the checkpoints are 1, 2, 4, 8, 12. Falling back to the
+     * last checkpoint is the worst available choice, because the last
+     * checkpoint is the most censored one. Only the oldest cohorts have been
+     * watched that long, so the headline would rest on the smallest sample in
+     * the matrix and, worse, on a sample selected for being old. If retention
+     * has decayed for recent cohorts, the newest ones are precisely the rows
+     * that cannot answer there, and the headline reports the healthy past as
+     * though it were the present.
+     *
+     * So: take the requested checkpoint when it exists, otherwise the largest
+     * one that at least two cohorts have actually been watched through. */
+  const answerable = matrix.overall.filter(o => o.cohorts >= 2 && o.denominator > 0)
+  const head = matrix.overall.find(o => o.period === wanted)
+    ?? answerable[answerable.length - 1]
     ?? matrix.overall[matrix.overall.length - 1]
-    ?? { period: headlinePeriod, retained: 0, denominator: 0, rate: null, cohorts: 0 }
+    ?? { period: wanted, retained: 0, denominator: 0, rate: null, cohorts: 0 }
+  const headlinePeriod = head.period
+  if (head.period !== wanted && matrix.overall.length) {
+    refusals.push(
+      'The headline is read at ' + head.period + ' ' + matrix.period +
+      (head.period === 1 ? '' : 's') + ' rather than ' + wanted +
+      ', which is not one of this matrix\'s checkpoints or has not been watched by enough cohorts.'
+    )
+  }
 
   /* The series of per-cohort rates at the headline period, over the cohorts
      large enough and old enough to answer. */
