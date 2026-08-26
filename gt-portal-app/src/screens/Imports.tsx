@@ -34,12 +34,18 @@ import {
 } from '../lib/retention'
 import { diagnose, type RetentionDiagnostic } from '../lib/retentionDiagnose'
 import { RetentionCurve, RetentionHeatmap } from '../components/RetentionHeatmap'
+import {
+  createDefinition, isStartInReturns, reachable, sendAll,
+  type IngestResponse, type Reach,
+} from '../lib/retentionApi'
 import { toast } from '../lib/bus'
 
 type Stage = 'choose' | 'map' | 'report' | 'define' | 'result'
 
 const PERIOD_LABEL: Record<Period, string> = { day: 'days', week: 'weeks', month: 'months' }
 const GRAIN_LABEL: Record<Grain, string> = { account: 'per account', user: 'per person' }
+
+type SaveState = 'idle' | 'working' | 'done' | 'failed'
 
 interface Measured {
   matrix: RetentionMatrix
@@ -69,12 +75,18 @@ export function Imports() {
   const [headerError, setHeaderError] = useState<string | null>(null)
   const [def, setDef] = useState<Definition | null>(null)
   const [measured, setMeasured] = useState<Measured | null>(null)
+  const [reach, setReach] = useState<Reach | null>(null)
+  const [save, setSave] = useState<SaveState>('idle')
+  const [saveNote, setSaveNote] = useState<string | null>(null)
+  const [sent, setSent] = useState<IngestResponse | null>(null)
+  const [progress, setProgress] = useState(0)
   const fileRef = useRef<HTMLInputElement | null>(null)
 
   const reset = useCallback(() => {
     setStage('choose'); setFileName(''); setTable(null); setSuggestions([])
     setMapping(null); setEvents([]); setReport(null); setGate(null); setHeaderError(null)
-    setDef(null); setMeasured(null)
+    setDef(null); setMeasured(null); setReach(null)
+    setSave('idle'); setSaveNote(null); setSent(null); setProgress(0)
   }, [])
 
   const take = useCallback(async (file: File) => {
@@ -175,7 +187,37 @@ export function Imports() {
     const diagnostic = diagnose(matrix, rolling, signals, opts)
     setMeasured({ matrix, rolling, signals, diagnostic })
     setStage('result')
+    /* Asked once, when the result appears, so the screen knows whether it can
+       offer to keep any of this before it offers. A button that fails on
+       press teaches people not to trust the button. */
+    setReach(null)
+    void reachable().then(setReach).catch(() => setReach({ state: 'error', detail: 'The engine could not be reached.' }))
   }, [def, check, report, events])
+
+  const keep = useCallback(async () => {
+    if (!def || !measured || save === 'working') return
+    setSave('working'); setSaveNote(null); setSent(null); setProgress(0)
+    try {
+      const d = prune(def, checkDefinition(events, def))
+      await createDefinition({
+        name: d.name, grain: d.grain, startEvent: d.startEvent, returnEvents: d.returnEvents,
+        period: d.period, cohortPeriod: d.cohortPeriod, checkpoints: d.checkpoints,
+        signalEvents: d.signalEvents,
+      })
+      const result = await sendAll(events, p => setProgress(p.sent))
+      setSent(result)
+      setSave('done')
+    } catch (e) {
+      /* The one refusal worth handling rather than printing, because it is
+         fixable in one click on the screen behind this one. */
+      if (isStartInReturns(e)) {
+        setSaveNote('The engine refused the definition: the start event is also a return event. Change it and measure again.')
+      } else {
+        setSaveNote(e instanceof Error ? e.message : 'The engine refused the save.')
+      }
+      setSave('failed')
+    }
+  }, [def, measured, events, save])
 
   return (
     <div className="scr on">
@@ -636,11 +678,88 @@ export function Imports() {
                 </>
               )}
 
+              <div className="shead" style={{ marginTop: 26 }}>
+                <h2>Keep this</h2>
+                <span className="hint">{reach === null ? 'checking the engine' : reach.state === 'ready' ? 'storage available' : 'nothing stored'}</span>
+              </div>
+
+              {reach === null && (
+                <p className="rtnote">Asking the engine whether it can store any of this.</p>
+              )}
+
+              {reach && reach.state !== 'ready' && (
+                <div className="impgate">
+                  <b>{reach.state === 'not_deployed'
+                    ? 'This engine build cannot store retention data yet.'
+                    : reach.state === 'unauthorized'
+                    ? 'This workspace is not allowed to store retention data.'
+                    : 'The engine could not be reached.'}</b>
+                  <p className="gbody">{reach.detail}</p>
+                  <p className="gbody">Everything above was computed here, from your file, and the
+                    numbers are real. What is missing is somewhere to put them, which means the
+                    definition is not saved and tomorrow's events have nowhere to go.</p>
+                </div>
+              )}
+
+              {reach && reach.state === 'ready' && save !== 'done' && (
+                <>
+                  <div className="impmap">
+                    <div className="impmaprow">
+                      <div>
+                        <b>Call it</b>
+                        <span>The name this definition is stored under. It has to be unique in the
+                          workspace.</span>
+                      </div>
+                      <input className="keyinput impsel" value={def.name}
+                        onChange={e => setDef({ ...def, name: e.target.value })}
+                        placeholder="Retention" />
+                    </div>
+                  </div>
+                  {save === 'failed' && saveNote && <p className="edwarn">{saveNote}</p>}
+                  <div className="vfact">
+                    <button className="btn p" disabled={save === 'working' || !def.name.trim()} onClick={() => void keep()}>
+                      {save === 'working' ? 'Sending' : 'Save the definition and send the events'}
+                    </button>
+                    <span className="hint">{save === 'working'
+                      ? n(progress) + ' of ' + n(events.length) + ' events sent.'
+                      : 'Stores the definition and sends ' + n(events.length) + ' events in batches. Events already sent are recognised and not counted twice, so running this again after adding a day of data is safe.'}</span>
+                  </div>
+                </>
+              )}
+
+              {save === 'done' && sent && (
+                <>
+                  <div className="vfnums">
+                    <div><span className="lbl">Stored</span><b>{n(sent.inserted)}</b><span className="hint">new events</span></div>
+                    <div><span className="lbl">Already there</span><b>{n(sent.duplicates)}</b><span className="hint">not counted twice</span></div>
+                    <div><span className="lbl">Refused</span><b>{n(sent.rejected)}</b><span className="hint">by the engine</span></div>
+                    <div><span className="lbl">Sent</span><b>{n(sent.received)}</b><span className="hint">of {n(events.length)} read</span></div>
+                  </div>
+                  {sent.rejections.length > 0 && (
+                    <div className="impfail">
+                      <span className="lbl">What the engine refused</span>
+                      <ul className="glist2">
+                        {sent.rejections.slice(0, 8).map((r, i) => (
+                          <li key={i}>Event {n(r.index + 1)}: {r.message}</li>
+                        ))}
+                        {typeof sent.rejectedOmitted === 'number' && sent.rejectedOmitted > 0 && (
+                          <li>and {n(sent.rejectedOmitted)} more the engine did not list.</li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                  {sent.rejected === 0 && (
+                    <p className="rtnote">The engine took every event the file gave it. The
+                      definition is stored under {def.name}, so the next import can be measured
+                      the same way without answering these questions again.</p>
+                  )}
+                </>
+              )}
+
               <div className="vfact" style={{ marginTop: 22 }}>
                 <button className="ract" onClick={() => setStage('define')}>Change the definition</button>
-                <span className="hint">This result lives in this browser tab. Storing a definition
-                  and running it against tomorrow's events needs the engine endpoints, which do not
-                  exist yet.</span>
+                <span className="hint">Measuring again from the same file costs nothing and sends
+                  nothing.</span>
               </div>
             </>
           )}
