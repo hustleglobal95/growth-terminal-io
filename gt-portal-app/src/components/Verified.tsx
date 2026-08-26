@@ -33,7 +33,7 @@ function RateLine({ runs, diagnosis, baseline }: {
   const W = 620
   const H = 132
   const padL = 8
-  const padR = 58
+  const padR = 132   /* room for the two reference labels, which sit outside the plot */
   const padT = 14
   const padB = 22
 
@@ -55,13 +55,13 @@ function RateLine({ runs, diagnosis, baseline }: {
         {baseline !== null && (
           <g>
             <line className="vfref" x1={padL} x2={W - padR} y1={y(baseline)} y2={y(baseline)} />
-            <text className="vfreft" x={W - padR + 6} y={y(baseline) + 4}>{pct(baseline, 0)} before</text>
+            <text className="vfreft" x={W - padR + 10} y={y(baseline) + 4}>{pct(baseline, 0)} before</text>
           </g>
         )}
         {diagnosis !== null && (
           <g>
             <line className="vfref dash" x1={padL} x2={W - padR} y1={y(diagnosis)} y2={y(diagnosis)} />
-            <text className="vfreft" x={W - padR + 6} y={y(diagnosis) + 4}>{pct(diagnosis, 0)} at diagnosis</text>
+            <text className="vfreft" x={W - padR + 10} y={y(diagnosis) + 4}>{pct(diagnosis, 0)} at diagnosis</text>
           </g>
         )}
         {pts.length > 1 && <path className="vfline" d={d} />}
