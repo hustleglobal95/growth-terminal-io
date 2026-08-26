@@ -20,6 +20,10 @@ const ICONS: Record<string, string> = {
   /* An arrow going into a tray: things go in here. */
   Feed: '<path d="M9 1.5v8.5"/><path d="M5.6 7.2L9 10.5l3.4-3.3"/><path d="M2 11.5v3a1.6 1.6 0 001.6 1.6h10.8A1.6 1.6 0 0016 14.5v-3"/>',
   Connections: '<path d="M7.4 10.6a3.2 3.2 0 010-4.5l2.6-2.6a3.2 3.2 0 014.5 4.5l-1.3 1.3"/><path d="M10.6 7.4a3.2 3.2 0 010 4.5l-2.6 2.6a3.2 3.2 0 01-4.5-4.5l1.3-1.3"/>',
+  /* A sheet with an arrow entering it. Distinct from Feed, which is an arrow
+     into a tray: this one is a file becoming data rather than an item joining
+     a queue. */
+  Imports: '<path d="M3.5 6.5V3.1A1.6 1.6 0 015.1 1.5h5.2L14.5 5.7v9.2a1.6 1.6 0 01-1.6 1.6H5.1a1.6 1.6 0 01-1.6-1.6v-1.4"/><path d="M10 1.7v4.2h4.3"/><path d="M1.5 10h6.8"/><path d="M6 7.6L8.4 10 6 12.4"/>',
   Teams: '<circle cx="6.5" cy="5.5" r="2.8"/><path d="M1.5 15.5c0-2.8 2.2-5 5-5s5 2.2 5 5"/><path d="M12 3.2a2.8 2.8 0 010 5.4"/><path d="M13.5 10.9c1.7.6 3 2.2 3 4.6"/>',
   Clients: '<circle cx="9" cy="5.5" r="3"/><path d="M3 15.5c0-3.3 2.7-6 6-6s6 2.7 6 6"/>',
   Editor: '<path d="M11.5 2.5l4 4L6 16H2v-4z"/><path d="M10 4l4 4"/>',
@@ -39,7 +43,7 @@ const ICONS: Record<string, string> = {
 export const NAV: [string, string][] = [
   ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'], ['Feed', '/feed'],
   ['Businesses', '/businesses'], ['Agents', '/agents'], ['Connections', '/connections'],
-  ['API', '/api-keys'], ['Teams', '/teams']
+  ['API', '/api-keys'], ['Teams', '/teams'], ['Imports', '/imports']
 ]
 /* The same nine destinations as NAV, in the same order, wearing labels.
    This is presentation only: no route changes, nothing is added, nothing is
@@ -51,7 +55,11 @@ export const NAV: [string, string][] = [
 const GROUPING: [string, string[]][] = [
   ['Workspace', ['Overview', 'Analyses', 'Businesses']],
   ['Content engine', ['Content', 'Feed', 'Connections']],
-  ['Setup', ['Agents', 'API', 'Teams']]
+  /* Imports sits in Setup, not beside the reporting screens. Raw ingestion is
+     plumbing: it is done rarely, by whoever wires the data up, and putting it
+     next to Analyses would invite a reader looking for a diagnosis to land on
+     a file picker instead. */
+  ['Setup', ['Agents', 'Imports', 'API', 'Teams']]
 ]
 export const NAV_GROUPS: [string, [string, string][]][] = GROUPING.map(
   ([g, names]) => [g, names.map(n => NAV.find(([l]) => l === n)).filter(Boolean) as [string, string][]]
