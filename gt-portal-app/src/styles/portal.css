@@ -887,11 +887,11 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 .logincard .lbl{margin-top:6px}
 .logincard input{width:100%;padding:11px 13px;background:var(--s2);color:var(--text);
   border:1px solid var(--line2);border-radius:var(--r-control);font:inherit;font-size:13.5px;outline:none}
-.logincard input:focus{border-color:rgba(252,88,2,.35);box-shadow:0 0 0 3px rgba(252,88,2,.10)}
+.logincard input:focus{border-color:var(--border2);box-shadow:none}
 .logincard .btn{margin-top:12px;justify-content:center}
 .logincard .note{padding:10px 12px;border-radius:var(--r-control);background:var(--s2);border:1px solid var(--line);
   font-size:12px;line-height:1.5;color:var(--muted)}
-.logincard .note.bad{border-color:rgba(252,88,2,.3);color:var(--text)}
+.logincard .note.bad{border-color:var(--aborder);color:var(--text)}
 .logincard .fine{margin-top:8px;font-size:11.5px;color:var(--faint);text-align:center}
 
 /* Split login: artwork on the left, sign in on the right. The art panel
@@ -1819,13 +1819,13 @@ mark.edmk.und::selection{background:var(--s3)}
 
 .tmrisk{font-size:10.5px;font-weight:600;letter-spacing:.02em;padding:2px 7px;border-radius:var(--r-control);
   background:var(--s2);color:var(--muted)}
-.tmrisk.overdue{background:rgba(252,88,2,.1);color:var(--alert)}
+.tmrisk.overdue{background:var(--tint);color:var(--alert)}
 .tmrisk.waiting,.tmrisk.stale{background:var(--s2);color:var(--muted)}
 .tmrisk.unassigned{background:transparent;color:var(--faint);box-shadow:0 0 0 1px var(--line) inset}
 
 .tmpri{font-size:10.5px;font-weight:600;text-transform:capitalize;padding:2px 7px;border-radius:var(--r-control);
   background:var(--s2);color:var(--muted)}
-.tmpri.urgent{background:rgba(252,88,2,.1);color:var(--alert)}
+.tmpri.urgent{background:var(--tint);color:var(--alert)}
 .tmpri.high{background:var(--s3);color:var(--text)}
 .tmpri.low{background:transparent;color:var(--faint)}
 
@@ -4106,6 +4106,28 @@ svg{vector-effect:non-scaling-stroke}
   .ggate{padding:14px 16px 16px}
   .gtwo > div{padding:14px 16px 18px}
 }
+
+/* ===========================================================================
+   THE TWO ORANGES ARE NOT A MISTAKE. READ THIS BEFORE UNIFYING THEM.
+
+   #FC5802 is Signal Orange, the brand. #F97316 is the product accent. The
+   split is deliberate and is explained in the conformance pass below: brand
+   orange is kept out of the product so that product screenshots, which are the
+   primary marketing image family, do not put two near identical oranges beside
+   each other by accident. The single sanctioned exception in the product is
+   the priced figure and its derivation.
+
+   Four rules had drifted across the line and are corrected on 26 August: an
+   overdue task chip and an urgent priority chip were washed in brand orange
+   while their text was the alert orange, and the login card carried a brand
+   orange focus halo and a brand orange error edge. The focus halo was already
+   meant to be gone: the focus pass at the end of this file replaced coloured
+   halos with an ink ring, but it only bound :focus-visible, so the halo still
+   appeared on pointer focus.
+
+   If you are here because the palette looks inconsistent, the answer is almost
+   never to collapse the two tokens. Check which surface the rule paints first.
+   =========================================================================== */
 
 /* ===========================================================================
    CONFORMANCE PASS.
