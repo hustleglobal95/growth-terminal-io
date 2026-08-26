@@ -548,13 +548,12 @@ export function Imports() {
 
               <p className="pgintro">{measured.diagnostic.severity_reason}</p>
 
-              <p className="hint" style={{ display: 'block', marginTop: 4 }}>
-                Each cell counts members active inside that column's own window
+              <p className="rtnote">
+                Each column counts activity inside its own window
                 {measured.matrix.cohorts.length
-                  ? ': ' + measured.matrix.cohorts[0].cells.map(c => c.windowStart + ' to ' + c.period).join(', ')
-                  : ''}. The windows are not the same width, so read down a column rather than
-                across a row. Cohorts are only ever compared to each other down one column,
-                where every cohort gets the same window.
+                  ? ' (' + measured.matrix.cohorts[0].cells.map(c => c.windowStart + ' to ' + c.period).join(', ') + ')'
+                  : ''}. The windows differ in width, so read down a column, not across a row.
+                Cohorts are only ever compared to each other within one column.
               </p>
               <div className="rtwrap">
                 <RetentionHeatmap matrix={measured.matrix} minCohortSize={MIN_COHORT} />
