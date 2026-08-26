@@ -3528,10 +3528,16 @@ h1{font-weight:700;letter-spacing:-.032em}
    =========================================================================== */
 
 /* White ground. Cards used to need a tinted page to sit on; sections do not,
-   they have rules. */
+   they have rules.
+   The ground stays white. `--recess` does not, and setting it to white was a
+   mistake carried along with the ground: a recess that is the same value as
+   the surface it is cut into is not a recess, it is an outline. It is used by
+   every well in the app, so a field, a code block and a quiet panel were all
+   rendering as white boxes with a hairline. Near-neutral rather than warm, at
+   a value you notice only by its absence. */
 :root{
   --page:#FFFFFF;
-  --recess:#FFFFFF;
+  --recess:#F1F1F0;
   --elev:#FAFAF9;
   --border:rgba(15,15,14,.105);
   --wash:rgba(249,115,22,.06);
