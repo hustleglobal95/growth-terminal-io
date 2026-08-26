@@ -126,24 +126,36 @@ export interface RunRow {
 }
 
 /* The verification routes hang off /api/v1 directly, not off the portal
-   prefix, which is why they go through liveRoot. */
+   prefix, which is why they go through liveRoot.
+ *
+ *  One difference matters. The portal adapter unwraps the { data, meta }
+ *  envelope for you; liveRoot hands it back whole. Reading straight through it
+ *  is how a committed plan renders as an uncommitted one: the array is there,
+ *  one level down, and every length check quietly reads undefined. */
+async function root<T>(path: string, init?: RequestInit): Promise<T> {
+  const body = await liveRoot<unknown>(path, init)
+  if (body && typeof body === 'object' && 'data' in (body as Record<string, unknown>)) {
+    return (body as { data: T }).data
+  }
+  return body as T
+}
 
 export function listCommitments(analysisId: string): Promise<CommitmentRow[]> {
-  return liveRoot<CommitmentRow[]>('/v1/analyses/' + encodeURIComponent(analysisId) + '/commitments')
+  return root<CommitmentRow[]>('/v1/analyses/' + encodeURIComponent(analysisId) + '/commitments')
 }
 
 export function getCommitment(id: string): Promise<{ commitment: CommitmentRow; claims: ClaimRow[] }> {
-  return liveRoot('/v1/commitments/' + encodeURIComponent(id))
+  return root('/v1/commitments/' + encodeURIComponent(id))
 }
 
 export function listRuns(commitmentId: string): Promise<RunRow[]> {
-  return liveRoot<RunRow[]>('/v1/commitments/' + encodeURIComponent(commitmentId) + '/runs')
+  return root<RunRow[]>('/v1/commitments/' + encodeURIComponent(commitmentId) + '/runs')
 }
 
 export function commitPlan(
   analysisId: string, committedPeriod: string,
 ): Promise<{ commitment: CommitmentRow; claim: ClaimRow; existed: boolean }> {
-  return liveRoot('/v1/analyses/' + encodeURIComponent(analysisId) + '/commitments', {
+  return root('/v1/analyses/' + encodeURIComponent(analysisId) + '/commitments', {
     method: 'POST',
     body: JSON.stringify({ committedPeriod }),
   })
