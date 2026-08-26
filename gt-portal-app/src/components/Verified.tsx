@@ -141,7 +141,7 @@ export function Verified({ analysisId }: { analysisId: string }) {
           promised, so the next measurement of your data can be judged against it instead of against
           a memory of what the report said.</p>
         <div className="vfact">
-          <button type="button" className="btn" onClick={commit} disabled={busy}>
+          <button type="button" className="btn g" onClick={commit} disabled={busy}>
             {busy ? 'Committing' : 'Commit this plan'}
           </button>
           <span className="hint">Starts the clock in {monthName(thisPeriod())}. It cannot be moved afterwards.</span>
