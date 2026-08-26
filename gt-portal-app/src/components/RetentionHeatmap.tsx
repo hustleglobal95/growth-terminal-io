@@ -162,8 +162,10 @@ export function RetentionHeatmap({
 
       {hover && (
         <p className="rtread">
-          {shortCohort(hover.cohort)} at {unit}{hover.cell.period}: {countOf(hover.cell)} of {hover.cell.denominator} came back
-          {mode === 'rolling' ? ' on or after that point' : ' in that period'}.
+          {shortCohort(hover.cohort)}: {countOf(hover.cell)} of {hover.cell.denominator} came back
+          {mode === 'rolling'
+            ? ' at ' + unit + hover.cell.period + ' or later'
+            : ' between ' + unit + hover.cell.windowStart + ' and ' + unit + hover.cell.period}.
         </p>
       )}
     </div>
