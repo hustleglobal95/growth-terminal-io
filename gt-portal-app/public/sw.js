@@ -44,7 +44,24 @@
 
    Renaming is the eviction. There is no other lever, because activate only
    deletes caches whose name is not SHELL. */
-const SHELL = 'gt-shell-v5';
+/* v6. Renaming the cache was necessary and was not sufficient.
+
+   v5 evicted the old entries correctly, and the new files were confirmed on
+   the origin by hash. The portal still drew the old mark. The reason is one
+   line below: this worker repopulated its cache with plain `fetch(req)`, and
+   a plain fetch is answered by the browser's own HTTP cache. These assets ship
+   with `max-age=14400`, so for four hours after a visitor's last load the
+   browser hands the worker a stale copy, the worker stores it as if it came
+   from the network, and cache first then serves that copy until the next
+   rename. A version bump on its own cannot outrun this: it re-poisons itself
+   within seconds of activating.
+
+   The fix is to revalidate when filling the cache. `no-cache` still uses the
+   HTTP cache, it just refuses to trust it without asking the server, so the
+   cost is one conditional request per asset per worker version and the answer
+   is usually 304. Every later read is served from the shell cache with no
+   network at all, exactly as before. */
+const SHELL = 'gt-shell-v6';
 
 /* Only a real, successful, same origin response is worth keeping. An opaque,
    redirected or error response is passed through to the page and dropped. */
@@ -138,7 +155,15 @@ self.addEventListener('fetch', function (e) {
     }
     if (hit) return hit;
 
-    return fetch(req).then(function (r) {
+    /* Revalidate rather than trust the browser's HTTP cache. Constructing a
+       Request from a Request preserves method, headers, mode and credentials
+       and only overrides the cache mode. Navigations returned above, so the
+       one input this constructor rejects cannot reach here, but fall back to
+       the plain request anyway rather than throwing inside a fetch handler. */
+    var fresh;
+    try { fresh = new Request(req, { cache: 'no-cache' }); } catch (err) { fresh = req; }
+
+    return fetch(fresh).then(function (r) {
       if (storable(r) && typeOk(req, r)) {
         const copy = r.clone();
         caches.open(SHELL).then(function (c) { c.put(req, copy); });
