@@ -178,8 +178,10 @@ export function Verified({ analysisId }: { analysisId: string }) {
         )}
 
         {!v && (
-          <p className="gbody vfempty">No measurement has been taken since you committed. The next
-            upload or refresh of this business produces one, and it will be judged against the promise above.</p>
+          <div className="vfempty">
+            <p className="gbody">No measurement has been taken since you committed. The next
+              upload or refresh of this business produces one, and it will be judged against the promise above.</p>
+          </div>
         )}
 
         {v && c && (
