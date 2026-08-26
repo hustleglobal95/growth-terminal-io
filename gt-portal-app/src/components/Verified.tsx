@@ -94,7 +94,8 @@ export function Verified({ analysisId }: { analysisId: string }) {
     setReady(false)
     try {
       const rows = await listCommitments(analysisId)
-      const latest = rows.length ? rows[rows.length - 1] : null
+      const list = Array.isArray(rows) ? rows : []
+      const latest = list.length ? list[list.length - 1] : null
       setCommitment(latest)
       if (!latest) { setClaim(null); setRuns([]); setReady(true); return }
       const [full, rr] = await Promise.all([getCommitment(latest.id), listRuns(latest.id)])
