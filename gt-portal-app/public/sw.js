@@ -26,7 +26,14 @@
 
    The version bump alone would evict the bad entries on activate. The read
    check is there because caches outlive assumptions. */
-const SHELL = 'gt-shell-v3';
+/* v4. The mark changed and nobody saw it.
+
+   Assets are cache first and the activate handler only clears caches whose
+   name is not SHELL, so an image stored under v3 is served from v3 forever.
+   The new logo shipped on the 24th and every browser that had already opened
+   the app kept handing back the old one, phones included, where an installed
+   copy has no reason to ever ask again. Renaming the cache is the eviction. */
+const SHELL = 'gt-shell-v4';
 
 /* Only a real, successful, same origin response is worth keeping. An opaque,
    redirected or error response is passed through to the page and dropped. */
