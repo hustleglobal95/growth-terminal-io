@@ -116,16 +116,27 @@ export function colLetter(i: number): string {
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}([T ]|$)/
 const SERIAL_MIN = 20000, SERIAL_MAX = 60000
 
-/** Judged from the sample rows. A column of order counts in the thousands
- *  looks exactly like a column of nineteen seventies date serials, so a serial
- *  is only called a date when the whole column sits inside a plausible range. */
+/** A header that says it holds time. Required before a bare number is read as
+ *  an Excel date serial, and the reason is a bug this cost us: the serial
+ *  range 20000 to 60000 is the same range a year of monthly revenue sits in,
+ *  so a Revenue column of 22,400 and 31,900 was being typed as dates and every
+ *  request to plot it came back saying no number was named.
+ *
+ *  The range test alone was never enough, and it is now backed by two facts
+ *  rather than one. sheet.ts reads workbooks with cellDates on, so anything
+ *  the spreadsheet itself considers a date arrives here already converted to
+ *  an ISO string. A bare number surviving that is a number the sheet does not
+ *  think is a date, and it takes a header saying otherwise to overrule it. */
+const TEMPORAL = /(^|[\s_-])(date|day|days|month|months|week|weeks|year|years|time|period|quarter|qtr|timestamp|when)([\s_-]|$)/i
+
 export function columnKind(sheet: SheetFacts, header: string): ColumnKind {
   const i = sheet.headers.indexOf(header)
   if (i < 0) return 'empty'
   const cells = sheet.sample.map(r => r[i]).filter(v => v !== '' && v !== null && v !== undefined)
   if (!cells.length) return 'empty'
   let n = 0, d = 0, t = 0
-  const allSerial = cells.every(v => typeof v === 'number' && v >= SERIAL_MIN && v <= SERIAL_MAX)
+  const allSerial = TEMPORAL.test(String(header))
+    && cells.every(v => typeof v === 'number' && v >= SERIAL_MIN && v <= SERIAL_MAX)
   for (const v of cells) {
     if (typeof v === 'number') { if (allSerial) d++; else n++; continue }
     if (typeof v === 'boolean') { t++; continue }
