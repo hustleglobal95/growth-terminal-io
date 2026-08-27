@@ -101,6 +101,7 @@ export function Agents() {
 
           <BrandFirst />
           <FormulaCard />
+          <ChartCard />
 
           <div className="shead" style={{ marginTop: 30 }}>
             <h2>The Growth Terminal guide</h2>
@@ -250,6 +251,29 @@ function FormulaCard() {
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+/** The one agent here that needs nothing switched on. It listens with the
+ *  browser's own recogniser and draws from the file in front of it, so there
+ *  is no version of this card that says come back later. */
+function ChartCard() {
+  return (
+    <div className="agentcard">
+      <span className="lbl">Draws in this browser</span>
+      <h2 style={{ margin: '6px 0 0', fontSize: 18, fontWeight: 600, letterSpacing: '-.02em' }}>
+        The chart builder
+      </h2>
+      <p className="agentnote">Say "revenue by month" or "top ten customers by spend" out loud. It
+        matches what you said to your real column names, picks the chart from the shape of the
+        data rather than from a menu, and tells you which words it matched to which column.</p>
+      <p className="agentnote">It draws here, from the file you drop, so nothing is uploaded and a
+        chart costs nothing. What it shows is described and never explained: a chart can see the
+        shape and cannot see the cause.</p>
+      <div className="act">
+        <Link className="btn p" to="/agents/chart">Draw a chart</Link>
+      </div>
     </div>
   )
 }
