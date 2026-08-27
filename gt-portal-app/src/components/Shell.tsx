@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Notes } from './Notes'
 import { Palette } from './Palette'
 import { onToast } from '../lib/bus'
 import { LegalFooter } from './LegalFooter'
@@ -243,6 +244,9 @@ export function Shell() {
       </div>
 
       {pal && <Palette close={() => setPal(false)} go={p => { setPal(false); nav(p) }} />}
+      {/* A note gets taken in the middle of doing something else, so the notepad
+          rides in the chrome rather than living on a screen of its own. */}
+      <Notes />
       <div className={'toast' + (msg ? ' on' : '')}>{msg}</div>
     </>
   )
