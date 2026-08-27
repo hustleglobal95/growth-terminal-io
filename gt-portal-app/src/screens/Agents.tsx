@@ -30,7 +30,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Header, QuickActions } from './simple'
-import { VOICE_AGENT_ID } from '../config'
+import { ASSISTANT_PATH, VOICE_AGENT_ID } from '../config'
 import { AgentSpec, agentCreateConfigured, createAgent, getWorkspaceId } from '../lib/api'
 import { brandConfigured } from '../lib/brandApi'
 import { businessLabel, useAccounts, useBusinesses, useMe } from '../lib/liveData'
@@ -100,6 +100,7 @@ export function Agents() {
             briefed on one of your businesses and the analyses run against it.</p>
 
           <BrandFirst />
+          <FormulaCard />
 
           <div className="shead" style={{ marginTop: 30 }}>
             <h2>The Growth Terminal guide</h2>
@@ -208,6 +209,44 @@ function BrandFirst() {
             happens on the engine, and the engine does not have that route today.</p>
           <div className="act">
             <Link className="btn g" to="/agents/brand">See what it will do</Link>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+/** THE FORMULA BUILDER, on the same screen as the brand agent because it is
+ *  the same kind of thing: an agent a customer builds on, not a section of the
+ *  product. It earns its place by the rule this screen already enforces, that
+ *  an agent must do something the analysis cannot. The analysis reads a sheet.
+ *  It never writes one.
+ */
+const formulaConfigured = () => ASSISTANT_PATH.length > 0
+
+function FormulaCard() {
+  return (
+    <div className="agentcard">
+      <span className="lbl">Writes into your sheet</span>
+      <h2 style={{ margin: '6px 0 0', fontSize: 18, fontWeight: 600, letterSpacing: '-.02em' }}>
+        The formula builder
+      </h2>
+      <p className="agentnote">Say what you want to measure. It reads your workbook's tab names,
+        headers and column shapes, writes the formula against them, then runs it over your own
+        sample rows before showing it to you. A formula that errors on every row does not reach
+        the screen.</p>
+      <p className="agentnote">It never asks what your business is or what your sheet looks like.
+        It already has both.</p>
+      {formulaConfigured() ? (
+        <div className="act">
+          <Link className="btn p" to="/agents/formula">Write a formula</Link>
+        </div>
+      ) : (
+        <>
+          <p className="agentnote">It is not switched on for this workspace yet. Formulas are
+            written on the engine, and the engine does not answer that route today.</p>
+          <div className="act">
+            <Link className="btn g" to="/agents/formula">See what it will do</Link>
           </div>
         </>
       )}
