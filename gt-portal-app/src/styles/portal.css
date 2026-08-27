@@ -5488,3 +5488,15 @@ body.edfocus .edmk.vd.ask{color:#1F4E8C}
   .impmaprow{flex-direction:column;align-items:stretch;gap:9px}
   .impmaprow select{max-width:none;width:100%}
 }
+
+/* The view switch in the header is not the full width switch from the canvas.
+   Two rules in the same phone block set .seg to flex:1 and its buttons to
+   flex:1 with no side padding, which is right for a switch that owns a row and
+   wrong for the one sharing the header with a title and an action: at 390px it
+   collapsed to 91px, Overview overflowed its own pill and Deep dive wrapped
+   onto two lines on top of it. The title already truncates to make room, so
+   the switch is the thing that should not move. */
+@media(max-width:760px){
+  .apphdr .seg{flex:0 0 auto;width:auto;min-width:max-content}
+  .apphdr .seg button{flex:0 0 auto;padding:7px 11px;font-size:12px;white-space:nowrap}
+}
