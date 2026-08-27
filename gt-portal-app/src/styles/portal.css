@@ -878,98 +878,145 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 }
 
 /* ---------- login ---------- */
-.loginwrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-.logincard{width:min(400px,100%);background:var(--s1);border:1px solid var(--line);border-radius:var(--r-control);
-  padding:30px 28px;display:flex;flex-direction:column;gap:10px}
-.logincard .logo{width:132px;margin-bottom:14px}
-.logincard h1{font-size:21px;letter-spacing:-.022em}
-.logincard .sub{margin:2px 0 10px}
-.logincard .lbl{margin-top:6px}
-.logincard input{width:100%;padding:11px 13px;background:var(--s2);color:var(--text);
-  border:1px solid var(--line2);border-radius:var(--r-control);font:inherit;font-size:13.5px;outline:none}
-.logincard input:focus{border-color:var(--border2);box-shadow:none}
-.logincard .btn{margin-top:12px;justify-content:center}
-.logincard .note{padding:10px 12px;border-radius:var(--r-control);background:var(--s2);border:1px solid var(--line);
-  font-size:12px;line-height:1.5;color:var(--muted)}
-.logincard .note.bad{border-color:var(--aborder);color:var(--text)}
-.logincard .fine{margin-top:8px;font-size:11.5px;color:var(--faint);text-align:center}
-
-/* Split login: artwork on the left, sign in on the right. The art panel
-   uses the brand key art at /login-bg.jpg and folds away on small
-   screens, where the form takes the full width. */
-/* The first split lived on .loginsplit, .loginart and .loginside, reading a
-   stock photograph from /login-bg.jpg. Nothing renders those class names any
-   more, so the rules are gone rather than left to rot. The image is still in
-   public if it is ever wanted again. */
-
 /* ---------- sign in ------------------------------------------------------
-   The old left panel was a stock photograph of a city at night, which could
-   sit in front of any software ever made. This one argues the product's one
-   idea instead: four things could be limiting revenue, exactly one of them
-   is, and we say which. It is the same picture the analysis draws, at the
-   size of a poster, so the first screen is a demonstration rather than a
-   mood. Everything is type and rules, so it costs no image bytes and stays
-   sharp at any width. */
-.lgsplit{min-height:100vh;display:grid;grid-template-columns:1.06fr .94fr}
+   The card is the page. Everything else is atmosphere and it stays there.
 
-.lgart{position:relative;overflow:hidden;color:#F5F1EA;
-  display:flex;flex-direction:column;justify-content:space-between;
-  padding:46px 52px;border-right:1px solid var(--line);
-  background:#0B0A09 url('/login-art.jpg') center/cover no-repeat}
-/* A scrim, not a filter. The picture keeps its own light; this only buys back
-   enough contrast at the top and bottom edges for type to sit on it without
-   an outline or a box, both of which would look like an apology. */
-.lgart::after{content:'';position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(180deg,rgba(11,10,9,.72) 0%,rgba(11,10,9,.12) 30%,
-    rgba(11,10,9,.34) 62%,rgba(11,10,9,.88) 100%)}
-.lgart > *{position:relative;z-index:1}
+   Three things carry this screen. The card, which is the only object here with
+   a shadow, because everything else in this product is a hairline on a fill and
+   the lift is what says this is the thing. The machine behind it, which is the
+   same three pictures the analysis draws, at the size of the window and the
+   contrast of a watermark. And one line under the card, which is the reason to
+   bother and is deliberately second.
 
-.lgmark{display:flex;align-items:center;gap:14px}
-/* The mark carries its own dark tile, so it needs no plate behind it. Sized
-   in one place: change this and the mobile lockup follows. The optical left
-   edge sits inside the tile's rounded corner, so a small negative margin
-   lines the mark up with the type below it rather than with its own box. */
-.lgmark img,.lgformmark img{display:block;width:64px;height:64px;flex:0 0 auto;margin-left:-4px}
-/* The address, at a size you read rather than inspect. Tabular figures are
-   pointless here but the tighter tracking is not: a domain set at this size
-   with default spacing looks like a headline that lost its nerve. */
-.lgmark b,.lgformmark b{font-size:25px;font-weight:600;letter-spacing:-.028em;line-height:1}
-.lgmark b{color:#F5F1EA}
-.lgformmark b{color:var(--text)}
+   Corners here are round rather than the product's 4px rule. That is a decision
+   about the front door, not drift: the sign in page reads as its own place and
+   the application behind it stays ruled. */
 
-.lgeyebrow{display:block;font-size:10px;font-weight:500;letter-spacing:.16em;
-  text-transform:uppercase;color:rgba(245,241,234,.62)}
+.lgwrap{position:relative;min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:40px 20px 28px}
 
-@keyframes lgfadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* -- the machine ---------------------------------------------------------- */
+.lgbg{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.lgbg svg{position:absolute;inset:0;width:100%;height:100%}
+.lgglow{position:absolute;inset:-25%;
+  background:
+    radial-gradient(34% 34% at 16% 88%, rgba(252,88,2,.13), transparent 70%),
+    radial-gradient(30% 30% at 88% 12%, rgba(252,88,2,.07), transparent 72%);
+  filter:blur(10px);animation:lgdrift 40s var(--ease) infinite alternate}
+@keyframes lgdrift{
+  0%{transform:translate3d(0,0,0) scale(1)}
+  100%{transform:translate3d(-2.5%,-2%,0) scale(1.07)}
+}
+/* A dotted field rather than a ruled one. Everything on this page is a curve,
+   including the measure behind it. */
+.lgdots{position:absolute;inset:0;
+  background-image:radial-gradient(rgba(15,15,14,.10) 1.4px, transparent 1.5px);
+  background-size:34px 34px;
+  mask-image:radial-gradient(88% 76% at 50% 46%, transparent 26%, #000 92%);
+  -webkit-mask-image:radial-gradient(88% 76% at 50% 46%, transparent 26%, #000 92%);
+  animation:lgcreep 72s linear infinite}
+@keyframes lgcreep{to{background-position:34px 34px}}
 
-/* The words sit at the foot of the picture, where the scrim is heaviest and
-   the image has already said its piece. */
-.lgsay{max-width:440px;animation:lgfadein .7s var(--ease) .15s both}
-.lgsay h2{margin:12px 0 0;font-size:clamp(28px,3.1vw,38px);line-height:1.08;
-  letter-spacing:-.032em;font-weight:600}
-.lgsay .lgnote{margin:16px 0 0}
+.lgscene{opacity:0;transition:opacity 1.1s var(--ease)}
+.lgscene.on{opacity:1}
+.lgcell{fill:rgba(15,15,14,.05)}
+.lgcellwin{fill:rgba(252,88,2,.16)}
+.lgbarfill{fill:rgba(15,15,14,.042)}
+.lgbarwin{fill:rgba(252,88,2,.16)}
+.lgbar{transform-origin:bottom;transform:scaleY(.05);transition:transform 1.1s var(--ease)}
+.lgscene.on .lgbar{transform:scaleY(1)}
+.lgcone{fill:rgba(252,88,2,.09)}
+.lgconeline{stroke:rgba(252,88,2,.34);stroke-width:2.5;fill:none;stroke-linecap:round;
+  stroke-dasharray:2600;stroke-dashoffset:2600;transition:stroke-dashoffset 2.2s var(--ease)}
+.lgscene.on .lgconeline{stroke-dashoffset:0}
 
-.lgnote{max-width:400px;font-size:12.5px;line-height:1.65;color:rgba(245,241,234,.55)}
+/* -- the mark and the card ------------------------------------------------ */
+.lgmark{position:relative;z-index:1;display:block;margin-bottom:28px}
+.lgmark img{display:block;width:262px;height:auto}
 
-.lgform{display:flex;align-items:center;justify-content:center;padding:48px 44px;background:var(--page)}
-.lgformin{width:min(400px,100%)}
-.lgformmark{display:none}
-.lghead{margin:0 0 5px;font-size:23px;font-weight:600;letter-spacing:-.028em}
-.lgsub{margin:0 0 24px;font-size:13.5px;line-height:1.55;color:var(--faint)}
-.lgfine{margin-top:22px;font-size:11.5px;line-height:1.6;color:var(--faint)}
-.lgform .cl-rootBox{width:100%}
-.lgform .cl-cardBox{width:100%}
-/* Demo mode keeps its own form, so it needs the width the Clerk box gets. */
-.lgform .logincard{width:100%;padding:0}
+/* flex:0 0 auto because the shell gives every main element flex:1, which
+   stretches the card down the column instead of letting it size to its
+   contents. border:0 on the message for the same reason: sections carry a
+   bottom hairline elsewhere in the product and it drew a rule under the line. */
+.lgcard{position:relative;z-index:1;flex:0 0 auto;width:min(452px,100%);background:var(--card);
+  border:1px solid var(--line);border-radius:28px;padding:40px 40px 34px;
+  box-shadow:0 1px 2px rgba(15,15,14,.04), 0 18px 44px -18px rgba(15,15,14,.16);
+  animation:lgland .7s var(--ease) both}
+@keyframes lgland{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* A short amber capsule at the head of the card. A rule drawn across a 28px
+   corner fights the corner; a handle sits inside it. One thing on this page is
+   the brand colour, and it is the door. */
+.lgcard::before{content:'';position:absolute;left:50%;top:16px;transform:translateX(-50%);
+  width:56px;height:6px;border-radius:999px;background:#FC5802}
+.lghead{margin:10px 0 6px;text-align:center;font-size:23px;font-weight:600;letter-spacing:-.03em}
+.lgsub{margin:0 0 24px;text-align:center;font-size:13.5px;line-height:1.55;color:var(--faint)}
 
-@media (max-width:980px){
-  .lgsplit{grid-template-columns:1fr}
-  .lgart{display:none}
-  .lgform{padding:36px 20px}
-  .lgformmark{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+/* -- the message ---------------------------------------------------------- */
+.lgmsg{position:relative;z-index:1;flex:0 0 auto;border:0;padding:0;width:min(560px,100%);
+  margin-top:26px;text-align:center;min-height:64px}
+/* The paper breathes out from under the message, so the machine behind it never
+   costs a word its contrast. */
+.lgmsg::before{content:'';position:absolute;left:-40px;right:-40px;top:-22px;bottom:-26px;
+  background:radial-gradient(60% 62% at 50% 50%, var(--page) 42%, transparent 100%);
+  z-index:-1}
+.lgeyebrow{display:block;font-size:10px;font-weight:500;letter-spacing:.18em;
+  text-transform:uppercase;color:#FC5802}
+.lgline{margin:9px 0 0;font-size:15px;line-height:1.45;letter-spacing:-.015em;color:var(--text)}
+.lgw{display:inline-block;opacity:0;transform:translateY(.28em);
+  animation:lgrise .5s var(--ease) forwards}
+@keyframes lgrise{to{opacity:1;transform:none}}
+
+.lgrail{display:flex;gap:7px;justify-content:center;margin-top:18px}
+.lgrail button{all:unset;cursor:pointer;height:3px;width:40px;border-radius:2px;
+  background:rgba(15,15,14,.10);position:relative;overflow:hidden}
+.lgrail button i{position:absolute;inset:0;transform-origin:left;transform:scaleX(0);
+  background:#FC5802}
+.lgrail button.on i{animation:lgsweep var(--lgdwell) linear forwards}
+.lgrail button.done i{transform:scaleX(1)}
+@keyframes lgsweep{to{transform:scaleX(1)}}
+.lgrail button:focus-visible{outline:2px solid #FC5802;outline-offset:4px}
+
+/* -- the foot -------------------------------------------------------------
+   The status is stated the way the company states it everywhere else, and the
+   non affiliation line travels with it. Set as words rather than as a badge: a
+   certificate drawn as a pill is a graphic somebody has to trust, and a
+   sentence is a claim they can read. */
+.lgfoot{position:relative;z-index:1;margin-top:auto;padding-top:34px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:6px}
+.lgstatus{margin:0;font-size:12px;font-weight:500;letter-spacing:-.012em;color:var(--muted)}
+.lgfine{margin:0;max-width:440px;font-size:11px;line-height:1.6;color:var(--faint)}
+
+/* -- Clerk, wearing the card's clothes ------------------------------------ */
+.lgcard .cl-rootBox,.lgcard .cl-cardBox{width:100%}
+
+/* -- the demo form, same clothes ------------------------------------------ */
+.logincard{width:100%}
+.logincard .lbl{display:block;margin:14px 0 7px 2px;font-size:11px;font-weight:500;color:var(--muted)}
+.logincard input{width:100%;height:46px;padding:0 18px;background:var(--card);color:var(--text);
+  border:1px solid var(--border2);border-radius:999px;font:14px var(--sans);
+  transition:border-color .16s var(--ease),box-shadow .16s var(--ease)}
+.logincard input:focus{outline:none;border-color:var(--text);box-shadow:0 0 0 3px rgba(15,15,14,.05)}
+.logincard .btn{margin-top:22px;width:100%;height:46px;border-radius:999px;justify-content:center}
+.logincard .note{margin-top:14px;padding:10px 16px;border-radius:16px;background:var(--s2);
+  border:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.logincard .note.bad{border-color:var(--aborder);color:var(--text)}
+.logincard .fine{display:block;margin-top:14px;font-size:12px;color:var(--faint);text-align:center}
+
+@media (max-width:560px){
+  .lgwrap{padding:28px 16px 22px;justify-content:flex-start}
+  .lgmark{margin:12px 0 20px}
+  .lgmark img{width:212px}
+  .lgcard{padding:30px 22px 26px}
+  .lghead{font-size:21px}
+  .lgmsg{margin-top:22px}
+  .lgdots{background-size:26px 26px}
 }
 @media (prefers-reduced-motion:reduce){
-  .lgbar i b{animation:none}
+  .lgglow,.lgdots,.lgw,.lgcard,.lgrail button.on i{animation:none}
+  .lgw{opacity:1;transform:none}
+  .lgbar{transition:none;transform:scaleY(1)}
+  .lgconeline{transition:none;stroke-dashoffset:0}
+  .lgrail button.on i{transform:scaleX(1)}
 }
 
 /* Polish pass: focus rings, skeletons, row actions, empty states, sign out.
