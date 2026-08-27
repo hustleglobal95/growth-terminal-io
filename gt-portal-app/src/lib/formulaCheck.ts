@@ -121,6 +121,24 @@ function references(f: string): { col: string; row: number }[] {
   return out
 }
 
+
+/** What a returned value looks like on screen. A raw float is not a preview:
+ *  79.01639344262295 tells a customer nothing that 79.02 does not, and it reads
+ *  as a machine leaking rather than a number they recognise. Precision is kept
+ *  where it carries meaning, which is below one, because that is where ratios
+ *  and rates live. */
+function show(v: unknown): string {
+  if (v === '' || v === null || v === undefined) return 'blank'
+  if (typeof v !== 'number' || !Number.isFinite(v)) return String(v)
+  const a = Math.abs(v)
+  const dp = a >= 1000 ? 0 : a >= 1 ? 2 : 4
+  const out = v.toFixed(dp)
+  const trimmed = dp > 0 ? out.replace(/\.?0+$/, '') : out
+  const [int, frac] = trimmed.split('.')
+  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return frac ? grouped + '.' + frac : grouped
+}
+
 export interface CheckInput {
   formula: string
   dialect: Dialect
@@ -207,7 +225,7 @@ export function checkFormula(inp: CheckInput): CheckResult {
     catch { problems.push({ code: 'could-not-run', says: 'The formula could not be read well enough to test against your data.' }); return { ok: false, problems, preview, notes } }
     ran++
     if (isError(v)) { errored++; preview.push({ row: r, value: 'error' }) }
-    else preview.push({ row: r, value: v === '' ? 'blank' : String(v) })
+    else preview.push({ row: r, value: show(v) })
   }
 
   if (ran && errored === ran) {
@@ -216,7 +234,7 @@ export function checkFormula(inp: CheckInput): CheckResult {
   }
   if (stoppedShort) notes.push(`Checked on ${ran} row${ran === 1 ? '' : 's'}. It reads ahead of itself, so the last rows of the sample have nothing to compare against and were left out rather than guessed at.`)
   const blanks = preview.filter(p => p.value === 'blank').length
-  if (blanks) notes.push(`${blanks} of the ${ran} rows checked come back blank. That is often correct, a growth column has nothing to compare on its first row, but check it is the rows you expect.`)
+  if (blanks) notes.push(`${blanks} of the ${ran} rows checked come back blank. That is often correct, because a row with nothing to compare against has no answer, but check it is the rows you expect.`)
   if (errored) notes.push(`${errored} of the ${ran} rows checked error. The formula still works elsewhere, so look at what those rows hold.`)
   return { ok: true, problems, preview, notes }
 }
