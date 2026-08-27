@@ -20,9 +20,7 @@
  *  credential; it is mounted inside the card and dressed to match it.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { DEMO, CLERK_PUBLISHABLE_KEY } from '../config'
-import { login } from '../lib/api'
+import { CLERK_PUBLISHABLE_KEY } from '../config'
 import { SignIn, SignUp } from '@clerk/clerk-react'
 
 /** How long each line holds before the next one. */
@@ -228,60 +226,31 @@ function Page({ title, sub, messages, children }: {
 /* -------------------------------------------------------------------- sign in */
 
 export function Login() {
-  const nav = useNavigate()
-  const [email, setEmail] = useState('')
-  const [pw, setPw] = useState('')
-  const [err, setErr] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setErr(null); setBusy(true)
-    try {
-      await login(email, pw)
-      nav('/')
-    } catch (ex) {
-      setErr(ex instanceof Error ? ex.message : 'Sign in failed. Check your details and try again.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  /* Live mode: Clerk owns sign in. The form below is the demo path only.
-     signUpUrl keeps the link at the bottom of Clerk's card inside this app.
-     Left unset it points at Clerk's hosted portal on accounts.growthterminal.io,
-     whose DNS is proxied through Cloudflare and answers Error 1000, so the only
-     way anyone could reach sign up was a dead end. Clerk itself works here
-     because it rides the backend proxy rather than that hostname. */
-  if (!DEMO && CLERK_PUBLISHABLE_KEY) {
-    return (
-      <Page title="Sign in to your workspace."
-        sub="Every analysis, every business, every 90 day plan. One console."
-        messages={SIGN_IN_MESSAGES}>
-        <SignIn afterSignInUrl="/" signUpUrl="/signup" appearance={CLERK_LOOK} />
-      </Page>
-    )
-  }
-
+  if (!CLERK_PUBLISHABLE_KEY) return <NoKey />
   return (
     <Page title="Sign in to your workspace."
       sub="Every analysis, every business, every 90 day plan. One console."
       messages={SIGN_IN_MESSAGES}>
-      <form className="logincard" onSubmit={submit}>
-        {DEMO && (
-          <div className="note">This build is in demo mode, so any details sign you into the
-            sample workspace. Wire the live API in src/config.ts to make this real.</div>
-        )}
-        <label className="lbl" htmlFor="em">Email</label>
-        <input id="em" type="email" required value={email} onChange={e => setEmail(e.target.value)}
-          placeholder="you@company.com" autoComplete="email" />
-        <label className="lbl" htmlFor="pw">Password</label>
-        <input id="pw" type="password" required value={pw} onChange={e => setPw(e.target.value)}
-          placeholder="Your password" autoComplete="current-password" />
-        {err && <div className="note bad">{err}</div>}
-        <button className="btn p" disabled={busy} type="submit">{busy ? 'Signing in' : 'Sign in'}</button>
-        <span className="fine">No account yet? Access comes with GT Professional and GT Agency.</span>
-      </form>
+      {/* signUpUrl keeps the link at the bottom of Clerk's card inside this app.
+          Left unset it points at Clerk's hosted portal on
+          accounts.growthterminal.io, whose DNS is proxied through Cloudflare and
+          answers Error 1000, so the only way anyone could reach sign up was a
+          dead end. Clerk itself works here because it rides the backend proxy
+          rather than that hostname. */}
+      <SignIn afterSignInUrl="/" signUpUrl="/signup" appearance={CLERK_LOOK} />
+    </Page>
+  )
+}
+
+/** No publishable key configured. Says so rather than rendering a form that
+ *  cannot sign anybody in. */
+function NoKey() {
+  return (
+    <Page title="Sign in is not configured."
+      sub="This build has no Clerk publishable key, so there is nothing to sign in against."
+      messages={SIGN_IN_MESSAGES}>
+      <p className="lgfine">Set CLERK_PUBLISHABLE_KEY in src/config.ts and this screen works
+        again. Nothing else on it changes.</p>
     </Page>
   )
 }
@@ -295,10 +264,10 @@ export function Login() {
    app.growthterminal.io and every Clerk call from it goes through the backend
    proxy, which is the path that already works for sign in.
 
-   Demo mode has no Clerk, so it gets the sign in screen instead of a blank
-   page. */
+   With no key there is nothing to create an account against, so this falls
+   through to the same honest message the sign in route shows. */
 export function Signup() {
-  if (DEMO || !CLERK_PUBLISHABLE_KEY) return <Login />
+  if (!CLERK_PUBLISHABLE_KEY) return <Login />
   return (
     <Page title="Create your workspace."
       sub="One workbook is enough to start. The first analysis takes a few minutes."
