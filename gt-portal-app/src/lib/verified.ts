@@ -152,6 +152,28 @@ export function listRuns(commitmentId: string): Promise<RunRow[]> {
   return root<RunRow[]>('/v1/commitments/' + encodeURIComponent(commitmentId) + '/runs')
 }
 
+/** Append a measurement. This is the call that closes the loop, and it is the
+ *  one the portal never made: the engine has served this route all along, the
+ *  panel simply told people their next upload would produce a run and nothing
+ *  ever did.
+ *
+ *  It takes a snapshot, not a workbook. The snapshot has to be confirmed and
+ *  has to still hold its raw rows, which is exactly what the intake the portal
+ *  already owns produces. No analysis is queued, so no credit is spent: this
+ *  re-measures the same lifecycle with the same engine and appends the result.
+ *
+ *  Idempotent on (claim, snapshot). Sending the same snapshot twice returns
+ *  the original run rather than making a second, competing record. */
+export function appendRun(
+  commitmentId: string, claimId: string, snapshotId: string,
+): Promise<{ run: RunRow; existed: boolean }> {
+  return root(
+    '/v1/commitments/' + encodeURIComponent(commitmentId)
+    + '/claims/' + encodeURIComponent(claimId) + '/runs',
+    { method: 'POST', body: JSON.stringify({ snapshotId }) },
+  )
+}
+
 export function commitPlan(
   analysisId: string, committedPeriod: string,
 ): Promise<{ commitment: CommitmentRow; claim: ClaimRow; existed: boolean }> {
@@ -164,6 +186,26 @@ export function commitPlan(
 /* ------------------------------------------------------------------ */
 /* Language                                                            */
 /* ------------------------------------------------------------------ */
+
+/** A gate is due a fixed number of periods after the plan was committed, and
+ *  both numbers are already in the record: the commitment carries its period
+ *  and every gate carries duePeriods. Nothing had to be asked for to know when
+ *  a measurement is owed; it simply was never worked out and shown. */
+export function addPeriods(period: string, months: number): string {
+  const m = /^(\d{4})-(\d{2})$/.exec(period)
+  if (!m) return period
+  const total = Number(m[1]) * 12 + (Number(m[2]) - 1) + months
+  const y = Math.floor(total / 12)
+  const mo = (total % 12) + 1
+  return y + '-' + String(mo).padStart(2, '0')
+}
+
+/** Negative when a is earlier. Periods are YYYY-MM so a string compare would
+ *  also work, and is not used, because it silently does the wrong thing the
+ *  moment a caller passes anything else. */
+export function comparePeriods(a: string, b: string): number {
+  return a === b ? 0 : (a < b ? -1 : 1)
+}
 
 export function thisPeriod(): string {
   const d = new Date()
