@@ -5660,3 +5660,79 @@ body.edfocus .edmk.vd.ask{color:#1F4E8C}
   .notepanel{animation:none}
   .noteheard i{animation:none}
 }
+
+/* ===========================================================================
+   THE CHART BUILDER.
+
+   One accent, because the portal marks one thing per view and a chart that
+   introduces a second hue breaks that everywhere it is embedded. The marks
+   themselves are drawn in ChartView.tsx, which resolves the tokens above into
+   real attributes so a chart exported out of the page keeps its colours.
+
+   The table under a chart is not a nice extra. The accent clears about 2.8 to
+   1 against white, under the three to one a mark needs to carry a value on
+   its own, so the numbers have to be readable without relying on the colour.
+   =========================================================================== */
+
+.gtchartbox{margin-top:18px}
+.gtchart{display:block;width:100%;height:auto;overflow:visible;
+  border-radius:var(--r-panel);background:var(--card)}
+
+/* The ask row. The talk button sits beside the box rather than under it, so
+   the thing you press and the thing that fills up are the same gesture. */
+.cbrow{display:flex;gap:10px;align-items:flex-start}
+.cbrow .tminput{flex:1 1 auto;min-width:0}
+.cbtalk{flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;
+  align-self:stretch}
+.cbtalk.on{border-color:var(--aborder);background:var(--tint);color:var(--text)}
+.cbdot{width:8px;height:8px;border-radius:999px;background:var(--faint);flex:0 0 auto}
+.cbdot.live{background:var(--amber);animation:cbpulse 1.15s var(--ease) infinite}
+@keyframes cbpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.78)}}
+
+/* The numbers. Tabular figures because a column of them has to line up, and a
+   sticky head because a top twenty runs past the fold. */
+.gttablewrap{margin-top:16px;max-height:340px;overflow:auto;border:1px solid var(--line);
+  border-radius:var(--r-panel)}
+.gttable{width:100%;border-collapse:collapse;font-size:12.5px}
+.gttable th,.gttable td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);
+  white-space:nowrap}
+.gttable th{position:sticky;top:0;background:var(--card);color:var(--muted);font-weight:500;
+  font-size:11px;letter-spacing:.01em;z-index:1}
+.gttable td{color:var(--text)}
+.gttable .num{text-align:right;font-variant-numeric:tabular-nums}
+.gttable tbody tr:last-child td{border-bottom:0}
+
+@media(max-width:760px){
+  /* The button drops under the box rather than squeezing it to nothing. */
+  .cbrow{flex-direction:column}
+  .cbtalk{align-self:flex-start;width:100%;justify-content:center}
+  .gtchartbox{margin-top:14px}
+  .gttablewrap{max-height:280px}
+}
+
+/* What it heard: the spoken phrase, how it was matched, and the column it
+   landed on. Its own rows rather than the analyses table's, which is a six
+   column grid and drops a two cell row in the wrong places. */
+.heardrows{margin:12px 0 0;padding:0;list-style:none;border:1px solid var(--line);
+  border-radius:var(--r-panel);overflow:hidden}
+.heardrows li{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.8fr) minmax(0,1.1fr);
+  gap:12px;align-items:baseline;padding:10px 14px;border-bottom:1px solid var(--line);font-size:12.5px}
+.heardrows li:last-child{border-bottom:0}
+.heardrows .hw{color:var(--text)}
+.heardrows .hh{color:var(--faint);font-size:11.5px}
+.heardrows b{font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:760px){
+  .heardrows li{grid-template-columns:1fr;gap:2px}
+  .heardrows .hh{order:3}
+}
+
+/* The chart's own button row. `.act` is used across the portal without ever
+   being declared, so its buttons simply flow; three of them at phone width
+   run off the card and the last one ends up under the notepad control. This
+   is scoped rather than fixing `.act` globally, which would move buttons on
+   every other screen at once. */
+.chartacts{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+@media(max-width:760px){
+  .chartacts{flex-direction:column;align-items:stretch;padding-bottom:8px}
+  .chartacts .btn{width:100%;text-align:center}
+}
