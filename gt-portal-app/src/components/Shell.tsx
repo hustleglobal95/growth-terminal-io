@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Notes } from './Notes'
+import { onTheme, readTheme, setTheme, type Theme } from '../lib/theme'
 import { Palette } from './Palette'
 import { onToast } from '../lib/bus'
 import { LegalFooter } from './LegalFooter'
@@ -101,6 +102,61 @@ export function UserCard() {
   )
 }
 
+/** The mark is ink on transparency, which is right on a white chrome and
+ *  invisible on a dark one: the G disappears and the accent square is left
+ *  floating on its own. The dark set is the same artwork with only its ink
+ *  lifted, so the accent square is identical in both. Chosen at render rather
+ *  than in CSS because the theme attribute is already on the document before
+ *  React mounts, so the first paint is already correct. */
+function Mark({ size }: { size: 60 | 90 }) {
+  const [t, setT] = React.useState<Theme>(() => readTheme())
+  React.useEffect(() => onTheme(setT), [])
+  const stem = t === 'dark' ? '/logo-mark-ondark-' : '/logo-mark-'
+  const two = size === 90 ? 128 : 60
+  const three = size === 90 ? 192 : 90
+  return (
+    <img className="marklogo" alt=""
+      src={`${stem}${size}.png`}
+      srcSet={`${stem}${two}.png 2x, ${stem}${three}.png 3x`} />
+  )
+}
+
+/* ---------------------------------------------------------------- theme -- */
+
+/** Two buttons rather than a switch. A switch has to be read to know which way
+ *  is on, and it has to carry a label saying what it toggles; two named states
+ *  say it in the words themselves and the one that is set is simply the one
+ *  that is pressed. */
+function ThemePick() {
+  const [t, setT] = React.useState<Theme>(() => readTheme())
+  React.useEffect(() => onTheme(setT), [])
+  const pick = (next: Theme) => { if (next !== t) { setTheme(next); setT(next) } }
+  return (
+    <div className="themepick" role="group" aria-label="Appearance">
+      {(['light', 'dark'] as Theme[]).map(k => (
+        <button key={k} type="button" className={t === k ? 'on' : ''}
+          aria-pressed={t === k} onClick={() => pick(k)}>
+          {k === 'light' ? <SunIcon /> : <MoonIcon />}
+          <span>{k === 'light' ? 'Light' : 'Dark'}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+const SunIcon = () => (
+  <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+    <circle cx="8" cy="8" r="3.1" />
+    <path d="M8 1.4v1.6M8 13v1.6M1.4 8h1.6M13 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1" />
+  </svg>
+)
+
+const MoonIcon = () => (
+  <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+    <path d="M13.2 9.6A5.6 5.6 0 016.4 2.8a5.6 5.6 0 106.8 6.8z" />
+  </svg>
+)
+
 export function Shell() {
   const cal = useCalibration()
   const cred = useCredits()
@@ -150,7 +206,7 @@ export function Shell() {
           {/* The phone mark is a 40px box, so the retina candidates are the 128
               and 192 assets. The 60 and 90 files are only enough for the 30px
               sidebar mark and would render soft here. */}
-          <img className="marklogo" src="/logo-mark-90.png" srcSet="/logo-mark-128.png 2x, /logo-mark-192.png 3x" alt="" />Growth Terminal
+          <Mark size={90} />Growth Terminal
         </span>
         <button className="mbtn r" aria-label="Share">
           <svg viewBox="0 0 20 20"><path d="M10 13V3M10 3L6.5 6.5M10 3l3.5 3.5" /><path d="M4 12v3.5A1.5 1.5 0 005.5 17h9a1.5 1.5 0 001.5-1.5V12" /></svg>
@@ -181,7 +237,7 @@ export function Shell() {
             <svg viewBox="0 0 16 16"><rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M6 2.5v11"/></svg>
           </button>
           <span className="mark">
-            <img className="marklogo" src="/logo-mark-60.png" srcSet="/logo-mark-60.png 2x, /logo-mark-90.png 3x" alt="" />Growth Terminal
+            <Mark size={60} />Growth Terminal
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             {/* A trial has a deadline attached, so it stays in the chrome where
@@ -212,6 +268,10 @@ export function Shell() {
             {meta && bill && bill.bypassed && <div className="chip"><i />{planLabel(bill)}</div>}
             {meta && cal && cal.totals && <div className="chip"><i />{calibrationLabel(cal)}</div>}
             {meta && cred && typeof cred.balance === 'number' && <div className="chip"><i />{creditsLabel(cred)}</div>}
+            {/* Unconditional, unlike the chips above it. Those render only when
+                they have an answer, and a preference that vanishes with the
+                billing request is a preference nobody can find twice. */}
+            <ThemePick />
           </div>
           <div className="searchpill" onClick={() => setPal(true)}>
             <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>

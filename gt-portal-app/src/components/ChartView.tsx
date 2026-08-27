@@ -37,6 +37,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react'
 import { compact, full, type Plan } from '../lib/chartPlan'
+import { onTheme } from '../lib/theme'
 
 interface Ink {
   accent: string; grid: string; axis: string
@@ -54,6 +55,11 @@ const FALLBACK: Ink = {
 function useInk(): Ink {
   const [ink, setInk] = useState<Ink>(FALLBACK)
   useEffect(() => {
+    /* Re-read on a theme change. These values are baked into attributes rather
+       than left as variables, which is what lets a chart export correctly and
+       is also what stops the cascade from restyling it: a chart drawn in light
+       and left alone would still be drawing on white after a switch to dark. */
+    const read = () => {
     try {
       const cs = getComputedStyle(document.documentElement)
       const v = (n: string, d: string) => (cs.getPropertyValue(n) || '').trim() || d
@@ -70,6 +76,9 @@ function useInk(): Ink {
         font: (v('--sans', '') ? v('--sans', '') + ', ' : '') + FALLBACK.font,
       })
     } catch { /* no document, keep the fallback */ }
+    }
+    read()
+    return onTheme(read)
   }, [])
   return ink
 }

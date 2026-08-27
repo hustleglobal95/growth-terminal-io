@@ -1,16 +1,57 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { data } from '../lib/api'
+import { onTheme } from '../lib/theme'
 
-/* Chart palette. These were literals for the light theme, where the accent
-   was ink and the surface was white. On black the accent goes back to Signal
-   Amber and the neutrals invert, so an unlit bar stays visible against the
-   card instead of disappearing into it. */
-const AMBER = '#FC5802', SURF = '#131110', MUTED = '#9A938B', TEXT = '#F5F1EA'
-const NEUTRAL = 'rgba(255,255,255,.16)'   /* unlit bars */
-const REFLINE = 'rgba(255,255,255,.30)'   /* reference line, a neutral annotation */
-const HAIRLINE = 'rgba(255,255,255,.22)'
+/** THE CHART PALETTE, READ FROM THE TOKEN BLOCK.
+ *
+ *  These were literals, and they were the wrong literals: P.surf, P.text and P.muted
+ *  still held the values of the dark theme this app was re-skinned away from,
+ *  so a ring drawn in the card colour was painting #131110 onto white and a
+ *  label written in P.text was near white text on a white card. Reading them
+ *  from the token block fixes the light theme and makes the dark one work at
+ *  the same time.
+ *
+ *  Resolved into real attributes rather than left as var() because these SVGs
+ *  are copied and exported, and a var that travels without its stylesheet
+ *  paints black. Which is also why the theme has to be listened for.
+ */
+interface Palette {
+  amber: string; surf: string; muted: string; text: string
+  neutral: string; refline: string; hairline: string
+}
+
+const FALLBACK: Palette = {
+  amber: '#F97316', surf: '#FFFFFF', muted: '#5A564F', text: '#0F0F0E',
+  neutral: 'rgba(15,15,14,.16)', refline: 'rgba(15,15,14,.30)', hairline: 'rgba(15,15,14,.22)',
+}
+
+function usePalette(): Palette {
+  const [p, setP] = useState<Palette>(FALLBACK)
+  useEffect(() => {
+    const read = () => {
+      try {
+        const cs = getComputedStyle(document.documentElement)
+        const v = (n: string, d: string) => (cs.getPropertyValue(n) || '').trim() || d
+        const ink = v('--ink-rgb', '15,15,14')
+        setP({
+          amber: v('--amber', FALLBACK.amber),
+          surf: v('--card', FALLBACK.surf),
+          muted: v('--muted', FALLBACK.muted),
+          text: v('--text', FALLBACK.text),
+          neutral: `rgba(${ink},.16)`,
+          refline: `rgba(${ink},.30)`,
+          hairline: `rgba(${ink},.22)`,
+        })
+      } catch { /* no document */ }
+    }
+    read()
+    return onTheme(read)
+  }, [])
+  return p
+}
 
 export function Spark({ series }: { series: number[] }) {
+  const P = usePalette()
   const W = 240, H = 34, n = series.length
   const lo = Math.min(...series), hi = Math.max(...series)
   const pad = (hi - lo) * 0.18 || 1
@@ -19,14 +60,15 @@ export function Spark({ series }: { series: number[] }) {
   const d = series.map((v, i) => `${x(i)},${y(v)}`).join('L')
   return (
     <svg className="spark" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
-      <path d={`M0,${H}L${d}L${W},${H}Z`} fill={AMBER} fillOpacity={0.1} />
-      <path d={`M${d}`} fill="none" stroke={AMBER} strokeWidth={2}
+      <path d={`M0,${H}L${d}L${W},${H}Z`} fill={P.amber} fillOpacity={0.1} />
+      <path d={`M${d}`} fill="none" stroke={P.amber} strokeWidth={2}
         strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
     </svg>
   )
 }
 
 export function GapChart() {
+  const P = usePalette()
   const { produced, required, months } = data.D
   const W = 460, H = 250, L = 42, R = 64, T = 14, B = 28
   const iw = W - L - R, ih = H - T - B, n = produced.length
@@ -48,14 +90,14 @@ export function GapChart() {
           <text x={L - 9} y={y(v) + 3.5} className="axis" textAnchor="end">{v.toLocaleString()}</text>
         </g>
       ))}
-      <path d={band} fill={AMBER} fillOpacity={0.1} />
-      <path d={area} fill={AMBER} fillOpacity={0.1} />
-      <path d={line(produced)} fill="none" stroke={AMBER} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-      <path d={line(required)} fill="none" stroke={REFLINE} strokeWidth={1.5} />
-      <circle cx={x(n - 1)} cy={y(produced[n - 1])} r={4.5} fill={AMBER} stroke={SURF} strokeWidth={2} />
-      <text x={x(n - 1) + 10} y={y(produced[n - 1]) + 4} className="axis" fill={TEXT}>{produced[n - 1].toLocaleString()}</text>
+      <path d={band} fill={P.amber} fillOpacity={0.1} />
+      <path d={area} fill={P.amber} fillOpacity={0.1} />
+      <path d={line(produced)} fill="none" stroke={P.amber} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+      <path d={line(required)} fill="none" stroke={P.refline} strokeWidth={1.5} />
+      <circle cx={x(n - 1)} cy={y(produced[n - 1])} r={4.5} fill={P.amber} stroke={P.surf} strokeWidth={2} />
+      <text x={x(n - 1) + 10} y={y(produced[n - 1]) + 4} className="axis" fill={P.text}>{produced[n - 1].toLocaleString()}</text>
       <text x={x(n - 1) + 10} y={y(required[n - 1]) + 4} className="axis">{required[n - 1].toLocaleString()}</text>
-      <text x={x(n - 1) - 8} y={mid + 4} className="axis" fill={MUTED} textAnchor="end">807 short</text>
+      <text x={x(n - 1) - 8} y={mid + 4} className="axis" fill={P.muted} textAnchor="end">807 short</text>
       <text x={L} y={H - 8} className="axis">{months[0]}</text>
       <text x={L + iw} y={H - 8} className="axis" textAnchor="end">{months[n - 1]}</text>
     </svg>
@@ -63,6 +105,7 @@ export function GapChart() {
 }
 
 export function OvBars() {
+  const P = usePalette()
   const vals = [1, 2, 3, 2, 4, 3, 5, 6, 4, 5, 6, 6]
   const W = 460, H = 190, L = 30, B = 26, T = 12
   const iw = W - L - 12, ih = H - T - B, max = 7
@@ -85,7 +128,7 @@ export function OvBars() {
         return (
           <g key={i}>
             <path d={`M${xx},${T + ih} L${xx},${yy + 4} Q${xx},${yy} ${xx + 4},${yy} L${xx + bw - 4},${yy} Q${xx + bw},${yy} ${xx + bw},${yy + 4} L${xx + bw},${T + ih} Z`}
-              fill={i === vals.length - 1 ? AMBER : NEUTRAL} />
+              fill={i === vals.length - 1 ? P.amber : P.neutral} />
             <text x={xx + bw / 2} y={H - 8} className="axis" textAnchor="middle">{mo[i]}</text>
           </g>
         )
@@ -95,6 +138,7 @@ export function OvBars() {
 }
 
 export function Gantt({ open }: { open: number }) {
+  const P = usePalette()
   const W = 900, H = 224, L = 8, R = 8, T = 30, rowH = 26, barH = 13
   const iw = W - L - R
   const wk = (w: number) => L + (iw * (w - 1)) / 12
@@ -118,17 +162,17 @@ export function Gantt({ open }: { open: number }) {
         return (
           <g key={b[0]}>
             <rect x={x0} y={yTop} width={Math.max(6, x1 - x0)} height={barH} rx={4}
-              fill={on ? AMBER : NEUTRAL} />
-            <text x={x0 + 10} y={yTop + barH + 13} className="axis" fill={on ? TEXT : MUTED}>{b[0]}. {b[3]}</text>
+              fill={on ? P.amber : P.neutral} />
+            <text x={x0 + 10} y={yTop + barH + 13} className="axis" fill={on ? P.text : P.muted}>{b[0]}. {b[3]}</text>
           </g>
         )
       })}
       {[[3, 'Gate 1'], [5, 'Gate 2'], [11, 'Gate 3']].map(([w, lb]) => (
         <g key={lb as string}>
           <line x1={wk(w as number)} x2={wk(w as number)} y1={T - 6} y2={T + 6 * rowH - 6}
-            stroke={HAIRLINE} strokeWidth={1} />
-          <circle cx={wk(w as number)} cy={T - 6} r={3.5} fill={AMBER} stroke={SURF} strokeWidth={2} />
-          <text x={wk(w as number) + 6} y={T + 6 * rowH + 6} className="axis" fill={MUTED}>{lb}</text>
+            stroke={P.hairline} strokeWidth={1} />
+          <circle cx={wk(w as number)} cy={T - 6} r={3.5} fill={P.amber} stroke={P.surf} strokeWidth={2} />
+          <text x={wk(w as number) + 6} y={T + 6 * rowH + 6} className="axis" fill={P.muted}>{lb}</text>
         </g>
       ))}
     </svg>
