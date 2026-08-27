@@ -7,14 +7,16 @@
  * something. Nothing here is computed in the browser.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Section } from './Section'
 import { toast } from '../lib/bus'
 import {
   ClaimRow, CommitmentRow, GateResult, RunRow, VERDICT_LABEL, GATE_LABEL,
-  commitPlan, getCommitment, listCommitments, listRuns, money, monthName,
-  pct, points, stepLabel, thisPeriod,
+  addPeriods, appendRun, commitPlan, comparePeriods, getCommitment,
+  listCommitments, listRuns, money, monthName, pct, points, stepLabel, thisPeriod,
 } from '../lib/verified'
+import { blockingReason, readWorkbook } from '../lib/sheet'
+import { confirm as confirmSnapshot, ingest, intakeLive } from '../lib/intake'
 
 /* ------------------------------------------------------------------ */
 /* The rate line                                                       */
@@ -77,6 +79,54 @@ function RateLine({ runs, diagnosis, baseline }: {
   )
 }
 
+
+/* ------------------------------------------------------------------ */
+/* The measurement                                                     */
+/* ------------------------------------------------------------------ */
+
+/** Drop a fresh workbook and it is measured against the frozen claim.
+ *
+ *  Deliberately the same drop zone as every other place a workbook enters
+ *  this product. A workbook arrives one way here, not two, and somebody who
+ *  has uploaded once should not have to learn a second control to do the one
+ *  thing the product is sold on.
+ *
+ *  The steps are named while they run because three network calls happen
+ *  behind this button and a spinner that says nothing for eight seconds reads
+ *  as a hang. */
+function Measure({ busy, step, over, setOver, fileRef, measure, live, runs }: {
+  busy: boolean; step: string; over: boolean; setOver: (b: boolean) => void
+  fileRef: React.MutableRefObject<HTMLInputElement | null>
+  measure: (f: File | null) => void; live: boolean; runs: number
+}) {
+  if (!live) {
+    return (
+      <div className="vfmeasure">
+        <p className="gbody">Measuring needs the data intake, which is not switched on for this
+          workspace, so this panel would be showing a button that throws. It says so instead.</p>
+      </div>
+    )
+  }
+  return (
+    <div className={'vfmeasure drop' + (over ? ' over' : '') + (busy ? ' busy' : '')}
+      onDragOver={e => { e.preventDefault(); setOver(true) }}
+      onDragLeave={() => setOver(false)}
+      onDrop={e => { e.preventDefault(); setOver(false); measure(e.dataTransfer.files && e.dataTransfer.files[0]) }}
+    >
+      <p className="dropt">{runs ? 'Measure it again' : 'Measure it now'}</p>
+      <p className="dropf">{busy
+        ? step + '\u2026'
+        : 'Drop the same business\u2019s current workbook. It is measured against the promise above by the engine that made it. Nothing is re-analysed, so nothing is charged.'}</p>
+      <button className="btn p" disabled={busy} onClick={() => fileRef.current?.click()}>
+        {busy ? step || 'Working' : 'Choose a file'}
+      </button>
+      <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.tsv" className="vh"
+        aria-label="Choose the current workbook to measure against this plan"
+        onChange={e => { measure(e.target.files && e.target.files[0]); e.currentTarget.value = '' }} />
+    </div>
+  )
+}
+
 /* ------------------------------------------------------------------ */
 /* Panel                                                               */
 /* ------------------------------------------------------------------ */
@@ -89,6 +139,9 @@ export function Verified({ analysisId }: { analysisId: string }) {
   const [runs, setRuns] = useState<RunRow[]>([])
   const [busy, setBusy] = useState(false)
   const [why, setWhy] = useState<string | null>(null)
+  const [step, setStep] = useState('')
+  const [over, setOver] = useState(false)
+  const fileRef = useRef<HTMLInputElement | null>(null)
 
   const load = useCallback(async () => {
     setReady(false)
@@ -124,9 +177,75 @@ export function Verified({ analysisId }: { analysisId: string }) {
     } finally { setBusy(false) }
   }, [analysisId, load])
 
+  /* THE CALL THAT CLOSES THE LOOP.
+   *
+   *  Read the workbook here, refuse here for the same two reasons the intake
+   *  refuses, send it up as a snapshot, confirm it, and append it against the
+   *  frozen claim. No analysis is queued, so nothing is charged: this is the
+   *  same lifecycle measured again by the same engine, which is the whole
+   *  point of having frozen the claim in the first place.
+   *
+   *  A refusal from the engine is shown in its own words rather than reduced
+   *  to "something went wrong". "Verification requires a confirmed snapshot"
+   *  and "no measurable lifecycle" are answers, and the customer can act on
+   *  both of them. */
+  const measure = useCallback(async (file: File | null) => {
+    if (!file || !commitment || !claim) return
+    setBusy(true); setWhy(null); setStep('Reading the file')
+    try {
+      const read = await readWorkbook(file)
+      const blocked = blockingReason(read)
+      if (blocked) { setWhy(blocked); return }
+
+      setStep('Sending it up')
+      const snap = await ingest(read.workbook, read.fileName)
+
+      setStep('Confirming it')
+      await confirmSnapshot(snap.snapshotId)
+
+      setStep('Measuring against the promise')
+      const out = await appendRun(commitment.id, claim.id, snap.snapshotId)
+
+      toast(out.existed
+        ? 'That workbook had already been measured against this plan.'
+        : 'Measured. The verdict is below.')
+      await load()
+    } catch (e) {
+      setWhy(e instanceof Error ? e.message : 'The measurement did not finish.')
+    } finally { setBusy(false); setStep('') }
+  }, [commitment, claim, load])
+
   const latest = runs.length ? runs[runs.length - 1] : null
   const c = claim ? claim.claimJson : null
   const v = latest ? latest.resultJson : null
+
+  /* WHEN A MEASUREMENT IS OWED, worked out rather than waited for. Every gate
+   *  in the frozen claim carries duePeriods and the commitment carries the
+   *  period it started, so the month each gate falls due has been knowable
+   *  since the day it was committed. It was simply never shown, which is how a
+   *  product that sells verification ends up silent about it. */
+  const due = useMemo(() => {
+    if (!commitment || !c || !c.gates || !c.gates.length) return null
+    const now = thisPeriod()
+    const rows = c.gates.map(g => {
+      const at = addPeriods(commitment.committedPeriod, g.duePeriods)
+      return { id: g.id, label: g.label, at, arrived: comparePeriods(at, now) <= 0 }
+    })
+    const soonest = rows.reduce((a, b) => (comparePeriods(a.at, b.at) <= 0 ? a : b))
+    /* Covered means a measurement has been taken that observed through the due
+       month or later. A run from before the gate came due does not close it. */
+    const observed = runs
+      .map(r => (r.observedThrough || '').slice(0, 7))
+      .filter(Boolean)
+      .sort()
+    const through = observed.length ? observed[observed.length - 1] : null
+    const uncovered = rows.filter(r => r.arrived && (!through || comparePeriods(through, r.at) < 0))
+    /* Every gate that has come due has been measured through. Saying "next due
+       August" about a gate that was measured in August is the kind of small
+       lie that makes somebody stop trusting the rest of the panel. */
+    const allCovered = Boolean(through) && rows.every(r => comparePeriods(through as string, r.at) >= 0)
+    return { rows, soonest, through, uncovered, allCovered }
+  }, [commitment, c, runs])
 
   const gatesByStatus = useMemo(() => {
     const g: GateResult[] = v ? v.gates : []
@@ -177,12 +296,41 @@ export function Verified({ analysisId }: { analysisId: string }) {
           </div>
         )}
 
-        {!v && (
-          <div className="vfempty">
-            <p className="gbody">No measurement has been taken since you committed. The next
-              upload or refresh of this business produces one, and it will be judged against the promise above.</p>
+        {due && (
+          <div className={'vfdue' + (due.uncovered.length ? ' now' : '')}>
+            <span className="lbl">{due.uncovered.length
+              ? (due.uncovered.length === 1 ? 'A gate is due to be measured' : due.uncovered.length + ' gates are due to be measured')
+              : due.allCovered ? 'Every gate has been measured' : 'Next due'}</span>
+            <p className="gbody">{due.uncovered.length
+              ? <>The window closed in {monthName(due.uncovered[0].at)}
+                  {due.through
+                    ? <> and the last measurement only reaches {monthName(due.through)}.</>
+                    : <> and nothing has been measured yet.</>}
+                {' '}Until a measurement covers it, this plan has no verdict, only a promise.</>
+              : due.allCovered
+                ? <>Measured through {monthName(due.through as string)}, which covers every gate this
+                    plan set. Measuring again later adds another point rather than replacing this one.</>
+                : <>The first gate falls due in {monthName(due.soonest.at)}. Measuring before then is
+                    allowed and reports that it is not due yet, which is a real answer rather than
+                    an empty one.</>}</p>
           </div>
         )}
+
+        {!v && (
+          <div className="vfempty">
+            <p className="gbody">Nothing has been measured against this yet, so there is a promise on
+              the record and no verdict. Measuring happens here rather than by uploading: an upload
+              starts a new analysis, which asks what the constraint is now, and that is a different
+              question from whether this plan worked.</p>
+          </div>
+        )}
+
+        <Measure
+          busy={busy} step={step} over={over} setOver={setOver}
+          fileRef={fileRef} measure={measure} live={intakeLive()} runs={runs.length}
+        />
+
+        {why && <p className="vfwhy">{why}</p>}
 
         {v && c && (
           <>
@@ -215,7 +363,7 @@ export function Verified({ analysisId }: { analysisId: string }) {
                   <div key={g.id} className={'vfgate ' + g.status}>
                     <i />
                     <div className="t">{g.label}</div>
-                    <div className="s">{GATE_LABEL[g.status]}</div>
+                    <div className="s">{GATE_LABEL[g.status]}{g.duePeriod ? ', due ' + monthName(g.duePeriod) : ''}</div>
                     <div className="r">{g.reason}</div>
                   </div>
                 ))}
