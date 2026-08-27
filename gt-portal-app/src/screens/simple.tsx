@@ -4,6 +4,8 @@ import { DEMO, CREDIT_BUNDLES, SHEET_PRODUCTS } from '../config'
 import { api, data, AnalysisRow, ApiKeyRow, ADDON_SCOPES, SCOPE_HELP, secretOf, startCheckout, checkoutConfigured, Purchase } from '../lib/api'
 import { rememberCheckout } from './Billing'
 import { useMe, useAnalyses, useOverview, useBusinesses, useAccounts, useCredits, accountName, businessLabel, firstName } from '../lib/liveData'
+import { findDue, MAX_CHECKED, NOTHING_DUE, type DueSummary } from '../lib/dueNow'
+import { monthName } from '../lib/verified'
 import { toast, noCredits } from '../lib/bus'
 import { recents, lastSeen, stampSeen, ago, RecentItem } from '../lib/memory'
 import { BLOG_POSTS, BLOG_URL } from '../lib/blogPosts'
@@ -140,6 +142,19 @@ export function Overview() {
   const mine = useMemo(() => recents(), [ov])
   useEffect(() => { stampSeen() }, [])
 
+  /* A committed plan nobody has measured is the loop left open, and the person
+     who left it open is not going to find it by browsing. Asked for after the
+     screen has painted, because this is a nudge and a nudge does not get to
+     delay the page it sits on. */
+  const [due, setDue] = useState<DueSummary>(NOTHING_DUE)
+  useEffect(() => {
+    let live = true
+    const rows = an && an.st === 'ready' ? an.rows : []
+    if (!rows.length) return
+    void findDue(rows).then(d => { if (live) setDue(d) })
+    return () => { live = false }
+  }, [an])
+
   const moved = useMemo(() => {
     if (!ov || since == null) return null
     const fresh = acts.filter(a => {
@@ -198,6 +213,37 @@ export function Overview() {
           {/* Above the counters, because a total is the same number every
               morning and nobody makes a decision from one. What moved is the
               only thing on this screen that is different than yesterday. */}
+          {due.unmeasured.length > 0 && (
+            <Section
+              title={due.unmeasured.length === 1 ? 'A committed plan has never been measured' : due.unmeasured.length + ' committed plans have never been measured'}
+              qualifier="the loop is open"
+              flush
+            >
+              <div className="gsb">
+                <p className="sfine" style={{ margin: '0 0 10px' }}>
+                  Committing froze what each plan promised. Until a current workbook is measured
+                  against it, there is a promise on the record and no verdict. Measuring costs
+                  nothing: it re-measures the same thing with the same engine and runs no analysis.
+                </p>
+                <ul className="glist2">
+                  {due.unmeasured.map(d => (
+                    <li key={d.analysisId}>
+                      <a href={'#/analyses/' + d.analysisId} onClick={e => { e.preventDefault(); nav('/analyses/' + d.analysisId) }}>
+                        {d.business}
+                      </a>, committed {monthName(d.committedPeriod)}.
+                    </li>
+                  ))}
+                </ul>
+                {due.notChecked > 0 && (
+                  <p className="sfine" style={{ margin: '8px 0 0' }}>
+                    Only the {MAX_CHECKED} most recent analyses were checked, so {due.notChecked} older
+                    {due.notChecked === 1 ? ' one is' : ' ones are'} not counted here.
+                  </p>
+                )}
+              </div>
+            </Section>
+          )}
+
           <Section
             title="Since you last looked"
             qualifier={since == null ? 'first visit' : ago(since)}
