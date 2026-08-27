@@ -221,9 +221,8 @@ export function Overview() {
             >
               <div className="gsb">
                 <p className="sfine" style={{ margin: '0 0 10px' }}>
-                  Committing froze what each plan promised. Until a current workbook is measured
-                  against it, there is a promise on the record and no verdict. Measuring costs
-                  nothing: it re-measures the same thing with the same engine and runs no analysis.
+                  Each one froze what it promised. Until a current workbook is measured against it,
+                  there is no verdict. Measuring is free.
                 </p>
                 <ul className="glist2">
                   {due.unmeasured.map(d => (
