@@ -9,6 +9,7 @@ import { SocialReturn } from './screens/SocialReturn'
 import { Agents } from './screens/Agents'
 import { Brand } from './screens/Brand'
 import { Formula } from './screens/Formula'
+import { Chart } from './screens/Chart'
 import { Connections } from './screens/Connections'
 import { Feed } from './screens/Feed'
 import { Intake } from './screens/Intake'
@@ -73,6 +74,11 @@ const router = createBrowserRouter([
       /* The formula builder. Under agents rather than in the sidebar: it is one
          agent among the ones a customer builds, not a section of the product. */
       { path: '/agents/formula', element: <Formula /> },
+      /* The chart builder, beside the formula builder for the same reason: one
+         agent among the ones a customer builds, not a section of the product.
+         Unlike the others it draws in the browser, so it works whether or not
+         the engine route is answering. */
+      { path: '/agents/chart', element: <Chart /> },
       /* Where the engine is granted permission to post. Its own route rather
          than a tab inside Content, because a customer revoking access should
          not have to walk through a content screen to find it. */
