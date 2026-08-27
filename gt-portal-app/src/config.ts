@@ -216,3 +216,31 @@ export const THREADS_PATH = '/v1/portal/threads'
 export const INTAKE_PATH = '/v1/data'
 
 export const FEED_PATH = ''
+
+/** THE FORMULA BUILDER.
+ *
+ *  Generation happens on the engine and nowhere else. This bundle is static
+ *  and public: a model key in it is a key anyone can read and spend, and every
+ *  other screen in this app renders a customer's revenue, their clients and
+ *  their team. So the portal gathers the context, checks what comes back, and
+ *  never generates anything itself.
+ *
+ *  The path is relative to /api/v1/portal, which is what live() prefixes, so
+ *  '/assistant' is POSTed to growthterminal.io/api/v1/portal/assistant.
+ *
+ *  Empty takes the screen offline and it says so plainly, the same way the
+ *  agent create form does, rather than rendering a box that throws when a
+ *  customer uses it. Set it the day the route answers and nothing else in the
+ *  portal changes.
+ *
+ *  Credits are charged by the engine under the key assistant:ask, and a
+ *  question back or a refusal is never charged. That is deliberate: charging
+ *  for a refusal makes refusing expensive, and an agent that cannot afford to
+ *  refuse produces a plausible answer instead of an honest one.
+ */
+/* Live. Verified against production on 27 August: an unauthenticated POST to
+   growthterminal.io/api/v1/portal/assistant answers 401 with
+   {"error":{"code":"unauthenticated","message":"Clerk session required"}},
+   which is the session-only 401 the contract requires and not a feature flag
+   refusing the call. */
+export const ASSISTANT_PATH = '/assistant'

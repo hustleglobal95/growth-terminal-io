@@ -8,6 +8,7 @@ import { CheckoutSuccess, CheckoutCancel, SubscriptionReturn, CreditsReturn } fr
 import { SocialReturn } from './screens/SocialReturn'
 import { Agents } from './screens/Agents'
 import { Brand } from './screens/Brand'
+import { Formula } from './screens/Formula'
 import { Connections } from './screens/Connections'
 import { Feed } from './screens/Feed'
 import { Intake } from './screens/Intake'
@@ -69,6 +70,9 @@ const router = createBrowserRouter([
          first one a customer sets up, and the one every later assistant is
          briefed from. */
       { path: '/agents/brand', element: <Brand /> },
+      /* The formula builder. Under agents rather than in the sidebar: it is one
+         agent among the ones a customer builds, not a section of the product. */
+      { path: '/agents/formula', element: <Formula /> },
       /* Where the engine is granted permission to post. Its own route rather
          than a tab inside Content, because a customer revoking access should
          not have to walk through a content screen to find it. */
