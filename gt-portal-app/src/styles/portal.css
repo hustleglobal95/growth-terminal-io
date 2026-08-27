@@ -5892,3 +5892,42 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
      target rather than the compact one the desk version uses. */
   .themepick button{padding:9px 8px;font-size:12px;min-height:38px}
 }
+
+/* ===========================================================================
+   CLOSING THE LOOP.
+
+   The measurement control and the due notice on a committed plan. The drop
+   zone reuses `.drop` so a workbook enters this product one way rather than
+   two; only the spacing inside the verification panel is set here.
+   =========================================================================== */
+
+.vfdue{margin:0 0 4px;padding:13px 15px;border:1px solid var(--line);
+  border-radius:var(--r-control);background:var(--s2)}
+.vfdue .lbl{display:block;margin-bottom:5px}
+.vfdue .gbody{margin:0}
+
+/* Due now is the one thing on this panel that is asking for something, so it
+   is the one thing that carries the accent. One marked thing per view. */
+.vfdue.now{background:var(--tint);border-color:var(--aborder)}
+.vfdue.now .lbl{color:var(--amber)}
+
+.vfmeasure{margin-top:14px}
+.vfmeasure.drop{padding:20px 18px}
+.vfmeasure .dropt{margin:0 0 5px;font-size:14px;font-weight:600;letter-spacing:-.012em}
+.vfmeasure .dropf{margin:0 auto 13px;max-width:56ch}
+.vfmeasure.busy{opacity:.72;pointer-events:none}
+
+@media(max-width:760px){
+  .vfdue{padding:12px 13px}
+  .vfmeasure.drop{padding:17px 14px}
+  .vfmeasure .btn{width:100%}
+}
+
+/* A refusal from the engine, in its own words. It reads as an answer rather
+   than an error, because it is one: "verification requires a confirmed
+   snapshot" and "no measurable lifecycle" both tell somebody what to do next. */
+.vfwhy{margin:12px 0 0;padding:11px 14px;border-radius:var(--r-control);
+  background:var(--s2);border:1px solid var(--line);color:var(--text);
+  font-size:12.5px;line-height:1.55}
+.vfempty{margin-top:14px}
+.vfempty .gbody{margin:0}
