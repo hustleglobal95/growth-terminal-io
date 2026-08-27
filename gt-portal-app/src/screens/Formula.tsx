@@ -18,7 +18,7 @@
  *  first class results. Neither costs a credit. That is the whole reason the
  *  agent can afford to be honest about what it cannot see.
  */
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Header } from './simple'
 import { live } from '../lib/api'
 import { ASSISTANT_PATH } from '../config'
@@ -73,6 +73,8 @@ export function Formula() {
   const [res, setRes] = useState<AgentResponse | null>(null)
   const [check, setCheck] = useState<CheckResult | null>(null)
   const [reply, setReply] = useState('')
+  const [over, setOver] = useState(false)
+  const fileRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => { setGranted(grantFor(me?.name || '')) }, [me])
 
@@ -163,12 +165,29 @@ export function Formula() {
               {biz.length === 0 && <option value="">No businesses in this workspace yet</option>}
             </select>
 
-            <label className="lbl" htmlFor="ffile">Your workbook</label>
-            <input id="ffile" type="file" accept=".xlsx,.xls,.csv" disabled={busy}
-              onChange={e => onFile(e.target.files && e.target.files[0])} />
-            {read && <p className="sfine">{read.fileName}, {sheets.length} tab{sheets.length === 1 ? '' : 's'} read,
-              {' '}{read.totalDataRows} data rows. The file stays in this browser. Only the column
-              shapes below are sent.</p>}
+            <label className="lbl">Your workbook</label>
+            {/* The same drop zone the upload screen uses. A workbook arrives one
+                way in this product, not two. */}
+            <div className={'drop' + (over ? ' over' : '') + (busy ? ' busy' : '')}
+              onDragOver={e => { e.preventDefault(); setOver(true) }}
+              onDragLeave={() => setOver(false)}
+              onDrop={e => { e.preventDefault(); setOver(false); onFile(e.dataTransfer.files && e.dataTransfer.files[0]) }}
+            >
+              <svg viewBox="0 0 24 24" className="dropico" aria-hidden="true">
+                <path d="M12 16V4M12 4L7.5 8.5M12 4l4.5 4.5" />
+                <path d="M4 16v2.5A1.5 1.5 0 005.5 20h13a1.5 1.5 0 001.5-1.5V16" />
+              </svg>
+              <p className="dropt">{read ? read.fileName : 'Drag your spreadsheet here'}</p>
+              <p className="dropf">{read
+                ? `${sheets.length} tab${sheets.length === 1 ? '' : 's'} read, ${read.totalDataRows} data rows. The file stays in this browser.`
+                : 'CSV, XLSX, XLS or TSV. It is read here, not uploaded.'}</p>
+              <button className="btn p" disabled={busy} onClick={() => fileRef.current?.click()}>
+                {read ? 'Choose a different file' : 'Choose a file'}
+              </button>
+              <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.tsv" className="vh"
+                aria-label="Choose a spreadsheet to write a formula against"
+                onChange={e => onFile(e.target.files && e.target.files[0])} />
+            </div>
 
             {sheets.length > 1 && (
               <>
