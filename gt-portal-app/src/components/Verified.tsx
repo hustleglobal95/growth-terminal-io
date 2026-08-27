@@ -116,7 +116,7 @@ function Measure({ busy, step, over, setOver, fileRef, measure, live, runs }: {
       <p className="dropt">{runs ? 'Measure it again' : 'Measure it now'}</p>
       <p className="dropf">{busy
         ? step + '\u2026'
-        : 'Drop the same business\u2019s current workbook. It is measured against the promise above by the engine that made it. Nothing is re-analysed, so nothing is charged.'}</p>
+        : 'The current workbook for this business. Free, and no analysis is run.'}</p>
       <button className="btn p" disabled={busy} onClick={() => fileRef.current?.click()}>
         {busy ? step || 'Working' : 'Choose a file'}
       </button>
@@ -302,26 +302,23 @@ export function Verified({ analysisId }: { analysisId: string }) {
               ? (due.uncovered.length === 1 ? 'A gate is due to be measured' : due.uncovered.length + ' gates are due to be measured')
               : due.allCovered ? 'Every gate has been measured' : 'Next due'}</span>
             <p className="gbody">{due.uncovered.length
-              ? <>The window closed in {monthName(due.uncovered[0].at)}
+              ? <>Due since {monthName(due.uncovered[0].at)}
                   {due.through
-                    ? <> and the last measurement only reaches {monthName(due.through)}.</>
-                    : <> and nothing has been measured yet.</>}
-                {' '}Until a measurement covers it, this plan has no verdict, only a promise.</>
+                    ? <>, and the last measurement only reaches {monthName(due.through)}.</>
+                    : <>.</>}</>
               : due.allCovered
-                ? <>Measured through {monthName(due.through as string)}, which covers every gate this
-                    plan set. Measuring again later adds another point rather than replacing this one.</>
-                : <>The first gate falls due in {monthName(due.soonest.at)}. Measuring before then is
-                    allowed and reports that it is not due yet, which is a real answer rather than
-                    an empty one.</>}</p>
+                ? <>Measured through {monthName(due.through as string)}, which covers every gate.
+                    Measuring again adds a point rather than replacing one.</>
+                : <>First gate falls due in {monthName(due.soonest.at)}. You can measure sooner;
+                    it will say it is not due yet.</>}</p>
           </div>
         )}
 
         {!v && (
           <div className="vfempty">
-            <p className="gbody">Nothing has been measured against this yet, so there is a promise on
-              the record and no verdict. Measuring happens here rather than by uploading: an upload
-              starts a new analysis, which asks what the constraint is now, and that is a different
-              question from whether this plan worked.</p>
+            <p className="gbody">Nothing measured against this yet, so there is a promise here and no
+              verdict. Uploading will not do it: that starts a new analysis, which asks a different
+              question.</p>
           </div>
         )}
 
