@@ -5930,3 +5930,136 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
   font-size:12.5px;line-height:1.55}
 .vfempty{margin-top:14px}
 .vfempty .gbody{margin:0}
+
+/* ===========================================================================
+   FINDING COMPANIES.
+
+   The lead finder, under Businesses. Two shapes live here: the form that
+   starts a search, and the funnel that reports where the rows went. The
+   funnel is not decoration. A search that returns eighty rows out of two
+   hundred has lost them at one of three stages, and which stage decides
+   whether the next search should widen the term or the map.
+   =========================================================================== */
+
+.ldfind{margin:0 0 18px;padding:16px 17px;border:1px solid var(--line);
+  border-radius:var(--r-panel,12px);background:var(--card)}
+.ldfields{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}
+.ldf{min-width:0}
+.ldf.narrow{min-width:150px}
+.ldf .tminput,.ldf .tmsel{width:100%}
+
+.ldcheck{display:flex;align-items:flex-start;gap:9px;margin:13px 0 0;
+  font-size:13px;color:var(--text);cursor:pointer}
+.ldcheck input{margin:2px 0 0;accent-color:var(--amber);flex:0 0 auto}
+.ldcheck span{min-width:0}
+
+.ldfind .sfine{margin:10px 0 0;max-width:74ch}
+
+.ldact{display:flex;align-items:center;gap:14px;margin-top:15px;flex-wrap:wrap}
+.ldquota{font-size:11.5px;color:var(--faint)}
+.ldquota.out{color:var(--muted)}
+
+.lderr{margin:11px 0 0;font-size:12.5px;color:var(--amber)}
+.lderr.big{margin:0 0 4px;font-size:13.5px}
+.ldwarn{margin:0 0 6px;font-size:13px;color:var(--muted)}
+
+/* Where the rows went. Reads left to right as a narrowing, with the last
+   stage carrying the accent because it is the number worth acting on. */
+.ldfunnel{display:flex;flex-wrap:wrap;gap:0;margin:0 0 14px;
+  border:1px solid var(--line);border-radius:var(--r-control);overflow:hidden}
+.ldstage{flex:1 1 0;min-width:118px;padding:11px 13px;
+  border-right:1px solid var(--line)}
+.ldstage:last-child{border-right:0}
+.ldstage b{display:block;font-size:20px;font-weight:600;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;color:var(--text)}
+.ldstage span{display:block;margin-top:2px;font-size:11px;font-weight:500;color:var(--faint)}
+/* The accent lands on the last number only once it is final. A count that
+   is still climbing is not a number to act on, and a failed search has no
+   number to act on at all. */
+.ldfunnel.done .ldstage.last b{color:var(--amber)}
+.ldstage b.pending{color:var(--faint);font-size:13px;font-weight:500;letter-spacing:0}
+
+.ldrun{display:flex;align-items:center;gap:8px;margin:0 0 12px;
+  font-size:12.5px;color:var(--muted)}
+.ldrun i{width:6px;height:6px;border-radius:50%;background:var(--amber);flex:0 0 auto;
+  animation:ldpulse 1.4s var(--ease) infinite}
+@keyframes ldpulse{0%,100%{opacity:.35}50%{opacity:1}}
+
+.ldrefuse{margin:0 0 12px;padding-left:17px;font-size:12.5px;color:var(--muted)}
+.ldrefuse li{margin:3px 0}
+
+.ldempty{padding:26px 18px;text-align:center;border:1px dashed var(--border2);
+  border-radius:var(--r-control);background:var(--s2)}
+.ldempty b{display:block;font-size:14px;font-weight:600;color:var(--text)}
+.ldempty span{display:block;margin:6px auto 0;max-width:56ch;font-size:12.5px;color:var(--muted)}
+
+/* One lead. Company carries three lines, so the row is aligned to the top
+   rather than centred; a two line address must not push the actions down. */
+.leadrow{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(0,1.6fr) minmax(0,1fr) 78px 152px;
+  gap:14px;align-items:start;padding:12px 14px;border-bottom:1px solid var(--line);font-size:13px}
+.leadrow:last-child{border-bottom:0}
+.leadrow.h{padding:9px 14px;font-size:11px;font-weight:500;color:var(--faint);
+  background:var(--s2);align-items:center}
+.leadrow.saved{background:var(--elev)}
+
+.ldco b{display:block;font-weight:600;color:var(--text)}
+.ldco i{display:block;font-style:normal;font-size:11.5px;color:var(--faint);margin-top:2px}
+.ldcontact{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ldcontact a{color:var(--text);text-decoration:none;overflow:hidden;text-overflow:ellipsis}
+.ldcontact a:hover{text-decoration:underline}
+.ldcontact i{font-style:normal;font-size:11.5px;color:var(--faint)}
+.ldsite a{color:var(--text);text-decoration:none;overflow-wrap:anywhere}
+.ldsite a:hover{text-decoration:underline}
+.ldnone{font-style:normal;font-size:11.5px;color:var(--faint)}
+.ldrate{font-variant-numeric:tabular-nums;color:var(--text)}
+.ldrate b{font-weight:400}
+.ldrate i{font-style:normal;font-size:11.5px;color:var(--faint)}
+.ldrate .ldrev{margin-left:6px}
+
+.ldacts{display:flex;gap:6px;justify-content:flex-end}
+.ldbtn{padding:5px 10px;border:1px solid var(--border);border-radius:var(--r-chip);
+  background:none;color:var(--muted);font:inherit;font-size:11.5px;font-weight:500;
+  cursor:pointer;transition:color 110ms var(--ease),border-color 110ms var(--ease)}
+.ldbtn:hover{color:var(--text);border-color:var(--border2)}
+.ldbtn.on{background:var(--s2);color:var(--text);border-color:var(--border2)}
+.ldbtn.q{color:var(--faint)}
+.ldbtn:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+
+.ldhidden{margin:10px 14px 2px}
+
+/* Earlier searches. A button rather than a div, because it navigates the
+   screen and a keyboard has to be able to reach it. */
+.srchrow{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1.2fr) minmax(0,1fr) 60px;
+  gap:14px;align-items:center;width:100%;padding:11px 14px;border:0;border-bottom:1px solid var(--line);
+  background:none;font:inherit;font-size:13px;text-align:left;color:var(--text);cursor:pointer}
+.srchrow:last-child{border-bottom:0}
+.srchrow:hover{background:var(--s2)}
+.srchrow.on{background:var(--elev)}
+.srchrow .sq{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srchrow .num{text-align:right;font-variant-numeric:tabular-nums;color:var(--text)}
+.srchrow:focus-visible{outline:2px solid var(--amber);outline-offset:-2px}
+
+@media(max-width:900px){
+  .ldfields{grid-template-columns:1fr}
+  .ldf.narrow{min-width:0}
+  .ldact .btn{width:100%}
+  /* The table stops being a table. Each lead becomes a block with its own
+     labels, because five columns at phone width is four columns of nothing. */
+  .leadrow{grid-template-columns:minmax(0,1fr);gap:7px;padding:14px}
+  .leadrow.h{display:none}
+  .ldrate:empty{display:none}
+  .ldacts{justify-content:flex-start;margin-top:3px}
+  .ldbtn{padding:8px 14px;font-size:12px}
+  /* Two rows rather than a wrapped grid: the search and its count on top,
+     where it is scanned, and the area and stage under it. */
+  .srchrow{grid-template-columns:minmax(0,1fr) auto;row-gap:2px}
+  .srchrow>:nth-child(1){grid-column:1;grid-row:1}
+  .srchrow>:nth-child(4){grid-column:2;grid-row:1}
+  .srchrow>:nth-child(2){grid-column:1;grid-row:2}
+  .srchrow>:nth-child(3){grid-column:2;grid-row:2;text-align:right;white-space:nowrap}
+  /* The rating loses its column header on a phone, so it says what it is. */
+  .ldrate b::before{content:'Rated '}
+  .ldrate .ldrev::before{content:'from '}
+  .ldrate .ldrev::after{content:' reviews'}
+  .ldstage{min-width:50%}
+}
