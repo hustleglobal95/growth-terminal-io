@@ -135,9 +135,9 @@ function ThemePick() {
     <div className="themepick" role="group" aria-label="Appearance">
       {(['light', 'dark'] as Theme[]).map(k => (
         <button key={k} type="button" className={t === k ? 'on' : ''}
-          aria-pressed={t === k} onClick={() => pick(k)}>
+          aria-pressed={t === k} aria-label={k === 'light' ? 'Light' : 'Dark'}
+          title={k === 'light' ? 'Light' : 'Dark'} onClick={() => pick(k)}>
           {k === 'light' ? <SunIcon /> : <MoonIcon />}
-          <span>{k === 'light' ? 'Light' : 'Dark'}</span>
         </button>
       ))}
     </div>
@@ -145,14 +145,14 @@ function ThemePick() {
 }
 
 const SunIcon = () => (
-  <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
     <circle cx="8" cy="8" r="3.1" />
     <path d="M8 1.4v1.6M8 13v1.6M1.4 8h1.6M13 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1" />
   </svg>
 )
 
 const MoonIcon = () => (
-  <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
     <path d="M13.2 9.6A5.6 5.6 0 016.4 2.8a5.6 5.6 0 106.8 6.8z" />
   </svg>
 )
