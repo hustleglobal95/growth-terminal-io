@@ -32,6 +32,8 @@ import {
   running, stageLabel, headline, drop, contactable, toCsv, leadsLive,
 } from '../lib/leads'
 import type { Lead, LeadSearch, Quota, LeadStatus } from '../lib/leads'
+import { sampleState, sample, SAMPLE_QUOTA, SAMPLE_STATES } from '../lib/leadsSample'
+import type { SampleState } from '../lib/leadsSample'
 
 const SIZES = [25, 50, 100, 200]
 const POLL_MS = 4000
@@ -40,6 +42,11 @@ type Load = 'loading' | 'ready' | 'failed'
 
 export function Leads() {
   const nav = useNavigate()
+
+  /* Made-up rows, drawn only when the URL asks for them by name. Nothing in
+     the product links here, so a customer cannot arrive at this by clicking.
+     See lib/leadsSample.ts, which is deleted the day the engine answers. */
+  const demo = sampleState(typeof window === 'undefined' ? '' : window.location.search)
 
   const [load, setLoad] = useState<Load>('loading')
   const [searches, setSearches] = useState<LeadSearch[]>([])
@@ -75,6 +82,15 @@ export function Leads() {
   }, [])
 
   useEffect(() => {
+    if (demo) {
+      const s = sample(demo)
+      setSearches(s.searches)
+      setQuota(SAMPLE_QUOTA)
+      setDetail(s.searches.length ? { search: s.searches[0], leads: s.leads[s.searches[0].id] || [] } : null)
+      setOpenId(s.searches.length ? s.searches[0].id : null)
+      setLoad('ready')
+      return
+    }
     if (!leadsLive()) { setLoad('ready'); return }
     let live = true
     loadList().then(list => {
@@ -87,11 +103,12 @@ export function Leads() {
       if (first) setOpenId(first.id)
     })
     return () => { live = false; stop() }
-  }, [loadList])
+  }, [loadList, demo])
 
   /* Detail load and poll. One effect: the poll is the same call as the load,
      so splitting them would mean two code paths that must agree. */
   useEffect(() => {
+    if (demo) return
     if (!openId || !leadsLive()) { setDetail(null); return }
     let live = true
     stop()
@@ -115,7 +132,7 @@ export function Leads() {
     }
     tick()
     return () => { live = false; stop() }
-  }, [openId, loadList])
+  }, [openId, loadList, demo])
 
   const ready = industry.trim().length > 1 && location.trim().length > 1
   const spent = quota ? quota.used >= quota.limit : false
@@ -145,6 +162,7 @@ export function Leads() {
        for two seconds gets clicked again. */
     const before = lead.status
     setDetail(d => d && ({ ...d, leads: d.leads.map(l => l.id === lead.id ? { ...l, status } : l) }))
+    if (demo) return
     try {
       await setLeadStatus(lead.id, status)
     } catch {
@@ -174,9 +192,11 @@ export function Leads() {
           details their own websites publish. These are prospects, not businesses: a business
           appears in this workspace when it is analysed, and nothing here is analysed.</p>
 
+        {demo && <SampleNotice state={demo} />}
+
         {/* The screen is finished and the engine routes are not. Saying so is
             the honest state; a form that posts into nothing is not. */}
-        {!leadsLive() && (
+        {!leadsLive() && !demo && (
           <div className="ldempty">
             <b>Not switched on yet</b>
             <span>The engine does not serve lead searches yet. This screen is built against
@@ -185,7 +205,7 @@ export function Leads() {
           </div>
         )}
 
-        {leadsLive() && <Find
+        {(leadsLive() || demo) && <Find
           industry={industry} setIndustry={setIndustry}
           location={location} setLocation={setLocation}
           limit={limit} setLimit={setLimit}
@@ -194,7 +214,7 @@ export function Leads() {
           err={err} onFind={onFind}
         />}
 
-        {leadsLive() && load === 'loading' && (
+        {leadsLive() && !demo && load === 'loading' && (
           <div className="tbl">{[0, 1, 2].map(i => (
             <div key={i} className="leadrow skelrow" aria-hidden="true">
               <span className="skel" style={{ width: '34%' }} />
@@ -205,7 +225,7 @@ export function Leads() {
           ))}</div>
         )}
 
-        {leadsLive() && load === 'ready' && searches.length === 0 && (
+        {(leadsLive() || demo) && load === 'ready' && searches.length === 0 && (
           <div className="ldempty">
             <b>No searches yet</b>
             <span>Name an industry and an area above. The first pass finds companies and
@@ -221,7 +241,10 @@ export function Leads() {
               {searches.map(s => (
                 <button key={s.id} type="button"
                   className={'srchrow' + (s.id === openId ? ' on' : '')}
-                  onClick={() => setOpenId(s.id)}>
+                  onClick={() => {
+                    setOpenId(s.id)
+                    if (demo) setDetail({ search: s, leads: sample(demo).leads[s.id] || [] })
+                  }}>
                   <span className="sq">{s.industry}</span>
                   <span className="mut">{s.location}</span>
                   <span className="mut">{stageLabel(s)}</span>
@@ -232,6 +255,30 @@ export function Leads() {
           </Section>
         )}
       </Canvas>
+    </div>
+  )
+}
+
+/** Says what this is, every time, in the one place nobody can scroll past.
+ *  The switcher underneath changes which made-up situation is drawn. */
+function SampleNotice({ state }: { state: SampleState }) {
+  const go = (k: SampleState) => {
+    const q = new URLSearchParams(window.location.search)
+    q.set('sample', '1')
+    q.set('state', k)
+    window.location.search = q.toString()
+  }
+  return (
+    <div className="ldsample">
+      <p><b>These rows are made up.</b> The engine does not serve lead searches yet, so this
+        is the screen drawn against invented companies. It appears only because the address
+        bar says sample. Nothing links here, and no customer can reach it.</p>
+      <div className="ldsamplesw">
+        {SAMPLE_STATES.map(s => (
+          <button key={s.key} type="button" className={s.key === state ? 'on' : ''}
+            onClick={() => go(s.key)}>{s.label}</button>
+        ))}
+      </div>
     </div>
   )
 }
