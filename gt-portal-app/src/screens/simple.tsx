@@ -6,6 +6,7 @@ import { rememberCheckout } from './Billing'
 import { useMe, useAnalyses, useOverview, useBusinesses, useAccounts, useCredits, accountName, businessLabel, firstName } from '../lib/liveData'
 import { findDue, MAX_CHECKED, NOTHING_DUE, type DueSummary } from '../lib/dueNow'
 import { monthName } from '../lib/verified'
+import { leadsLive } from '../lib/leads'
 import { toast, noCredits } from '../lib/bus'
 import { recents, lastSeen, stampSeen, ago, RecentItem } from '../lib/memory'
 import { BLOG_POSTS, BLOG_URL } from '../lib/blogPosts'
@@ -696,6 +697,10 @@ export function Businesses() {
   return (
     <div className="scr on">
       <Header title="Businesses">
+        {/* The only way a company enters this workspace is by being analysed,
+            so the header offers the thing you actually can do here: go find
+            companies that are not in it yet. */}
+        {leadsLive() && <button className="btn g" onClick={() => nav('/businesses/leads')}>Find leads</button>}
         <button className="btn g" onClick={() => toast('Businesses are created when their first analysis runs.')}>Add business</button>
       </Header>
       <Canvas>
