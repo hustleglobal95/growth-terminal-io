@@ -21,6 +21,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react'
 import { Header } from './simple'
+import { DataSources } from '../components/DataSources'
 import { toast } from '../lib/bus'
 import {
   ConnectedAccount, SocialState, beginConnect, disconnect,
@@ -154,9 +155,18 @@ export function Connections() {
         <div className="wrap">
 
           <div className="greet">
+            <h1>What Growth Terminal is connected to.</h1>
+            <p>Two kinds of connection live here. The first is where your numbers come from,
+              which decides what every analysis is reading. The second is where the engine is
+              allowed to post. Growth Terminal never sees a password for either.</p>
+          </div>
+
+          <DataSources />
+
+          <div className="greet" style={{ marginTop: 4 }}>
             <h1>Where the engine is allowed to post.</h1>
-            <p>You connect once through Facebook. Growth Terminal never sees your password,
-              and you can revoke it from Facebook at any time without asking us.</p>
+            <p>You connect once through Facebook. You can revoke it from Facebook at any time
+              without asking us.</p>
           </div>
 
           {!socialConfigured() && <NotSwitchedOn />}
