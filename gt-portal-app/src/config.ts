@@ -217,6 +217,17 @@ export const INTAKE_PATH = '/v1/data'
 
 export const FEED_PATH = ''
 
+/** THE LEAD FINDER.
+ *
+ *  Empty until the engine serves the routes in lib/leads.ts. The screen is
+ *  built and the contract is fixed; the server side is not written yet, and a
+ *  button that opens a screen which cannot answer is worse than no button.
+ *
+ *  Set this to '/v1/leads' on the day the engine answers, and the entry point
+ *  in the Businesses header appears with it. Nothing else has to change.
+ */
+export const LEADS_PATH = ''
+
 /** THE FORMULA BUILDER.
  *
  *  Generation happens on the engine and nowhere else. This bundle is static
