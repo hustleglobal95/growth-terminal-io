@@ -159,19 +159,16 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
               : 'This account is not in a workspace yet.'}</b>
           <span className="wsgatemut">
             {serverFault && (
-              <>This is a fault on our side, not a problem with your account. Your workspace,
-                your analyses and your team are all still there and nothing has been lost or
-                changed. The request that asks which workspace you belong to is failing, and
-                until it answers we will not guess. Reloading is worth a try; if it keeps
-                happening it is ours to fix, not yours.</>
+              <>Nothing has been lost or changed. The request that asks which workspace you
+                  belong to is failing, and until it answers we will not guess. Reloading is
+                  worth a try.</>
             )}
             {!serverFault && reason === 'checking' && 'You are signed in. Checking what this account has.'}
             {!serverFault && reason === 'no-subscription' && (
-              <>You are signed in, but the engine has no plan against this account, so there
-                is no workspace to open. If you have just paid, the subscription can take a
-                moment to appear: reload in a minute. If you paid with a different email
-                address than the one you signed in with, that is the usual cause, and we can
-                move it across.</>
+              <>You are signed in, but the engine has no plan against this account. If you have
+                  just paid, reload in a minute. If you paid with a different email address
+                  than the one you signed in with, that is the usual cause and we can move it
+                  across.</>
             )}
             {!serverFault && reason === 'subscribed' && (
               <>Your subscription is active, but this account is not attached to a workspace

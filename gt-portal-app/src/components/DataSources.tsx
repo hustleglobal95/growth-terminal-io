@@ -126,10 +126,8 @@ export function DataSources() {
         <h2>Where your numbers come from</h2>
       </div>
 
-      <p className="ssub">Connect a source once and the engine pulls from it on a schedule,
-        so an analysis reads what is true today rather than whatever was last uploaded. A
-        spreadsheet still works and stays the fallback: a connected source only wins for the
-        figures it actually carries.</p>
+      <p className="ssub">A spreadsheet still works. A connected source only wins for the
+                            figures it actually carries.</p>
 
       {load === 'loading' && (
         <div className="dsgrid">{[0, 1, 2, 3].map(i => (

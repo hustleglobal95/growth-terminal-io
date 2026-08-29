@@ -72,9 +72,8 @@ export function BrandGate({ businessSlug, onState }: {
     return (
       <div className="setupcard">
         <h2>{started ? 'Your brand record is not finished.' : 'The engine writes from your brand record.'}</h2>
-        <p className="ssub">Before it posts anything in your name it needs to know what you do,
-          who you are talking to, how you sound, and what you are allowed to claim. The brand
-          agent reads your website and drafts all of it, and you correct it line by line.</p>
+        <p className="ssub">Before it posts in your name it needs to know what you do, who you
+                              are talking to, how you sound, and what you must never claim.</p>
         <p className="ssub">{started
           ? 'You started one and have not confirmed it. Nothing is used until you do.'
           : 'It takes about ten minutes and you only do it once.'}</p>
