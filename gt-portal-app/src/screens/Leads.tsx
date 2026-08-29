@@ -233,7 +233,10 @@ export function Leads() {
           </div>
         )}
 
-        {detail && <Result detail={detail} onMark={mark} onExport={exportCsv} />}
+        {detail && <Result detail={detail} onMark={mark} onExport={exportCsv}
+          onWrite={detail.leads.some(l => l.status !== 'dismissed' && contactable(l))
+            ? () => nav('/businesses/leads/outreach' + (demo ? window.location.search : ''))
+            : undefined} />}
 
         {searches.length > 1 && (
           <Section title="Earlier searches" flush>
@@ -361,10 +364,12 @@ function resetsIn(iso: string): string {
 
 // ── One search and its rows ─────────────────────────────────────────────────
 
-function Result({ detail, onMark, onExport }: {
+function Result({ detail, onMark, onExport, onWrite }: {
   detail: { search: LeadSearch; leads: Lead[] }
   onMark: (l: Lead, s: LeadStatus) => void
   onExport: () => void
+  /** Present only when at least one row can actually be written to. */
+  onWrite: (() => void) | undefined
 }) {
   const { search: s, leads } = detail
   const live = running(s.status)
@@ -378,7 +383,11 @@ function Result({ detail, onMark, onExport }: {
     <Section
       title={s.industry + ' in ' + s.location}
       qualifier={stageLabel(s) + (s.limit ? ', asked for ' + s.limit : '')}
-      verbs={leads.length > 0 ? [{ label: 'Export CSV', onClick: onExport }] : undefined}
+      verbs={leads.length > 0 ? [
+        { label: 'Draft outreach', onClick: onWrite, disabled: !onWrite,
+          title: onWrite ? undefined : 'No company here came back with an email or a phone number, so there is nothing to write to.' },
+        { label: 'Export CSV', onClick: onExport },
+      ] : undefined}
       flush
     >
       <div className={'ldfunnel' + (settled ? ' done' : '')}>
