@@ -13,6 +13,7 @@
  *  engine answers. Nothing else depends on it.
  */
 import type { Lead, LeadSearch, Quota } from './leads'
+import type { Sender } from './outreach'
 
 /** Which made-up situation to draw. `?sample=1` is the full result. */
 export type SampleState = 'results' | 'running' | 'partial' | 'failed' | 'nothing' | 'none'
@@ -44,6 +45,12 @@ const COMPANIES: [string, Partial<Lead>][] = [
     emails: [], phone: null, rating: null, reviews: null, address: null, category: null,
   }],
   ['Steiner Ranch Dentistry', { status: 'dismissed' }],
+  /* Reachable, but only by phone, and the listing carries no rating and no
+     category. The sparsest row anyone will actually try to write to. */
+  ['Brushy Hollow Dental', {
+    website: null, domain: null, emails: [], phone: '(512) 555-0155',
+    rating: null, reviews: null, category: null,
+  }],
 ]
 
 function row(i: number, name: string, o: Partial<Lead>): Lead {
@@ -142,3 +149,16 @@ export const SAMPLE_STATES: { key: SampleState; label: string }[] = [
   { key: 'nothing', label: 'Nothing found' },
   { key: 'none', label: 'No searches yet' },
 ]
+
+/** A made-up brand record, already confirmed, so the outreach screen can be
+ *  looked at behind `?sample=1` too. Without one, every angle is refused for
+ *  the right reason and the screen shows nothing but the refusal. */
+export const SAMPLE_SENDER: Sender = {
+  name: 'Northgate Dental Marketing',
+  oneLine: 'we fill dental chairs for practices that are good at dentistry and bad at getting found',
+  what: 'a done-for-you patient acquisition system: local search, review capture and a booking follow-up sequence',
+  promise: 'twenty new patient enquiries a month within ninety days, or we work the next month unpaid',
+  who: 'independent dental practices with one to four chairs',
+  neverSay: ['guaranteed', 'cheapest'],
+  missing: [],
+}
