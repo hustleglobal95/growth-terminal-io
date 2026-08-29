@@ -6100,8 +6100,13 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
 .dsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:12px;
   margin-top:16px}
 
+/* Lifted rather than recessed. These tiles cover most of the card they sit on,
+   and at --s2 they were darker than the page, so a white card full of them
+   read as a sheet with holes in it. --elev sits just above the ground, so the
+   card stays white and the tiles stay distinct. Connected tiles are pure white
+   with a stronger border, which is still the difference that matters. */
 .dstile{display:flex;flex-direction:column;gap:6px;padding:14px 15px;
-  border:1px solid var(--line);border-radius:var(--r-control);background:var(--s2)}
+  border:1px solid var(--line);border-radius:var(--r-control);background:var(--elev)}
 .dstile.on{background:var(--card);border-color:var(--border2)}
 .dstile.bad{border-color:var(--aborder)}
 .dstile.skel{min-height:132px;background:var(--s2);border-style:dashed}
