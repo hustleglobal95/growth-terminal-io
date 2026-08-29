@@ -643,7 +643,7 @@ ol.steps li::before{content:counter(s) ".";position:absolute;left:0;top:6px;
 .fchip{padding:6px 12px;border-radius:var(--r-control);background:var(--s2);border:1px solid var(--line);
   font-size:12px;color:var(--muted)}
 .fchip.on{background:rgba(var(--ink-rgb),.10);color:var(--amber);border-color:rgba(var(--ink-rgb),.24);font-weight:600}
-.tbl{border:2px solid var(--boxline);border-radius:var(--r-control);overflow:hidden;background:var(--s1);box-shadow:var(--shadow-sm)}
+.tbl{border:1px solid var(--border2);border-radius:var(--r-control);overflow:hidden;background:var(--s1);box-shadow:var(--shadow-sm)}
 .trow{display:grid;grid-template-columns:1.35fr 1.15fr .55fr .8fr .75fr .7fr;gap:14px;align-items:center;
   padding:11px 16px;border-bottom:1px solid var(--line);font-size:12.5px;cursor:pointer}
 .trow:last-child{border-bottom:0}
@@ -660,7 +660,7 @@ ol.steps li::before{content:counter(s) ".";position:absolute;left:0;top:6px;
 
 /* cards */
 .cardgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
-.bizcard{background:var(--s1);border:2px solid var(--boxline);border-radius:var(--r-control);padding:15px 16px;cursor:pointer;box-shadow:var(--shadow-sm)}
+.bizcard{background:var(--s1);border:1px solid var(--border2);border-radius:var(--r-control);padding:15px 16px;cursor:pointer;box-shadow:var(--shadow-sm)}
 .bizcard:hover{background:var(--s2)}
 .bizcard .nm{font-size:13.5px;font-weight:600}
 .bizcard .in{margin-top:3px;color:var(--faint);font-size:11.5px}
@@ -1145,7 +1145,7 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 .setupstep.on .stepnum{border-color:rgba(var(--ink-rgb),.55);color:var(--text)}
 .setupstep.done .stepnum{background:rgba(var(--ink-rgb),.12);border-color:rgba(var(--ink-rgb),.35);color:var(--text)}
 
-.setupcard{background:var(--s1);border:2px solid var(--boxline);box-shadow:var(--shadow-sm);border-radius:var(--r-control);padding:26px 26px 22px;
+.setupcard{background:var(--s1);border:1px solid var(--border2);box-shadow:var(--shadow-sm);border-radius:var(--r-control);padding:26px 26px 22px;
   display:flex;flex-direction:column;gap:10px}
 .setupcard h2{font-size:18px;letter-spacing:-.02em}
 .ssub{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:62ch;margin-bottom:6px}
@@ -1187,7 +1187,7 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 }
 
 /* New analysis modal. */
-.namodal{width:min(560px,94vw);background:var(--s1);border:2px solid var(--boxline);box-shadow:var(--shadow);border-radius:var(--r-control);
+.namodal{width:min(560px,94vw);background:var(--s1);border:1px solid var(--border2);box-shadow:var(--shadow);border-radius:var(--r-control);
   padding:24px 24px 20px;display:flex;flex-direction:column;gap:9px;max-height:88vh;overflow:auto}
 .namodal h2{font-size:17px;letter-spacing:-.02em}
 .namodal input,.namodal textarea{width:100%;padding:11px 13px;background:var(--s2);color:var(--text);
@@ -1301,7 +1301,7 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 .tmcolh{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:12px;font-weight:600;
   padding:2px 4px 8px}
 .tmcount{color:var(--muted);font-weight:500}
-.tmcard{background:var(--card);border:2px solid var(--boxline);border-radius:var(--r-control);padding:10px 11px;margin-bottom:8px;
+.tmcard{background:var(--card);border:1px solid var(--border2);border-radius:var(--r-control);padding:10px 11px;margin-bottom:8px;
   cursor:pointer;transition:.15s;box-shadow:var(--shadow-sm)}
 .tmcard:hover{border-color:var(--text)}
 .tmcardtop{display:flex;align-items:center;gap:7px}
@@ -3606,7 +3606,12 @@ h1{font-weight:700;letter-spacing:-.032em}
    rendering as white boxes with a hairline. Near-neutral rather than warm, at
    a value you notice only by its absence. */
 :root{
-  --page:#FFFFFF;
+  /* The ground is neutral.100 from the colour system, not white.
+     A card the same value as the page behind it is not a card, it is an
+     outline, and that is what the 2px border was compensating for. Section 09
+     says to prefer a change of ground over a shadow, so this is the change of
+     ground and the border comes back down to a hairline. */
+  --page:#F4F3F2;
   --recess:#F1F1F0;
   --elev:#FAFAF9;
   --border:rgba(var(--ink-rgb),.105);
@@ -3616,7 +3621,7 @@ h1{font-weight:700;letter-spacing:-.032em}
 
 .gwrap{padding:0 0 70px;max-width:none}
 
-.gsec{border-bottom:1px solid var(--border);padding:0}
+.gsec{border-bottom:1px solid var(--border);padding:0;background:var(--card)}
 .gsec:last-child{border-bottom:0}
 .gsh{display:flex;align-items:center;gap:9px;padding:15px 26px 9px;
   border-bottom:1px solid var(--border)}
@@ -3884,9 +3889,12 @@ h1{font-weight:700;letter-spacing:-.032em}
    geometry are set in one place instead of five.
    =========================================================================== */
 
-html{background:var(--card)}
+/* The ground is the page token, not the card token. These were pinned to
+   --card when the page and the card were both white and the distinction did
+   not matter. It matters now: it is the difference the cards sit on. */
+html{background:var(--page)}
 body{
-  background:var(--card);
+  background:var(--page);
   background-attachment:scroll;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
