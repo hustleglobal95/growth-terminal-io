@@ -29,9 +29,9 @@ import { toast } from '../lib/bus'
 import { contactable, leadsLive } from '../lib/leads'
 import type { Lead, LeadSearch } from '../lib/leads'
 import { listSearches, getSearch } from '../lib/leads'
-import { sampleState, sample, SAMPLE_SENDER } from '../lib/leadsSample'
+import { demoState, sample, SAMPLE_SENDER } from '../lib/leadsSample'
 import { getBrand, brandConfigured } from '../lib/brandApi'
-import { useBusinesses } from '../lib/liveData'
+import { useBusinesses, useBilling } from '../lib/liveData'
 import {
   senderFrom, availableAngles, buildDraft, asText, asMergeCsv,
   ANGLES, FORMATS,
@@ -43,7 +43,12 @@ type Load = 'loading' | 'ready' | 'failed'
 export function Outreach() {
   const nav = useNavigate()
   const businesses = useBusinesses()
-  const demo = sampleState(typeof window === 'undefined' ? '' : window.location.search)
+  const billing = useBilling()
+  const demo = demoState(
+    typeof window === 'undefined' ? '' : window.location.search,
+    billing?.bypassed === true,
+  )
+  const settled = billing !== null || !!demo
 
   const [load, setLoad] = useState<Load>('loading')
   const [why, setWhy] = useState<string | null>(null)
@@ -180,14 +185,15 @@ export function Outreach() {
               exactly the thing that must never be mistaken for a real one. */}
           {demo && (
             <div className="ldsample">
-              <p><b>These companies are made up.</b> The drafts below are assembled from a
-                sample brand record and sample rows so the screen can be looked at before the
-                engine serves lead searches. Nothing here is a real business and nothing here
-                can be sent.</p>
+              <p><b>These companies are made up.</b> The engine does not serve lead searches
+                yet, so the drafts below are assembled from a sample brand record and sample
+                rows to show what the screen produces. Nothing here is a real business,
+                nothing here can be sent, and real rows replace these the day the engine
+                answers.</p>
             </div>
           )}
 
-          {!leadsLive() && !demo && (
+          {!leadsLive() && !demo && settled && (
             <div className="ldempty">
               <b>Not switched on yet</b>
               <span>The lead finder is not serving yet, so there is nothing to write to.</span>

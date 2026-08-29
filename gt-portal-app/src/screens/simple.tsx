@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { DEMO, CREDIT_BUNDLES, SHEET_PRODUCTS } from '../config'
 import { api, data, AnalysisRow, ApiKeyRow, ADDON_SCOPES, SCOPE_HELP, secretOf, startCheckout, checkoutConfigured, Purchase } from '../lib/api'
 import { rememberCheckout } from './Billing'
-import { useMe, useAnalyses, useOverview, useBusinesses, useAccounts, useCredits, accountName, businessLabel, firstName } from '../lib/liveData'
+import { useMe, useAnalyses, useOverview, useBusinesses, useAccounts, useCredits, useBilling, accountName, businessLabel, firstName } from '../lib/liveData'
 import { findDue, MAX_CHECKED, NOTHING_DUE, type DueSummary } from '../lib/dueNow'
 import { monthName } from '../lib/verified'
 import { leadsLive } from '../lib/leads'
@@ -664,6 +664,7 @@ export function Businesses() {
   const rows = useBusinesses()
   const an = useAnalyses()
   const accs = useAccounts()
+  const billing = useBilling()
 
   if (DEMO) return (
     <div className="scr on">
@@ -700,7 +701,13 @@ export function Businesses() {
         {/* The only way a company enters this workspace is by being analysed,
             so the header offers the thing you actually can do here: go find
             companies that are not in it yet. */}
-        {leadsLive() && <button className="btn g" onClick={() => nav('/businesses/leads')}>Find leads</button>}
+        {/* The door stands whenever there is something behind it: real rows
+            once the engine serves them, and the sample on an internal
+            workspace so the screen can be opened and worked on. A customer
+            with neither never sees a button that leads to a dead end. */}
+        {(leadsLive() || billing?.bypassed === true) && (
+          <button className="btn g" onClick={() => nav('/businesses/leads')}>Find leads</button>
+        )}
         <button className="btn g" onClick={() => toast('Businesses are created when their first analysis runs.')}>Add business</button>
       </Header>
       <Canvas>

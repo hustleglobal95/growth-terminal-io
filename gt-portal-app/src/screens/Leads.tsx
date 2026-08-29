@@ -32,7 +32,8 @@ import {
   running, stageLabel, headline, drop, contactable, toCsv, leadsLive,
 } from '../lib/leads'
 import type { Lead, LeadSearch, Quota, LeadStatus } from '../lib/leads'
-import { sampleState, sample, SAMPLE_QUOTA, SAMPLE_STATES } from '../lib/leadsSample'
+import { demoState, sample, SAMPLE_QUOTA, SAMPLE_STATES } from '../lib/leadsSample'
+import { useBilling } from '../lib/liveData'
 import type { SampleState } from '../lib/leadsSample'
 
 const SIZES = [25, 50, 100, 200]
@@ -46,7 +47,16 @@ export function Leads() {
   /* Made-up rows, drawn only when the URL asks for them by name. Nothing in
      the product links here, so a customer cannot arrive at this by clicking.
      See lib/leadsSample.ts, which is deleted the day the engine answers. */
-  const demo = sampleState(typeof window === 'undefined' ? '' : window.location.search)
+  /* Billing is what says whether this is an internal workspace, and it
+     arrives a beat after the first render. Nothing decides between the sample
+     and the not-switched-on panel until it lands, so the screen never flashes
+     one before settling on the other. */
+  const billing = useBilling()
+  const demo = demoState(
+    typeof window === 'undefined' ? '' : window.location.search,
+    billing?.bypassed === true,
+  )
+  const settled = billing !== null || !!demo
 
   const [load, setLoad] = useState<Load>('loading')
   const [searches, setSearches] = useState<LeadSearch[]>([])
@@ -185,6 +195,15 @@ export function Leads() {
   return (
     <div className="scr on">
       <Header title="Leads">
+        {/* The drafts are the other half of this screen and they need a door
+            that is there before a search is open, not only a verb on a result
+            that has to exist first. */}
+        {(leadsLive() || demo) && (
+          <button className="btn g"
+            onClick={() => nav('/businesses/leads/outreach' + window.location.search)}>
+            Draft outreach
+          </button>
+        )}
         <button className="btn g" onClick={() => nav('/businesses')}>Businesses</button>
       </Header>
       <Canvas>
@@ -196,7 +215,7 @@ export function Leads() {
 
         {/* The screen is finished and the engine routes are not. Saying so is
             the honest state; a form that posts into nothing is not. */}
-        {!leadsLive() && !demo && (
+        {!leadsLive() && !demo && settled && (
           <div className="ldempty">
             <b>Not switched on yet</b>
             <span>The engine does not serve lead searches yet. This screen is built against
@@ -274,8 +293,9 @@ function SampleNotice({ state }: { state: SampleState }) {
   return (
     <div className="ldsample">
       <p><b>These rows are made up.</b> The engine does not serve lead searches yet, so this
-        is the screen drawn against invented companies. It appears only because the address
-        bar says sample. Nothing links here, and no customer can reach it.</p>
+        is the screen drawn against invented companies. It shows on an internal workspace and
+        to anyone whose address bar says sample. A customer sees the empty state instead, and
+        real rows replace these the day the engine answers.</p>
       <div className="ldsamplesw">
         {SAMPLE_STATES.map(s => (
           <button key={s.key} type="button" className={s.key === state ? 'on' : ''}
