@@ -90,10 +90,9 @@ export function MoreAgents() {
     <div className="vagent">
       <style>{CSS}</style>
 
-      <p className="pgintro">The analysis diagnoses, forecasts and plans in about three minutes.
-        Two things it cannot do: go and get data it does not have, and watch a number every week
-        for twelve weeks. That is this agent, and it is one agent rather than twelve because the
-        engine already routes between the twelve constraints on its own.</p>
+      <p className="pgintro">The analysis diagnoses, forecasts and plans in one pass. What it cannot do is go and get
+        data it does not have, or watch a number every week for twelve weeks. That is this
+        agent.</p>
 
       <div className="shead" style={{ marginTop: 26 }}>
         <h2>The verify agent</h2>
@@ -161,9 +160,8 @@ export function MoreAgents() {
 
         <div className="mafull">
           <span className="malbl">What would prove this wrong</span>
-          <p className="maq">If your analyses already run on complete data and come back at high
-            confidence, there is nothing here to close and this agent has no work to do. It earns
-            its place when the falsifier section is a list, not when it is empty.</p>
+          <p className="maq">It earns its place when the falsifier section is a list, not when
+                               it is empty.</p>
         </div>
 
         <div className="mapair">
@@ -175,9 +173,9 @@ export function MoreAgents() {
           </div>
           <div>
             <span className="malbl">What it will not do</span>
-            <p className="mabody">Change your plan, commit a week on your behalf, or re-diagnose
-              on its own. It brings evidence and it reports drift. The reading stays the engine's
-              and the decision stays yours.</p>
+            <p className="mabody">Change your plan, commit a week on your behalf, or
+                                    re-diagnose on its own. It brings evidence and it reports
+                                    drift.</p>
           </div>
         </div>
 

@@ -155,9 +155,8 @@ export function Formula() {
 
           <div className="setupcard">
             <h2>Say what you want to measure.</h2>
-            <p className="ssub">It already knows your business, your workspace and how your
-              forecasts have been running. Point it at the workbook and it reads the tab names,
-              the headers and the shape of every column, so you never describe your sheet to it.</p>
+            <p className="ssub">Point it at the workbook and it reads the tab names, the
+                                  headers and the shape of every column.</p>
 
             <label className="lbl" htmlFor="fbiz">Business</label>
             <select id="fbiz" className="tmsel" value={slug} onChange={e => setSlug(e.target.value)} disabled={busy}>
@@ -383,9 +382,8 @@ function NotOn() {
         <div className="wrap">
           <div className="setupcard">
             <h2>Not switched on for this workspace yet.</h2>
-            <p className="ssub">Formulas are written on the engine, never in this browser. The route
-              exists or it does not, and today it does not, so this screen says so rather than
-              showing a box that throws when you use it.</p>
+            <p className="ssub">Formulas are written on the engine, and that route does not
+                                  answer today.</p>
           </div>
         </div>
       </div>

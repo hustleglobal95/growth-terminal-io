@@ -1157,11 +1157,8 @@ export function LiveDetail({ id }: { id: string }) {
               <Verified analysisId={id} />
 
               <Section id="basis" title="Basis of this analysis" qualifier="how to read it">
-                <p className="gbody">This analysis is produced by an automated system reading the
-                  figures you supplied, and it is an estimate. Every prediction it makes is recorded
-                  and graded against what actually happened, and your calibration record reports that
-                  score. The section above states in advance what would prove this particular reading
-                  wrong.</p>
+                <p className="gbody">This is an estimate, produced by an automated system
+                                       reading the figures you supplied.</p>
                 <p className="gbody">It is business analysis, not accounting, legal, tax or
                   investment advice, and it is not a guarantee of any financial outcome. Decisions
                   about budget, headcount and spend remain yours.</p>

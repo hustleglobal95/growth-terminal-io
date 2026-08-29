@@ -311,10 +311,8 @@ function YourAgents() {
         <div className="emptypage wide">
           <span className="lbl">None yet</span>
           <h2>You have not set up an agent of your own.</h2>
-          <p>Yours is briefed on one of your businesses and on the analyses run against it, so the
-            people who need to understand a verdict can ask it out loud instead of reading the
-            whole report. You say which business it may speak for, who is allowed to talk to it,
-            and what it must never say.</p>
+          <p>Yours is briefed on one of your businesses and on the analyses run against it, so
+               a verdict can be asked about out loud instead of read.</p>
           {!ready && (
             <p style={{ marginTop: 10 }}>Your workspace is still loading. Give it a moment and the
               button turns on.</p>

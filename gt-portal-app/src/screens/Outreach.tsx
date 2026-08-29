@@ -176,9 +176,7 @@ export function Outreach() {
 
       <div className="canvas" style={{ gridTemplateColumns: 'minmax(0,1fr)' }}>
         <div className="wrap">
-          <p className="pgintro">Pick the companies, pick why you are writing, and copy the result into
-            whatever you send with. Every line comes from your brand record or from what the search
-            actually found. Nothing here sends anything.</p>
+          <p className="pgintro">Nothing here sends anything.</p>
 
           {/* Same rule as the Leads screen: made-up rows say so, permanently and
               on screen. A draft addressed to an invented dental practice is
@@ -186,10 +184,9 @@ export function Outreach() {
           {demo && (
             <div className="ldsample">
               <p><b>These companies are made up.</b> The engine does not serve lead searches
-                yet, so the drafts below are assembled from a sample brand record and sample
-                rows to show what the screen produces. Nothing here is a real business,
-                nothing here can be sent, and real rows replace these the day the engine
-                answers.</p>
+                                                       yet, so these drafts are assembled from
+                                                       a sample brand record and invented
+                                                       companies. Nothing here can be sent.</p>
             </div>
           )}
 

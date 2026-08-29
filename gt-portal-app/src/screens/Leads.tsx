@@ -207,9 +207,8 @@ export function Leads() {
         <button className="btn g" onClick={() => nav('/businesses')}>Businesses</button>
       </Header>
       <Canvas>
-        <p className="pgintro">Companies in an industry and an area, with whatever contact
-          details their own websites publish. These are prospects, not businesses: a business
-          appears in this workspace when it is analysed, and nothing here is analysed.</p>
+        <p className="pgintro">These are prospects, not businesses. A business appears in this workspace when it is
+          analysed, and nothing here is analysed.</p>
 
         {demo && <SampleNotice state={demo} />}
 
@@ -218,9 +217,9 @@ export function Leads() {
         {!leadsLive() && !demo && settled && (
           <div className="ldempty">
             <b>Not switched on yet</b>
-            <span>The engine does not serve lead searches yet. This screen is built against
-              the routes it will serve, and it starts working the day they answer. Nothing
-              here is waiting on you.</span>
+            <span>The engine does not serve lead searches yet, so these companies are invented.
+                    A customer sees the empty state instead, and real rows replace these the
+                    day the engine answers.</span>
           </div>
         )}
 
@@ -292,10 +291,8 @@ function SampleNotice({ state }: { state: SampleState }) {
   }
   return (
     <div className="ldsample">
-      <p><b>These rows are made up.</b> The engine does not serve lead searches yet, so this
-        is the screen drawn against invented companies. It shows on an internal workspace and
-        to anyone whose address bar says sample. A customer sees the empty state instead, and
-        real rows replace these the day the engine answers.</p>
+      <p><b>These rows are made up.</b> The engine does not serve lead searches yet, so these
+        companies are invented. Real rows replace them the day it answers.</p>
       <div className="ldsamplesw">
         {SAMPLE_STATES.map(s => (
           <button key={s.key} type="button" className={s.key === state ? 'on' : ''}
@@ -352,9 +349,9 @@ function Find(p: {
         <span>Read each company's website for an email and a phone number</span>
       </label>
 
-      <p className="sfine">It reads pages anyone can open. It does not sign in, it does not
-        submit forms, and it collects what a business publishes about itself. Companies
-        without a website are still returned, with whatever the listing carried.</p>
+      <p className="sfine">It reads pages anyone can open. It does not sign in or submit forms.
+                             Companies without a website are still returned, with whatever the
+                             listing carried.</p>
 
       {p.err && <p className="lderr">{p.err}</p>}
 

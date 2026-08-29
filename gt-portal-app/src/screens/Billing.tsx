@@ -340,10 +340,9 @@ export function SubscriptionReturn() {
             <div className="emptypage">
               <span className="lbl">Not confirmed yet</span>
               <h2>Payment may have gone through, but the subscription is not showing yet.</h2>
-              <p>Notifications from the payment provider occasionally take longer than this.
-                Give it a few minutes and reload. Your receipt email is the record that the
-                payment happened; if the plan still has not appeared after that, send it to
-                us and we will attach it to this account.</p>
+              <p>Give it a few minutes and reload. Your receipt email is the record that the
+                   payment happened; if the plan still has not appeared, send it to us and we
+                   will attach it to this account.</p>
               <div className="act">
                 <button className="btn p" onClick={() => window.location.reload()}>Check again</button>
                 <button className="btn g" style={{ marginLeft: 8 }} onClick={() => nav('/')}>Overview</button>

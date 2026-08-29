@@ -132,7 +132,9 @@ export function ContentSetup() {
             {step === 3 && (
               <div className="setupcard">
                 <h2>Set the schedule.</h2>
-                <p className="ssub">Daily is the default because daily is what compounds. The engine posts at each platform's slot in your timezone, and moves slots on its own when the data says a better hour exists.</p>
+                <p className="ssub">The engine posts at each platform's slot in your timezone,
+                                      and moves slots on its own when the data says a better
+                                      hour exists.</p>
                 <div className="schedrow">
                   <span className="lbl">Posts per platform, per day</span>
                   <div className="segwrap">

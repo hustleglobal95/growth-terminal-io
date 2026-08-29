@@ -193,9 +193,8 @@ function NotSwitchedOn() {
       <p>Nothing is wrong with your account. Reading a website and drafting a record from it
         happens on the engine, and the engine does not have that route yet. When it does, this
         screen becomes a box you paste your address into.</p>
-      <p>What it will do: read your public pages, draft what your business is, who it is for,
-        how it sounds and what it must never say, then show you every line next to the sentence
-        it was read from so you can correct it. Nothing it drafts is used until you confirm it.</p>
+      <p>It reads your public pages and drafts what your business is, who it is for, how it
+           sounds and what it must never say. Nothing it drafts is used until you confirm it.</p>
     </div>
   )
 }
@@ -211,8 +210,7 @@ function Point({ biz, slug, setSlug, url, setUrl, err, busy, onRun }: {
     <div className="setupcard">
       <h2>Point it at your site.</h2>
       <p className="ssub">It reads your public pages and drafts a record of what your business
-        is. You correct it on the next screen. This is the record every agent you build
-        after this one reads, so it is worth the ten minutes.</p>
+                            is. You correct it on the next screen.</p>
 
       <label className="lbl" htmlFor="bbiz">Business this record is for</label>
       <select id="bbiz" className="tmsel" value={slug} onChange={e => setSlug(e.target.value)} disabled={busy}>
@@ -226,9 +224,9 @@ function Point({ biz, slug, setSlug, url, setUrl, err, busy, onRun }: {
 
       {err && <p className="brerr">{err}</p>}
 
-      <p className="sfine">It reads pages anyone can open. It does not sign in, it does not
-        submit forms, and it does not touch anything behind your login. If your text only
-        appears after scripts run, it will tell you it found nothing rather than guessing.</p>
+      <p className="sfine">It reads pages anyone can open. It does not sign in or submit forms.
+                             If your text only appears after scripts run, it may come back
+                             thin.</p>
 
       <div className="act">
         <button className="btn p" disabled={!ready || busy} onClick={onRun}>Read my site</button>
@@ -241,13 +239,11 @@ function Reading({ url }: { url: string }) {
   return (
     <div className="setupcard">
       <h2>Reading {url.replace(/^https?:\/\//, '')}</h2>
-      <p className="ssub">It opens your home page and the handful of standard pages that
-        usually carry the offer and the audience. A page that is not there is normal and is
-        not an error.</p>
+      <p className="ssub">It opens your home page and the standard pages that usually carry the
+                            offer and the audience. A page that is not there is normal.</p>
       <div className="brload"><i /><i /><i /></div>
-      <p className="sfine">This takes a few seconds. Anything it cannot back up with a sentence
-        from your own pages gets thrown away before you see it, so the review is shorter than
-        you might expect and everything on it is traceable.</p>
+      <p className="sfine">Anything it cannot back up with a sentence from your own pages is
+                             thrown away before you see it.</p>
     </div>
   )
 }
@@ -294,9 +290,9 @@ function Review({ record, stat, pagesRead, dropped, saved, busy, onUpdate, onSav
       {!saved && (
         <div className="setupcard">
           <h2>Correct what it got wrong.</h2>
-          <p className="ssub">Each line shows the sentence it was read from. If the sentence does
-            not say what the line says, the line is wrong. Nothing here is used until you confirm
-            it, and a line left empty is better than a line that is nearly right.</p>
+          <p className="ssub">If the sentence does not say what the line says, the line is
+                                wrong. Nothing here is used until you confirm it, and a line
+                                left empty is better than one that is nearly right.</p>
 
           <div className="brstat">
             <span className="brdot on" /><b>{stat.confirmed}</b> of {stat.total} confirmed

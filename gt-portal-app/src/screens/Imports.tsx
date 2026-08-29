@@ -228,9 +228,8 @@ export function Imports() {
       </Header>
       <div className="canvas">
         <div className="wrap">
-          <p className="pgintro">Activity logs come in here and become cohort retention. One row
-            per event: which account it belongs to, who did it, what it was, and when. Nothing
-            reaches the diagnostic engine until the file has been read back to you.</p>
+          <p className="pgintro">One row per event: which account it belongs to, who did it, what it was, and when.
+            Nothing reaches the diagnostic engine until the file has been read back to you.</p>
 
           {stage === 'choose' && (
             <>
@@ -410,16 +409,19 @@ export function Imports() {
                     <button className="btn p" onClick={openDefine}>
                       Choose the start and return events
                     </button>
-                    <span className="hint">You pick which event starts a cohort and which counts as coming back. Retention is undefined until you do, and guessing on your behalf is how a report ends up measuring the wrong thing.</span>
+                    <span className="hint">You pick which event starts a cohort and which
+                                             counts as coming back. Retention is undefined
+                                             until you do.</span>
                   </div>
                 </>
               ) : (
                 <div className="impgate">
                   <b>Retention health needs at least {MIN_ACCOUNTS} accounts and {MIN_SPAN_DAYS} days of account event history.</b>
                   <ul className="glist2">{gate.blocking.map((b, i) => <li key={i}>{b}</li>)}</ul>
-                  <p className="gbody">The file is loaded and the counts above are real. This part stays
-                    closed because a severity score from this much data would move on chance rather
-                    than on your business, and a number nobody can trust is worse than no number.</p>
+                  <p className="gbody">The file is loaded and the counts above are real. This
+                                         part stays closed because a severity score from this
+                                         much data would move on chance rather than on your
+                                         business.</p>
                 </div>
               )}
             </>
@@ -431,10 +433,8 @@ export function Imports() {
                 <h2>What counts as retention here</h2>
                 <span className="hint">{n(events.length)} events, {n(catalog.length)} event names</span>
               </div>
-              <p className="pgintro">Two people can point this at the same file, answer these
-                questions differently, and get opposite answers. That is why nothing below is
-                filled in for you silently: every choice is a proposal you can see the numbers
-                behind, and the ones that cannot produce an honest matrix are refused outright.</p>
+              <p className="pgintro">Two people can answer these questions differently about the same file and get
+                opposite answers.</p>
 
               <div className="impmap">
                 <div className="impmaprow">

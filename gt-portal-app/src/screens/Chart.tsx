@@ -206,9 +206,8 @@ export function Chart() {
 
           <div className="setupcard">
             <h2>Say what you want to see.</h2>
-            <p className="ssub">It reads your tab names, your headers and the type of every column,
-              so you never describe your sheet to it. The chart is drawn here, in this browser, from
-              the file you dropped. Nothing is uploaded and nothing is spent.</p>
+            <p className="ssub">The chart is drawn in this browser, from the file you dropped.
+                                  Nothing is uploaded.</p>
 
             <label className="lbl" htmlFor="cbiz">Business</label>
             <select id="cbiz" className="tmsel" value={slug} onChange={e => setSlug(e.target.value)} disabled={busy}>
@@ -373,10 +372,9 @@ function Stuck({ why, intent, busy, canSend, fromEngine, onSend }: {
       {canSend && (
         <>
           <label className="lbl">Or hand it to the engine</label>
-          <p className="ssub">The rules here understand the shapes people usually say. The engine
-            understands more of them, and it costs one credit. Your rows are not sent: it is given
-            the column names and their types, and whatever it picks is checked against this sheet
-            before anything is drawn.</p>
+          <p className="ssub">The engine understands more shapes, and it costs one credit. Your
+                                rows are not sent: it is given the column names and their
+                                types.</p>
           <div className="act">
             <button className="btn p" disabled={busy} onClick={onSend}>Send it on, one credit</button>
           </div>

@@ -713,8 +713,7 @@ export function Businesses() {
       <Canvas>
         {/* The same one-line orientation the API screen already opens with, so
             a screen holding a single row still has a top to it. */}
-        <p className="pgintro">Every business you have ever analysed, with the most recent verdict
-          against each. Businesses are created by the engine on their first run, not added here.</p>
+        <p className="pgintro">Businesses are created by the engine on their first run, not added here.</p>
         {rows === null && (
           <div className="tbl">{[0, 1, 2].map(i => (
             <div key={i} className="bizrowi skelrow" aria-hidden="true">

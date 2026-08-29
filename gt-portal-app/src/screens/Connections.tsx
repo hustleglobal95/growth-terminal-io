@@ -156,9 +156,7 @@ export function Connections() {
 
           <div className="greet">
             <h1>What Growth Terminal is connected to.</h1>
-            <p>Two kinds of connection live here. The first is where your numbers come from,
-              which decides what every analysis is reading. The second is where the engine is
-              allowed to post. Growth Terminal never sees a password for either.</p>
+            <p>Growth Terminal never sees a password for either kind of connection.</p>
           </div>
 
           <DataSources />
@@ -301,9 +299,8 @@ function ThreadsCard({ configured, account, result, busy, onConnect }: {
         </button>
       </div>
 
-      <p className="sfine">That list is exactly what the consent screen asks for. Threads
-        grants what an app requests and nothing beyond it, so anything absent from the list
-        above is absent because we do not ask for it.</p>
+      <p className="sfine">Threads grants what an app requests and nothing beyond it. Anything
+                             absent from the list above is absent because we do not ask for it.</p>
     </div>
   )
 }
