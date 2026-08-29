@@ -95,10 +95,6 @@ export function Agents() {
       <div className="canvas">
         <div className="wrap">
           {tab === 'yours' && (<>
-          <p className="pgintro">Two kinds of agent live here. The Growth Terminal guide, which
-            answers questions about the product and about this portal, and your own, which is
-            briefed on one of your businesses and the analyses run against it.</p>
-
           <BrandFirst />
           <FormulaCard />
           <ChartCard />
@@ -133,10 +129,9 @@ export function Agents() {
             <>
               <div className="agentcard">
                 <span className="lbl">Talk to it</span>
-                <p className="agentnote">Press the control below to start a call. It listens,
-                  answers, and stops when you do. The call runs on ElevenLabs, who ask you to
-                  accept their recording terms before it connects; nothing from it is written
-                  into your workspace.</p>
+                <p className="agentnote">The call runs on ElevenLabs, who ask you to accept
+                  their recording terms before it connects. Nothing from it is written into
+                  your workspace.</p>
                 <div className="agentmount">
                   <elevenlabs-convai agent-id={VOICE_AGENT_ID} />
                 </div>
@@ -151,10 +146,8 @@ export function Agents() {
                 ))}
               </div>
 
-              <p className="sfine" style={{ marginTop: 16 }}>It cannot see your workspace, so it
-                does not know your figures, your clients or your team. Ask it what a screen
-                means and it will tell you where to look; ask it what your severity is and it
-                will say it cannot see that, which is the truthful answer.</p>
+              <p className="sfine" style={{ marginTop: 16 }}>It cannot see your workspace, so
+                it does not know your figures, your clients or your team.</p>
             </>
           )}
 
@@ -188,14 +181,12 @@ function BrandFirst() {
       <h2 style={{ margin: '6px 0 0', fontSize: 18, fontWeight: 600, letterSpacing: '-.02em' }}>
         The brand agent
       </h2>
-      <p className="agentnote">It reads your website and drafts a record of what your business
-        is, who it is for, how it sounds and what it must never say. You correct it line by
-        line, next to the sentence each line was read from. Nothing it drafts counts until you
+      <p className="agentnote">It reads your website and drafts what your business is, who it
+        is for, how it sounds and what it must never say. Nothing it drafts counts until you
         confirm it.</p>
       {/* Agent, not assistant. Section 08 lists assistant under Avoid, and the
           navigation label this screen sits under is already Agents. */}
-      <p className="agentnote">Every agent you build after this one is briefed from that
-        record, so it is the only time you have to answer these questions.</p>
+      <p className="agentnote">Every agent after this one is briefed from that record.</p>
       {/* The card does not invite a click into a wall. With no brand route on
           the engine the screen behind this one can only explain itself, so
           this says that here rather than letting the customer find out by
@@ -206,8 +197,8 @@ function BrandFirst() {
         </div>
       ) : (
         <>
-          <p className="agentnote">It is not switched on for this workspace yet. Reading a site
-            happens on the engine, and the engine does not have that route today.</p>
+          <p className="agentnote">Not switched on for this workspace yet. Nothing here is
+            waiting on you.</p>
           <div className="act">
             <Link className="btn g" to="/agents/brand">See what it will do</Link>
           </div>
@@ -232,20 +223,16 @@ function FormulaCard() {
       <h2 style={{ margin: '6px 0 0', fontSize: 18, fontWeight: 600, letterSpacing: '-.02em' }}>
         The formula builder
       </h2>
-      <p className="agentnote">Say what you want to measure. It reads your workbook's tab names,
-        headers and column shapes, writes the formula against them, then runs it over your own
-        sample rows before showing it to you. A formula that errors on every row does not reach
-        the screen.</p>
-      <p className="agentnote">It never asks what your business is or what your sheet looks like.
-        It already has both.</p>
+      <p className="agentnote">Say what you want to measure. It writes the formula against your
+        own columns and runs it over your sample rows before showing it to you.</p>
       {formulaConfigured() ? (
         <div className="act">
           <Link className="btn p" to="/agents/formula">Write a formula</Link>
         </div>
       ) : (
         <>
-          <p className="agentnote">It is not switched on for this workspace yet. Formulas are
-            written on the engine, and the engine does not answer that route today.</p>
+          <p className="agentnote">Not switched on for this workspace yet. Nothing here is
+            waiting on you.</p>
           <div className="act">
             <Link className="btn g" to="/agents/formula">See what it will do</Link>
           </div>
@@ -265,12 +252,10 @@ function ChartCard() {
       <h2 style={{ margin: '6px 0 0', fontSize: 18, fontWeight: 600, letterSpacing: '-.02em' }}>
         The chart builder
       </h2>
-      <p className="agentnote">Say "revenue by month" or "top ten customers by spend" out loud. It
-        matches what you said to your real column names, picks the chart from the shape of the
-        data rather than from a menu, and tells you which words it matched to which column.</p>
-      <p className="agentnote">It draws here, from the file you drop, so nothing is uploaded and a
-        chart costs nothing. What it shows is described and never explained: a chart can see the
-        shape and cannot see the cause.</p>
+      <p className="agentnote">Say "revenue by month" or "top ten customers by spend" out loud.
+        It tells you which words it matched to which column.</p>
+      <p className="agentnote">It draws here, from the file you drop, so nothing is uploaded and
+        a chart costs nothing.</p>
       <div className="act">
         <Link className="btn p" to="/agents/chart">Draw a chart</Link>
       </div>
