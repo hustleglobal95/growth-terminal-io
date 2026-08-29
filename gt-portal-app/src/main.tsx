@@ -5,6 +5,7 @@ import { Shell } from './components/Shell'
 import { WorkspaceGate } from './components/WorkspaceGate'
 import { Overview, Analyses, Businesses, ApiKeys, Stub } from './screens/simple'
 import { Leads } from './screens/Leads'
+import { Outreach } from './screens/Outreach'
 import { CheckoutSuccess, CheckoutCancel, SubscriptionReturn, CreditsReturn } from './screens/Billing'
 import { SocialReturn } from './screens/SocialReturn'
 import { Agents } from './screens/Agents'
@@ -65,6 +66,7 @@ const router = createBrowserRouter([
          a tab on the Businesses table: a business here has been analysed and a
          lead has not, and one list holding both would mean neither is true. */
       { path: '/businesses/leads', element: <Leads /> },
+      { path: '/businesses/leads/outreach', element: <Outreach /> },
       { path: '/api-keys', element: <ApiKeys /> },
       { path: '/teams', element: <Teams /> },
       { path: '/agents', element: <Agents /> },
