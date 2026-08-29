@@ -6214,3 +6214,28 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
   .orto,.orsaved{grid-column:2;text-align:left}
   .orf .tmsel{max-width:none}
 }
+
+/* ===========================================================================
+   LIFT.
+
+   The long shadows were cleared because on a white ground they read as haze
+   rather than depth: there was nothing behind a card for a shadow to fall on.
+   The ground is neutral now, so a shallow one has something to sit against.
+
+   One shadow value, and it is short. Bounded objects only, never anything
+   nested inside one, because a shadow inside a shadow is the thing that made
+   the old card era look soft.
+
+   In dark the lift is off. A dark shadow on a dark ground is invisible and a
+   light one is a glow, which section 09 prohibits. There the ground change
+   does the work on its own.
+   =========================================================================== */
+:root{
+  --lift:0 1px 2px rgba(var(--ink-rgb),.05), 0 6px 16px -10px rgba(var(--ink-rgb),.16);
+}
+:root[data-theme="dark"]{ --lift:none }
+@media(prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --lift:none } }
+
+.setupcard,.agentcard,.dscard,.bizcard,.tbl,.tmcard,.namodal{
+  box-shadow:var(--lift)
+}
