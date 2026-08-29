@@ -6231,7 +6231,7 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
    does the work on its own.
    =========================================================================== */
 :root{
-  --lift:0 1px 2px rgba(var(--ink-rgb),.05), 0 6px 16px -10px rgba(var(--ink-rgb),.16);
+  --lift:0 1px 3px rgba(var(--ink-rgb),.07), 0 14px 28px -13px rgba(var(--ink-rgb),.26);
 }
 :root[data-theme="dark"]{ --lift:none }
 @media(prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --lift:none } }
