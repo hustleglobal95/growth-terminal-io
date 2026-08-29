@@ -12,6 +12,7 @@
  *  Delete this file and the two `sample` branches in Leads.tsx on the day the
  *  engine answers. Nothing else depends on it.
  */
+import { leadsLive } from './leads'
 import type { Lead, LeadSearch, Quota } from './leads'
 import type { Sender } from './outreach'
 
@@ -26,6 +27,25 @@ export function sampleState(search: string): SampleState | null {
   const known: SampleState[] = ['results', 'running', 'partial', 'failed', 'nothing', 'none']
   const found = known.find(k => k === named)
   return found || 'results'
+}
+
+/** Whether to draw the sample, and which one.
+ *
+ *  Two ways in, and the difference matters. `?sample=1` is explicit and works
+ *  for anybody. The second is the reason this function exists: while the
+ *  engine serves no lead routes at all, an internal workspace draws the sample
+ *  by default so the screens can be opened, looked at and worked on rather
+ *  than showing a panel saying they are not switched on yet.
+ *
+ *  A customer never reaches that second branch. Invented dental practices in
+ *  a paying workspace would be a lie the product told first and explained
+ *  second, and the honest empty state is the right thing to show them. The
+ *  moment LEADS_PATH is set both branches stop mattering and real rows win.
+ */
+export function demoState(search: string, internal: boolean): SampleState | null {
+  const named = sampleState(search)
+  if (named) return named
+  return !leadsLive() && internal ? 'results' : null
 }
 
 const iso = (ms: number) => new Date(Date.now() + ms).toISOString()
