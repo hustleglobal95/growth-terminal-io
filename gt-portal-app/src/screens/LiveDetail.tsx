@@ -797,6 +797,12 @@ export function LiveDetail({ id }: { id: string }) {
         {d && <span className={'stat' + (complete ? ' ok' : running ? ' run' : '')} style={{ marginLeft: 10 }}>
           <i />{complete ? 'Complete' : failed ? 'Failed' : running ? 'Running' : d.status}</span>}
         <span className="sp" />
+        {/* The diagnosis ends here and the question it leaves open is what to
+            use. This is the door to that, placed on the screen where somebody
+            has just finished reading the constraint. */}
+        {d && complete && (
+          <button className="btn g" onClick={() => nav('/what-closes-it')}>What closes it</button>
+        )}
         {d && complete && (
           <button className={'btn g edtoggle' + (markup ? ' on' : '')} aria-pressed={markup}
             onClick={() => setMarkup(!markup)}>{markup ? 'Done marking' : 'Mark up'}</button>
