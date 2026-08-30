@@ -6231,7 +6231,17 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
    does the work on its own.
    =========================================================================== */
 :root{
-  --lift:0 1px 3px rgba(var(--ink-rgb),.07), 0 14px 28px -13px rgba(var(--ink-rgb),.26);
+  /* Three layers, not one bigger blur. A single shadow deep enough to read
+     as real elevation has to be blurred so far that it stops being a shadow
+     and starts being haze around the card, which is the failure the long
+     shadows were removed for. Layering separates the jobs: a tight contact
+     shadow holds the edge, a short mid layer gives the card a body, and one
+     long ambient layer does the actual lifting. The edge stays as crisp as it
+     was at half this depth. */
+  --lift:
+    0 1px 2px rgba(var(--ink-rgb),.07),
+    0 6px 12px -3px rgba(var(--ink-rgb),.10),
+    0 26px 46px -14px rgba(var(--ink-rgb),.36);
 }
 :root[data-theme="dark"]{ --lift:none }
 @media(prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --lift:none } }
