@@ -6255,3 +6255,56 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
 .setupcard,.agentcard,.dscard,.bizcard,.tbl,.tmcard,.namodal{
   box-shadow:var(--lift)
 }
+
+/* ── What closes it ─────────────────────────────────────────────────────────
+   Capabilities are a list of statements, not a grid of cards. Each one is a
+   claim, a reason, and a coverage word, and the coverage word is the only
+   thing carrying colour. Amber marks nothing here on purpose: nothing on this
+   screen is urgent, and the accent belongs to the constraint itself. */
+
+.stkfrom{margin:0 0 14px;font-size:12.5px;color:var(--muted)}
+.stkfrom b{font-weight:600;color:var(--text)}
+
+.stkpick{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 20px}
+
+.stkmove{margin-bottom:22px}
+.stkmove p{margin:7px 0 0;font-size:13.5px;line-height:1.6;color:var(--text);max-width:78ch}
+
+.stkcap{padding:16px 14px;border-bottom:1px solid var(--border)}
+.stkcap:last-child{border-bottom:0}
+.stkh{display:flex;align-items:baseline;gap:10px}
+.stkh b{font-size:13.5px;font-weight:600;color:var(--text);max-width:62ch}
+.stkh .sp{flex:1}
+.stkstate{flex:0 0 auto;font-size:11px;font-weight:500;padding:3px 9px;border-radius:var(--r-chip);
+  border:1px solid var(--border);color:var(--faint);white-space:nowrap}
+.stkstate.connected{color:var(--text);border-color:var(--border2);background:var(--elev)}
+.stkstate.declared{color:var(--muted)}
+
+.stkwhy{margin:6px 0 0;font-size:12.5px;line-height:1.55;color:var(--muted);max-width:76ch}
+.stkvia{margin:6px 0 0;font-size:11.5px;color:var(--faint)}
+.stktools{display:flex;flex-wrap:wrap;align-items:baseline;gap:9px;margin:9px 0 0;
+  font-size:11.5px;color:var(--faint)}
+
+.stknote{margin-top:14px;max-width:78ch}
+
+.stkpicker{margin-bottom:22px}
+.stkpicker .ssub{margin:6px 0 14px}
+.stkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:2px 14px}
+.stktool{display:flex;align-items:center;gap:9px;padding:7px 2px;font-size:12.5px;
+  color:var(--muted);cursor:pointer}
+.stktool:hover{color:var(--text)}
+.stktool.on{color:var(--text)}
+/* .setupcard input:not(.slotin) sets width:100% for text fields and out
+   specifies a bare .stktool input, which stretched every checkbox to the full
+   column and pushed its label to the far edge. Scoped through the card so the
+   two rules are not fighting on specificity. */
+.stkpicker .stktool input{width:15px;height:15px;min-width:0;padding:0;margin:0;
+  background:none;border:0;border-radius:0;box-shadow:none;
+  accent-color:var(--text);cursor:pointer;flex:0 0 auto}
+.stktool span{flex:1;min-width:0}
+
+@media(max-width:760px){
+  .stkh{flex-wrap:wrap}
+  .stkh .sp{display:none}
+  .stkgrid{grid-template-columns:minmax(0,1fr)}
+}
