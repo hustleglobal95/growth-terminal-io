@@ -6,6 +6,7 @@ import { WorkspaceGate } from './components/WorkspaceGate'
 import { Overview, Analyses, Businesses, ApiKeys, Stub } from './screens/simple'
 import { Leads } from './screens/Leads'
 import { Outreach } from './screens/Outreach'
+import { Stack } from './screens/Stack'
 import { CheckoutSuccess, CheckoutCancel, SubscriptionReturn, CreditsReturn } from './screens/Billing'
 import { SocialReturn } from './screens/SocialReturn'
 import { Agents } from './screens/Agents'
@@ -67,6 +68,7 @@ const router = createBrowserRouter([
          lead has not, and one list holding both would mean neither is true. */
       { path: '/businesses/leads', element: <Leads /> },
       { path: '/businesses/leads/outreach', element: <Outreach /> },
+      { path: '/what-closes-it', element: <Stack /> },
       { path: '/api-keys', element: <ApiKeys /> },
       { path: '/teams', element: <Teams /> },
       { path: '/agents', element: <Agents /> },
