@@ -6243,8 +6243,11 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
     0 6px 12px -3px rgba(var(--ink-rgb),.10),
     0 26px 46px -14px rgba(var(--ink-rgb),.36);
 }
+/* The palette is driven by this attribute alone. Nothing else in this file
+   consults prefers-color-scheme, and a guard that did would turn the lift off
+   for anyone whose machine is dark while the app is showing light, which is
+   the common case. */
 :root[data-theme="dark"]{ --lift:none }
-@media(prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --lift:none } }
 
 .setupcard,.agentcard,.dscard,.bizcard,.tbl,.tmcard,.namodal{
   box-shadow:var(--lift)
