@@ -6231,17 +6231,20 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
    does the work on its own.
    =========================================================================== */
 :root{
-  /* Three layers, not one bigger blur. A single shadow deep enough to read
-     as real elevation has to be blurred so far that it stops being a shadow
-     and starts being haze around the card, which is the failure the long
-     shadows were removed for. Layering separates the jobs: a tight contact
-     shadow holds the edge, a short mid layer gives the card a body, and one
-     long ambient layer does the actual lifting. The edge stays as crisp as it
-     was at half this depth. */
+  /* Three layers, graded the way a real shadow falls.
+     The previous version had this backwards: its widest layer was also its
+     darkest, which is a card with a cloud parked under it rather than an
+     object resting on a surface. Light comes from above, so the contact
+     shadow directly beneath the card is the darkest and tightest, and each
+     layer out from it is lighter and softer.
+
+     Cast in Terminal Ink rather than Core Ink. The ground is a warm neutral
+     and a shadow in the cooler ink reads as grey dirt on it. */
+  --shadow-cast:29,24,21;
   --lift:
-    0 1px 2px rgba(var(--ink-rgb),.07),
-    0 6px 12px -3px rgba(var(--ink-rgb),.10),
-    0 26px 46px -14px rgba(var(--ink-rgb),.36);
+    0 1px 2px rgba(var(--shadow-cast),.10),
+    0 3px 6px -1px rgba(var(--shadow-cast),.07),
+    0 10px 20px -6px rgba(var(--shadow-cast),.06);
 }
 /* The palette is driven by this attribute alone. Nothing else in this file
    consults prefers-color-scheme, and a guard that did would turn the lift off
