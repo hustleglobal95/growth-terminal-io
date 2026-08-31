@@ -7,6 +7,7 @@ import { Overview, Analyses, Businesses, ApiKeys, Stub } from './screens/simple'
 import { Leads } from './screens/Leads'
 import { Outreach } from './screens/Outreach'
 import { Stack } from './screens/Stack'
+import { TeamTree } from './screens/TeamTree'
 import { CheckoutSuccess, CheckoutCancel, SubscriptionReturn, CreditsReturn } from './screens/Billing'
 import { SocialReturn } from './screens/SocialReturn'
 import { Agents } from './screens/Agents'
@@ -69,6 +70,7 @@ const router = createBrowserRouter([
       { path: '/businesses/leads', element: <Leads /> },
       { path: '/businesses/leads/outreach', element: <Outreach /> },
       { path: '/what-closes-it', element: <Stack /> },
+      { path: '/teams/tree', element: <TeamTree /> },
       { path: '/api-keys', element: <ApiKeys /> },
       { path: '/teams', element: <Teams /> },
       { path: '/agents', element: <Agents /> },

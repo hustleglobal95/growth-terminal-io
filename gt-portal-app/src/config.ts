@@ -228,6 +228,12 @@ export const FEED_PATH = ''
  */
 export const LEADS_PATH = ''
 
+/* The engine stores no team tree yet: it serves members, tickets, approvals,
+   section grants and invite links, and has no node table, no title assignment
+   and no team_node_id on a ticket. Until it does, the tree is a local draft
+   and the screen says so. Set this and it becomes shared. */
+export const TEAM_TREE_PATH = ''
+
 /** THE FORMULA BUILDER.
  *
  *  Generation happens on the engine and nowhere else. This bundle is static
