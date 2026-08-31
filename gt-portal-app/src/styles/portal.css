@@ -6323,6 +6323,8 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
 .ttseatnote{margin:8px 0 0;font-size:12.5px;color:var(--text);max-width:70ch}
 .ttseats .sfine{margin-top:6px}
 
+.ttempty{margin:0;padding:14px 14px 16px;font-size:12.5px;line-height:1.55;
+  color:var(--muted);max-width:74ch;border-bottom:1px solid var(--border)}
 .ttnode{position:relative}
 .ttrow{display:flex;align-items:center;gap:8px;
   padding:10px 12px 10px calc(12px + var(--d,0px));
