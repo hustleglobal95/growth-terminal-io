@@ -18,6 +18,7 @@
  *  Adding the columns brings them straight back.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Header } from './simple'
 import { DEMO } from '../config'
 import { toast } from '../lib/bus'
@@ -75,6 +76,7 @@ export function Teams() {
   const bizRows = useBusinesses()
   const me = useMe()
   const [now] = useState(() => Date.now())
+  const nav = useNavigate()
   const [d, setD] = useState<TeamData | null>(null)
   const [failed, setFailed] = useState(false)
   /* Whether the workspace itself could not be read, which is a different
@@ -610,6 +612,9 @@ export function Teams() {
     <div className="scr on">
       <Header title="Teams">
         <UpdatesPill count={updatesOpen ? 0 : newEvents.length} onClick={() => setUpdatesOpen(true)} />
+        {/* Structure lives on its own screen so this board, which works, is
+            not rebuilt to make room for it. */}
+        <button className="btn g" onClick={() => nav('/teams/tree')}>Team tree</button>
         {setup === 'Team' && perms.manageTeam
           ? <button className="btn p" onClick={() => setInvite(true)}>Invite member</button>
           : <button className="btn p" onClick={() => setNewTicket(true)}>New ticket</button>}
