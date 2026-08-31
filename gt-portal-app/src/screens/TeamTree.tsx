@@ -190,19 +190,17 @@ function TreeView(p: {
 
   if (!p.root) return null
 
+  /* The root always exists, so an empty tree is still a tree with one row on
+     it. The guidance belongs above that row and inside the same card: a
+     standalone "nothing built yet" panel sitting over a visible node reads as
+     a contradiction. */
   const seated = seatedMembers(p.tree)
-  if (seated.length === 0 && childrenOf(p.tree, p.root.id).length === 0) {
-    return (
-      <>
-        <div className="ldempty"><b>Nothing built yet</b><span>{COPY.emptyTree}</span></div>
-        <Branch {...p} node={p.root} depth={1} adding={adding} setAdding={setAdding}
-          name={name} setName={setName} />
-      </>
-    )
-  }
+  const bare = seated.length === 0 && childrenOf(p.tree, p.root.id).length === 0
+  const live = p.tree.nodes.filter(n => !n.archived).length
 
   return (
-    <Section title="The tree" qualifier={p.tree.nodes.filter(n => !n.archived).length + ' nodes'} flush>
+    <Section title="The tree" qualifier={live + (live === 1 ? ' node' : ' nodes')} flush>
+      {bare && <p className="ttempty">{COPY.emptyTree}</p>}
       <Branch {...p} node={p.root} depth={1} adding={adding} setAdding={setAdding}
         name={name} setName={setName} />
     </Section>
