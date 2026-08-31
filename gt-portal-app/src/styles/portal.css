@@ -6308,3 +6308,73 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
   .stkh .sp{display:none}
   .stkgrid{grid-template-columns:minmax(0,1fr)}
 }
+
+/* ── Team tree ──────────────────────────────────────────────────────────────
+   An org chart is a list with indentation, not a diagram. Boxes and connector
+   lines cost width, break on a phone, and say nothing a left edge does not.
+   Depth is margin, and the only weight on the screen is the seat meter when
+   it is full. */
+
+.ttseats{margin-bottom:20px}
+.ttseath{display:flex;align-items:baseline;gap:11px}
+.ttseath b{font-size:20px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.ttseath b.full{color:var(--amber)}
+.ttseath .dsbtn{margin-left:auto}
+.ttseatnote{margin:8px 0 0;font-size:12.5px;color:var(--text);max-width:70ch}
+.ttseats .sfine{margin-top:6px}
+
+.ttnode{position:relative}
+.ttrow{display:flex;align-items:center;gap:8px;
+  padding:10px 12px 10px calc(12px + var(--d,0px));
+  border-bottom:1px solid var(--border)}
+.ttrow.on{background:var(--elev)}
+.ttname{display:flex;align-items:baseline;gap:9px;background:none;border:0;padding:0;
+  font:inherit;color:inherit;cursor:pointer;text-align:left;min-width:0}
+.ttname b{font-size:13.5px;font-weight:600;color:var(--text)}
+.ttname i{font-style:normal;font-size:11.5px;color:var(--faint)}
+.ttname:hover b{text-decoration:underline;text-underline-offset:3px}
+.ttrow .sp{flex:1}
+
+.ttadd{display:flex;align-items:center;gap:8px;
+  padding:10px 12px 10px calc(12px + var(--d,0px));
+  border-bottom:1px solid var(--border)}
+.ttadd .tminput{max-width:260px}
+
+.ttpanel{padding:12px 12px 14px calc(12px + var(--d,0px));background:var(--elev);
+  border-bottom:1px solid var(--border)}
+.ttseat{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:12.5px}
+.ttseat b{font-weight:600;color:var(--text)}
+.ttseat .sp{flex:1}
+.tttitle{font-size:11.5px;color:var(--muted)}
+.ttflag{font-size:11px;color:var(--faint);border:1px solid var(--border);
+  border-radius:var(--r-chip);padding:2px 7px}
+.ttseatadd{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.ttpeople{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+
+.ttdir{display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding:12px 14px;
+  border-bottom:1px solid var(--border)}
+.ttdir:last-child{border-bottom:0}
+.ttdir b{font-size:13px;font-weight:600;min-width:150px}
+.ttnone{font-size:11.5px;color:var(--faint)}
+.ttchip{display:inline-flex;align-items:baseline;gap:6px;font-size:11.5px;
+  color:var(--text);border:1px solid var(--border);border-radius:var(--r-chip);padding:3px 9px}
+.ttchip i{font-style:normal;color:var(--faint)}
+
+.ttpicker{max-height:78vh;overflow:auto;width:min(620px,94vw)}
+.ttcats{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 14px}
+.tttitles{display:flex;flex-direction:column}
+.tttitlerow{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;
+  padding:11px 2px;background:none;border:0;border-bottom:1px solid var(--border);
+  font:inherit;color:inherit;cursor:pointer}
+.tttitlerow:last-child{border-bottom:0}
+.tttitlerow:hover{background:var(--elev)}
+.tttitlerow b{font-size:13px;font-weight:600}
+.tttitlerow i{font-style:normal;font-size:11.5px;color:var(--faint);max-width:44ch}
+.tttitlerow .sp{flex:1}
+.ttbuckets{font-size:11.5px;color:var(--muted);white-space:nowrap}
+
+@media(max-width:760px){
+  .ttnode{--d:0px !important}
+  .ttdir b{min-width:0;flex:1 0 100%}
+  .tttitlerow{flex-wrap:wrap}
+}
