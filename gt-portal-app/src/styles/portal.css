@@ -6412,8 +6412,8 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
 
   /* The two ambient forms behind the canvas. Accent and ink, both far
      under the threshold where they would compete with content. */
-  --bio-a: rgba(249,115,22,.16);
-  --bio-b: rgba(var(--ink-rgb),.07);
+  --bio-a: rgba(249,115,22,.34);
+  --bio-b: rgba(var(--ink-rgb),.13);
 }
 
 /* Ambient forms. They sit behind the whole working area rather than
@@ -6428,17 +6428,17 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
   pointer-events: none;
   z-index: 0;
   filter: blur(70px);
-  opacity: .55;
+  opacity: .8;
 }
 .canvas::before{
   width: 340px; height: 300px;
-  right: -80px; top: -40px;
+  right: 24px; top: 40px;
   background: var(--bio-a);
   border-radius: 34% 66% 40% 60% / 56% 34% 66% 44%;
 }
 .canvas::after{
   width: 300px; height: 270px;
-  left: -110px; top: 340px;
+  left: 30px; top: 420px;
   background: var(--bio-b);
   border-radius: 62% 38% 55% 45% / 42% 58% 42% 58%;
 }
