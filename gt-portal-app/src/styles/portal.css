@@ -6416,8 +6416,8 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
      was tried here first: it read as a rendering fault rather than as a
      decision, and it fought the signage language the advertising already
      uses, which is flat fields and forty five degree cuts. */
-  --geo: rgba(249,115,22,.55);
-  --geo-ink: rgba(var(--ink-rgb),.30);
+  --geo: var(--accent);
+  --geo-line: var(--accent);
 }
 
 /* Ambient forms. They sit behind the whole working area rather than
@@ -6425,6 +6425,10 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
    Pointer events off and aria hidden by construction: these are
    atmosphere and must never intercept a click or reach a screen reader. */
 .canvas{ position: relative; }
+/* The figures are solid now, so the reading column carries its own ground.
+   Without this a full strength mark sits under body copy and the text stops
+   being readable, which is a price no decoration is worth. */
+.canvas > .wrap{ background: var(--page); }
 .canvas::before,
 .canvas::after{
   content: "";
@@ -6438,10 +6442,9 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
    rather than rotated, so the hypotenuse stays a clean edge at any zoom
    instead of picking up the softening a transform brings. */
 .canvas::before{
-  width: 300px; height: 300px;
-  right: 18px; top: 28px;
+  width: 132px; height: 132px;
+  right: 0; top: 0;
   background: var(--geo);
-  opacity: .13;
   clip-path: polygon(100% 0, 100% 100%, 0 0);
 }
 
@@ -6450,9 +6453,8 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
    they beat against one another and the disc reads as moving without
    anything actually moving. One element, no script. */
 .canvas::after{
-  width: 260px; height: 260px;
-  left: 26px; top: 430px;
-  opacity: .16;
+  width: 148px; height: 148px;
+  left: 0; bottom: 40px; top: auto;
   background:
     repeating-linear-gradient(45deg,  var(--geo) 0 2px, transparent 2px 9px),
     repeating-linear-gradient(-45deg, var(--geo) 0 2px, transparent 2px 11px);
@@ -6467,11 +6469,10 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
   position: absolute;
   pointer-events: none;
   z-index: 0;
-  width: 190px; height: 190px;
-  right: 30px; bottom: 90px;
-  border: 1px solid var(--geo-ink);
+  width: 118px; height: 118px;
+  right: 8px; bottom: 56px;
+  border: 2px solid var(--geo-line);
   transform: rotate(45deg);
-  opacity: .5;
 }
 .rail > *{ position: relative; z-index: 1; }
 
