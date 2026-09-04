@@ -6421,84 +6421,84 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
 }
 
 /* THE FIGURES.
-   Full strength accent, no tint and no fade, and placed where a solid mark
-   can never cross a word.
+   Full strength accent, and placed where the portal is actually empty.
 
-   That placement is arithmetic rather than judgement. The reading column
-   caps at 1080 and the rail takes 296, so above roughly 1500 the canvas is
-   wider than its own content and there is real empty gutter down both
-   sides. The figures live in that gutter and nowhere else. Below that width
-   the gutter does not exist, so neither do they: hiding them is the only
-   honest answer, because the alternative is a solid orange shape sitting
-   under a sentence.
+   The first attempt put them in the gutters either side of the canvas on
+   the assumption that the reading column caps below the canvas width. On
+   the live screen it does not: the column and the rail fill the width, so
+   there is no gutter and the figures would have rendered behind opaque
+   content and shown nothing at all.
 
-   Belt and braces on top of the arithmetic: the reading column paints its
-   own ground, so even if a figure were ever mispositioned it would pass
-   behind the column rather than through the text. */
+   The empty space is somewhere else, and it is obvious once the running
+   app is in front of you rather than the stylesheet. The rail runs out of
+   content under the last blog row and leaves a tall white column. The
+   sidebar runs out under the last nav item and leaves another. Those two
+   voids are where the figures go, anchored to the bottom of each so they
+   sit under the content rather than beside it, and they cannot collide
+   with a word because there is no word below that point.
+
+   Content in both columns is lifted above them anyway, so a rail that
+   grows long enough to reach a figure passes over it rather than through
+   it. */
 
 .canvas{ position: relative; }
 .canvas > .wrap{ background: var(--page); position: relative; z-index: 1; }
-.canvas > .rail{ position: relative; z-index: 1; }
 
-.canvas::before,
-.canvas::after{
+/* The rail void. A triangle on the same forty five degree diagonal the
+   advertising cuts on, and the interference disc above it: two rules of
+   stripes at opposing angles with periods that do not divide into each
+   other, nine against eleven, so where they cross they beat against one
+   another and the disc reads as moving without anything moving. */
+.rail{ position: relative; }
+.rail > *{ position: relative; z-index: 1; }
+.rail::after,
+.rail::before{
   content: "";
   position: absolute;
   pointer-events: none;
   z-index: 0;
   display: none;
 }
-
-@media (min-width: 1500px){
-  .canvas::before,
-  .canvas::after{ display: block; }
-}
-
-/* A right angled triangle in the right gutter, cut on the same forty five
-   degree diagonal the advertising cuts on. Clipped rather than rotated, so
-   the hypotenuse stays a clean edge at any zoom. */
-.canvas::before{
-  width: 120px; height: 120px;
-  right: 0; top: 0;
+.rail::after{
+  width: 132px; height: 132px;
+  right: 0; bottom: 40px;
   background: var(--geo);
   clip-path: polygon(100% 0, 100% 100%, 0 0);
 }
-
-/* Interference, in the left gutter. Two rules of stripes at opposing angles
-   with periods that do not divide into each other, nine against eleven, so
-   where they cross they beat against one another and the disc reads as
-   moving without anything actually moving. One element, no script. */
-.canvas::after{
-  width: 132px; height: 132px;
-  left: 0; top: 210px;
+.rail::before{
+  width: 108px; height: 108px;
+  left: 0; bottom: 210px;
   background:
     repeating-linear-gradient(45deg,  var(--geo) 0 2px, transparent 2px 9px),
     repeating-linear-gradient(-45deg, var(--geo) 0 2px, transparent 2px 11px);
   clip-path: circle(50% at 50% 50%);
 }
 
-/* A square standing on its corner, in the right gutter below the triangle.
-   Outlined rather than filled so the two marks on the same side of the page
-   do not read as one block of colour. */
-.canvas .wrap::after{
+/* The sidebar void, under the last nav item. Outlined rather than filled:
+   two solid marks and one drawn one reads as a set, three solid ones reads
+   as a pattern nobody asked for. */
+.side{ position: relative; }
+.side > *{ position: relative; z-index: 1; }
+.side::after{
   content: "";
   position: absolute;
   pointer-events: none;
+  z-index: 0;
   display: none;
-  width: 104px; height: 104px;
-  right: -190px; top: 470px;
+  width: 96px; height: 96px;
+  left: 26px; bottom: 130px;
   border: 2px solid var(--geo);
   transform: rotate(45deg);
-  z-index: 0;
-}
-@media (min-width: 1500px){
-  .canvas .wrap::after{ display: block; }
 }
 
-/* A repaint on every scroll frame buys nothing for somebody who has asked
-   for less motion. */
+/* Only where the voids exist. Below this the rail is stacked under the
+   column and the sidebar is a drawer, so neither has a tall empty tail and
+   a figure would land on something. */
+@media (min-width: 1100px){
+  .rail::after, .rail::before, .side::after{ display: block; }
+}
 @media (prefers-reduced-motion: reduce){
-  .canvas::before, .canvas::after, .canvas .wrap::after{ display: none; }
+  .rail::after, .rail::before, .side::after{ display: none; }
 }
 
 /* Tables keep their corners. Rows have to align to read as rows, and an
