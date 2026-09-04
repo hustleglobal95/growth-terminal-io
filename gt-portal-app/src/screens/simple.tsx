@@ -133,6 +133,15 @@ export function Overview() {
   const [na, setNa] = useState(false)
   const [busy, setBusy] = useState(false)
   const fn = firstName(me)
+  /* The same guard Analyses and Businesses already use on this screen.
+     findDue reports the raw AnalysisRow business field, which is empty
+     whenever the business was auto-created by the engine, and this block
+     was rendering that empty string straight into the sentence: the one
+     place the product says a promise went unmeasured could not say whose. */
+  const accs = useAccounts()
+  const acct = accountName(accs)
+  const nameOf = (raw: string) =>
+    businessLabel(raw, accs) || raw || acct || 'This workspace'
   const s = ov ? ov.stats : null
   const acts = ov ? ov.recentActivity : []
   /* What this browser remembers. The engine has no idea who looked at what or
@@ -218,6 +227,14 @@ export function Overview() {
             <Section
               title={due.unmeasured.length === 1 ? 'A committed plan has never been measured' : due.unmeasured.length + ' committed plans have never been measured'}
               qualifier="the loop is open"
+              /* It said a plan was never measured, said measuring was free, and
+                 offered nothing to press. Naming a cost objection and then
+                 withholding the door is worse than saying nothing. The oldest,
+                 because that is the verdict most overdue. */
+              verbs={[{
+                label: due.unmeasured.length === 1 ? 'Measure it' : 'Measure the oldest',
+                onClick: () => nav('/analyses/' + due.unmeasured[due.unmeasured.length - 1].analysisId)
+              }]}
               flush
             >
               <div className="gsb">
@@ -229,7 +246,7 @@ export function Overview() {
                   {due.unmeasured.map(d => (
                     <li key={d.analysisId}>
                       <a href={'#/analyses/' + d.analysisId} onClick={e => { e.preventDefault(); nav('/analyses/' + d.analysisId) }}>
-                        {d.business}
+                        {nameOf(d.business)}
                       </a>, committed {monthName(d.committedPeriod)}.
                     </li>
                   ))}
