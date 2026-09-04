@@ -6434,74 +6434,82 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
 .gwrap .gsb.flush > .gsb{ padding: 0 22px 16px; }
 
 /* The due block is the only section asking for something rather than
-   reporting, so it is the one place on the screen that gets the accent at
-   full strength. A tint was tried first and read as a highlighter mark
-   rather than as a decision.
+   reporting, so it is the one place on the screen that carries weight.
 
-   Ink on amber, not white on amber. White on #F97316 is 2.8 to 1 and fails
-   at any size; ink on the same ground is about 7 to 1. The block is loud
-   because it is meant to be, not because the text is hard to read.
+   Three treatments were tried in order and the first two were wrong for
+   reasons worth keeping.
 
-   Selected on holding a glist2 rather than on being first: when nothing is
-   due this section does not render at all, and first-of-type would then
-   paint the wrong one. */
+   A soft amber tint read as a highlighter mark, not as a decision.
+
+   Amber at full strength forced ink text, because white on #F97316 is
+   2.8 to 1 and fails at any size. Ink on amber passes at about 7 to 1 and
+   is still the wrong answer: a saturated field the width of the column
+   reads as a warning banner, and body copy in ink on top of it reads as
+   muddy rather than as urgent.
+
+   So the block is ink and the accent stays an accent. Light text on ink is
+   about 15 to 1, the amber survives on the pill and the verb where it
+   actually marks something, and the section reads as the heaviest object
+   on the screen without shouting. */
 .gwrap section.gsec:has(.glist2){
-  background: var(--amber, #F97316);
-  border-color: var(--amber, #F97316);
-  color: #0F0F0E;
+  background: #0F0F0E;
+  border-color: #0F0F0E;
+  color: #F4F2EE;
 }
 .gwrap section.gsec:has(.glist2) .gsh .t,
 .gwrap section.gsec:has(.glist2) .gsb,
-.gwrap section.gsec:has(.glist2) p,
-.gwrap section.gsec:has(.glist2) li,
-.gwrap section.gsec:has(.glist2) a{ color: #0F0F0E; }
-.gwrap section.gsec:has(.glist2) .sfine{ color: rgba(15,15,14,.74); }
+.gwrap section.gsec:has(.glist2) p{ color: #F4F2EE; }
+.gwrap section.gsec:has(.glist2) .sfine{ color: rgba(244,242,238,.66); }
 
-/* The qualifier inverts. On an amber ground an amber pill is invisible, and
-   an outline reads as a disabled control. */
+/* The qualifier is the one place the state is named, so it takes the
+   accent. Ink on amber here because the pill is small and short, which is
+   exactly where a 7 to 1 pairing is comfortable. */
 .gwrap section.gsec:has(.glist2) .gsh .q{
-  background: #0F0F0E;
-  color: #F4F2EE;
+  background: var(--amber, #F97316);
+  color: #0F0F0E;
   font-size: 11.5px;
   font-weight: 600;
   padding: 4px 11px;
   border-radius: 999px;
 }
 
-/* The verb is the only thing to press on this screen, so it stops being a
-   text link and becomes solid ink. */
+/* The only thing to press on this screen. */
 .gwrap section.gsec:has(.glist2) .gsh button.v{
-  background: #0F0F0E;
-  color: #F4F2EE;
-  border: 1px solid #0F0F0E;
+  background: var(--amber, #F97316);
+  color: #0F0F0E;
+  border: 1px solid var(--amber, #F97316);
   border-radius: 10px;
-  padding: 8px 14px;
-  font-weight: 500;
+  padding: 8px 15px;
+  font-weight: 600;
 }
 
-/* The business and its commitment date lift onto their own ground, so the
-   one named thing on the screen is not a bullet inside a paragraph. */
+/* The business and its commitment date sit on a raised step rather than a
+   white card. A white panel inside an ink block is a hole punched in it. */
 .gwrap section.gsec:has(.glist2) .glist2{
-  list-style: none; margin: 14px 0 12px; padding: 0;
+  list-style: none; margin: 15px 0 12px; padding: 0;
 }
 .gwrap section.gsec:has(.glist2) .glist2 li{
-  background: #FFFFFF;
-  border: 1px solid rgba(15,15,14,.14);
+  background: rgba(244,242,238,.07);
+  border: 1px solid rgba(244,242,238,.16);
   border-radius: 10px;
   padding: 13px 15px;
   font-size: 15px;
   font-weight: 500;
+  color: #F4F2EE;
 }
 .gwrap section.gsec:has(.glist2) .glist2 li a{
-  color: #0F0F0E; text-decoration: underline; text-underline-offset: 3px;
+  color: var(--amber, #F97316);
+  text-decoration: none;
+  font-weight: 600;
 }
+.gwrap section.gsec:has(.glist2) .glist2 li a:hover{ text-decoration: underline; text-underline-offset: 3px; }
 
-/* Dark mode keeps the same amber. It is already light enough to carry ink,
-   and swapping it for a dimmer orange would make the one urgent block on
-   the screen the quietest thing on it. */
-[data-theme="dark"] .gwrap section.gsec:has(.glist2) .glist2 li{
-  background: #F4F2EE;
-  border-color: rgba(15,15,14,.18);
+/* Dark mode. The page is already near ink, so an ink block would vanish
+   into it. One step up in lightness plus a hairline is enough, and it keeps
+   the same reading order as light mode rather than inverting the screen. */
+[data-theme="dark"] .gwrap section.gsec:has(.glist2){
+  background: #1B1B18;
+  border-color: rgba(244,242,238,.18);
 }
 
 /* Rows get height and a hover target, so a list reads as a list rather
