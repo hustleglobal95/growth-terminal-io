@@ -6433,84 +6433,84 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
 .gwrap .gsh .t{ font-size: 19px; letter-spacing: -.02em; }
 .gwrap .gsb.flush > .gsb{ padding: 0 22px 16px; }
 
-/* The due block is the only section asking for something rather than
-   reporting, so it is the one place on the screen that carries weight.
+/* The due block.
+   Reference: the product UI on the Countly page, not the marketing page
+   around it. That interface never fills a container with a colour. Surfaces
+   stay white, panes are split by hairlines, labels are small and grey,
+   figures are large, and the accent appears only on a pill, a button, a
+   bar or a ring. Colour marks a value; it is not a background.
 
-   Three treatments were tried in order and the first two were wrong for
-   reasons worth keeping.
+   Two things were shipped here before this and both were wrong for that
+   reason. A saturated amber ground read as a warning banner and forced ink
+   body copy. An ink slab read as a second piece of chrome. Neither is how
+   the reference behaves.
 
-   A soft amber tint read as a highlighter mark, not as a decision.
-
-   Amber at full strength forced ink text, because white on #F97316 is
-   2.8 to 1 and fails at any size. Ink on amber passes at about 7 to 1 and
-   is still the wrong answer: a saturated field the width of the column
-   reads as a warning banner, and body copy in ink on top of it reads as
-   muddy rather than as urgent.
-
-   So the block is ink and the accent stays an accent. Light text on ink is
-   about 15 to 1, the amber survives on the pill and the verb where it
-   actually marks something, and the section reads as the heaviest object
-   on the screen without shouting. */
+   So this block is a white card like every other section. It is
+   distinguished by a tinted pill, a solid verb and a raised inset, which is
+   how the reference distinguishes anything. */
 .gwrap section.gsec:has(.glist2){
-  background: #0F0F0E;
-  border-color: #0F0F0E;
-  color: #F4F2EE;
+  background: var(--gsurface);
+  border-color: rgba(249,115,22,.34);
 }
-.gwrap section.gsec:has(.glist2) .gsh .t,
-.gwrap section.gsec:has(.glist2) .gsb,
-.gwrap section.gsec:has(.glist2) p{ color: #F4F2EE; }
-.gwrap section.gsec:has(.glist2) .sfine{ color: rgba(244,242,238,.66); }
 
-/* The qualifier is the one place the state is named, so it takes the
-   accent. Ink on amber here because the pill is small and short, which is
-   exactly where a 7 to 1 pairing is comfortable. */
+/* Soft tint behind, accent on the text. The reference uses exactly this for
+   its active tab and never a solid fill at this size. */
 .gwrap section.gsec:has(.glist2) .gsh .q{
-  background: var(--amber, #F97316);
-  color: #0F0F0E;
+  background: rgba(249,115,22,.12);
+  color: #C2410C;
   font-size: 11.5px;
   font-weight: 600;
   padding: 4px 11px;
-  border-radius: 999px;
+  border-radius: 6px;
+  letter-spacing: 0;
+}
+[data-theme="dark"] .gwrap section.gsec:has(.glist2) .gsh .q{
+  background: rgba(249,115,22,.18);
+  color: #FDBA74;
 }
 
-/* The only thing to press on this screen. */
+/* The one thing to press. Solid accent, same as the New analysis button
+   already in the header, so the screen has one button style rather than
+   two. */
 .gwrap section.gsec:has(.glist2) .gsh button.v{
   background: var(--amber, #F97316);
-  color: #0F0F0E;
+  color: #FFFFFF;
   border: 1px solid var(--amber, #F97316);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 8px 15px;
   font-weight: 600;
 }
+.gwrap section.gsec:has(.glist2) .gsh button.v:hover{ filter: brightness(.94); }
 
-/* The business and its commitment date sit on a raised step rather than a
-   white card. A white panel inside an ink block is a hole punched in it. */
+/* The business row sits in a recessed pane, the way the reference splits a
+   card into panes rather than stacking bullets inside one. */
 .gwrap section.gsec:has(.glist2) .glist2{
-  list-style: none; margin: 15px 0 12px; padding: 0;
+  list-style: none; margin: 14px 0 12px; padding: 0;
 }
 .gwrap section.gsec:has(.glist2) .glist2 li{
-  background: rgba(244,242,238,.07);
-  border: 1px solid rgba(244,242,238,.16);
+  background: rgba(15,15,14,.028);
+  border: 1px solid var(--gline);
   border-radius: 10px;
   padding: 13px 15px;
   font-size: 15px;
   font-weight: 500;
-  color: #F4F2EE;
+}
+[data-theme="dark"] .gwrap section.gsec:has(.glist2) .glist2 li{
+  background: rgba(244,242,238,.05);
 }
 .gwrap section.gsec:has(.glist2) .glist2 li a{
-  color: var(--amber, #F97316);
-  text-decoration: none;
-  font-weight: 600;
+  color: #C2410C; font-weight: 600; text-decoration: none;
 }
+[data-theme="dark"] .gwrap section.gsec:has(.glist2) .glist2 li a{ color: #FDBA74; }
 .gwrap section.gsec:has(.glist2) .glist2 li a:hover{ text-decoration: underline; text-underline-offset: 3px; }
 
-/* Dark mode. The page is already near ink, so an ink block would vanish
-   into it. One step up in lightness plus a hairline is enough, and it keeps
-   the same reading order as light mode rather than inverting the screen. */
-[data-theme="dark"] .gwrap section.gsec:has(.glist2){
-  background: #1B1B18;
-  border-color: rgba(244,242,238,.18);
-}
+/* Counters read the way the reference reads them: a small grey label, a
+   large figure, a two line grey caption under it, and a hairline between
+   panes rather than a border around each. */
+.gwrap .gstat{ border-right: 1px solid var(--gline); }
+.gwrap .gstat:last-child{ border-right: 0; }
+.gwrap .gstat .k{ font-size: 12.5px; }
+.gwrap .gstat .c{ font-size: 12.5px; line-height: 1.35; }
 
 /* Rows get height and a hover target, so a list reads as a list rather
    than as text with a date after it. */
