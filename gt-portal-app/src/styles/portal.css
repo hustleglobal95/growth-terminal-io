@@ -6410,14 +6410,18 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
      one place where more curve costs nothing. */
   --r-chip: 999px;
 
-  /* The two ambient forms behind the canvas. Accent and ink, both far
-     under the threshold where they would compete with content. */
   /* The geometry behind the canvas. Hard edges throughout. A blurred wash
      was tried here first: it read as a rendering fault rather than as a
      decision, and it fought the signage language the advertising already
      uses, which is flat fields and forty five degree cuts. */
-  --geo: var(--accent);
-  --geo-line: var(--accent);
+  /* Measured on the running app: --accent does not exist in this stylesheet.
+     The product accent is --amber. --brand is the darker mark colour the
+     lint rule keeps out of the product, so it is not the one to use here.
+     Pointing at a token that is not defined resolves to nothing, so these
+     figures rendered at the right size in the right place and completely
+     transparent, which looks exactly like nothing having shipped. */
+  --geo: var(--amber);
+  --geo-line: var(--amber);
 }
 
 /* THE FIGURES.
