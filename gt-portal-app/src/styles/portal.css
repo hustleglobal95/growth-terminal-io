@@ -6380,3 +6380,89 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
   .ttdir b{min-width:0;flex:1 0 100%}
   .tttitlerow{flex-wrap:wrap}
 }
+
+
+/* ==================================================================== */
+/* BIOMORPHIC SHAPE LAYER                                               */
+/* Added 3 September 2026.                                              */
+/*                                                                      */
+/* Carried entirely by form. No colour moves, no typeface moves, and    */
+/* the one accent per view rule is untouched. That is deliberate and it */
+/* is what separates this from the two alternatives that were tried     */
+/* beside it: neumorphism needs the page to become a mid tone before a  */
+/* highlight has anything to sit against, and every soft edged palette  */
+/* costs contrast on a light theme whose tertiary ink is already at     */
+/* 3.24 to 1. Shape costs nothing on that budget.                       */
+/*                                                                      */
+/* It is three token redefinitions rather than three hundred selector   */
+/* overrides, because the radii were already tokenised. Delete this     */
+/* block and the portal is exactly as it was.                           */
+/* ==================================================================== */
+
+:root{
+  /* A cell rather than a rectangle: one soft side and one tight side,
+     so a card has an orientation instead of four identical corners. */
+  --r-panel: 24px 9px 24px 9px;
+  /* Controls stay close to their old 8px. A button is pressed, not
+     admired, and a strongly organic control reads as a toy. */
+  --r-control: 14px 6px 14px 6px;
+  /* Chips were 7px and are read at a glance in rows. Full round is the
+     one place where more curve costs nothing. */
+  --r-chip: 999px;
+
+  /* The two ambient forms behind the canvas. Accent and ink, both far
+     under the threshold where they would compete with content. */
+  --bio-a: rgba(249,115,22,.16);
+  --bio-b: rgba(var(--ink-rgb),.07);
+}
+
+/* Ambient forms. They sit behind the whole working area rather than
+   inside any one card, so nothing on the page has to know about them.
+   Pointer events off and aria hidden by construction: these are
+   atmosphere and must never intercept a click or reach a screen reader. */
+.canvas{ position: relative; }
+.canvas::before,
+.canvas::after{
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(70px);
+  opacity: .55;
+}
+.canvas::before{
+  width: 340px; height: 300px;
+  right: -80px; top: -40px;
+  background: var(--bio-a);
+  border-radius: 34% 66% 40% 60% / 56% 34% 66% 44%;
+}
+.canvas::after{
+  width: 300px; height: 270px;
+  left: -110px; top: 340px;
+  background: var(--bio-b);
+  border-radius: 62% 38% 55% 45% / 42% 58% 42% 58%;
+}
+/* Content above the atmosphere. Without this the forms paint over the
+   first screenful and the page looks like a rendering fault. */
+.canvas > .wrap,
+.canvas > .rail{ position: relative; z-index: 1; }
+
+/* A blurred form of that size repaints on every scroll frame. On a
+   machine that has asked for less motion, and on a narrow screen where
+   there is no room for it to read as anything but a smudge, it goes. */
+@media (prefers-reduced-motion: reduce){
+  .canvas::before, .canvas::after{ display: none; }
+}
+@media (max-width: 760px){
+  .canvas::before, .canvas::after{ display: none; }
+}
+
+/* Tables keep their corners. Rows have to align to read as rows, and an
+   organic edge on tabular data trades legibility for decoration. This is
+   the one place the shape language is told to stop. */
+.tbl,
+.glist .grow,
+.bizrowi,
+.keyrowi,
+.costrow,
+.buyrow{ border-radius: 0; }
