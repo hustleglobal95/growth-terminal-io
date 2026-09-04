@@ -6412,8 +6412,12 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
 
   /* The two ambient forms behind the canvas. Accent and ink, both far
      under the threshold where they would compete with content. */
-  --bio-a: rgba(249,115,22,.34);
-  --bio-b: rgba(var(--ink-rgb),.13);
+  /* The geometry behind the canvas. Hard edges throughout. A blurred wash
+     was tried here first: it read as a rendering fault rather than as a
+     decision, and it fought the signage language the advertising already
+     uses, which is flat fields and forty five degree cuts. */
+  --geo: rgba(249,115,22,.55);
+  --geo-ink: rgba(var(--ink-rgb),.30);
 }
 
 /* Ambient forms. They sit behind the whole working area rather than
@@ -6427,21 +6431,50 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
   position: absolute;
   pointer-events: none;
   z-index: 0;
-  filter: blur(70px);
-  opacity: .8;
 }
+
+/* A right angled triangle cut from the top right of the working area, on
+   the same forty five degree diagonal the advertising cuts on. Clipped
+   rather than rotated, so the hypotenuse stays a clean edge at any zoom
+   instead of picking up the softening a transform brings. */
 .canvas::before{
-  width: 340px; height: 300px;
-  right: 24px; top: 40px;
-  background: var(--bio-a);
-  border-radius: 34% 66% 40% 60% / 56% 34% 66% 44%;
+  width: 300px; height: 300px;
+  right: 18px; top: 28px;
+  background: var(--geo);
+  opacity: .13;
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
 }
+
+/* Interference. Two rules of stripes at opposing angles with periods that
+   do not divide into each other, nine against eleven, so where they cross
+   they beat against one another and the disc reads as moving without
+   anything actually moving. One element, no script. */
 .canvas::after{
-  width: 300px; height: 270px;
-  left: 30px; top: 420px;
-  background: var(--bio-b);
-  border-radius: 62% 38% 55% 45% / 42% 58% 42% 58%;
+  width: 260px; height: 260px;
+  left: 26px; top: 430px;
+  opacity: .16;
+  background:
+    repeating-linear-gradient(45deg,  var(--geo) 0 2px, transparent 2px 9px),
+    repeating-linear-gradient(-45deg, var(--geo) 0 2px, transparent 2px 11px);
+  clip-path: circle(50% at 50% 50%);
 }
+
+/* A square standing on its corner behind the rail, outlined rather than
+   filled. Ink rather than accent: the one accent per view rule is not
+   suspended for decoration, and the accent is already spent above. */
+.rail::before{
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  width: 190px; height: 190px;
+  right: 30px; bottom: 90px;
+  border: 1px solid var(--geo-ink);
+  transform: rotate(45deg);
+  opacity: .5;
+}
+.rail > *{ position: relative; z-index: 1; }
+
 /* Content above the atmosphere. Without this the forms paint over the
    first screenful and the page looks like a rendering fault. */
 .canvas > .wrap,
