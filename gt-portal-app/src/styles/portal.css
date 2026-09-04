@@ -6401,15 +6401,11 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
   --gsurface: var(--card, #FFFFFF);
   --gline: rgba(15,15,14,.10);
   --glift: 0 1px 2px rgba(15,15,14,.04), 0 8px 24px rgba(15,15,14,.05);
-  --gsoft: #FFF3EA;
-  --gsoft-line: rgba(249,115,22,.28);
   --gr: 14px;
 }
 [data-theme="dark"]{
   --gline: rgba(244,242,238,.14);
   --glift: 0 1px 2px rgba(0,0,0,.34), 0 8px 24px rgba(0,0,0,.28);
-  --gsoft: rgba(249,115,22,.10);
-  --gsoft-line: rgba(249,115,22,.34);
 }
 
 /* The greeting was the smallest thing that mattered. It is now the
@@ -6437,35 +6433,75 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
 .gwrap .gsh .t{ font-size: 19px; letter-spacing: -.02em; }
 .gwrap .gsb.flush > .gsb{ padding: 0 22px 16px; }
 
-/* The due block is the only section asking for something, and the only one
-   holding a glist2. Selected on that rather than on position: when nothing
-   is due this section does not render, and first-of-type would then paint
-   the wrong one amber. */
+/* The due block is the only section asking for something rather than
+   reporting, so it is the one place on the screen that gets the accent at
+   full strength. A tint was tried first and read as a highlighter mark
+   rather than as a decision.
+
+   Ink on amber, not white on amber. White on #F97316 is 2.8 to 1 and fails
+   at any size; ink on the same ground is about 7 to 1. The block is loud
+   because it is meant to be, not because the text is hard to read.
+
+   Selected on holding a glist2 rather than on being first: when nothing is
+   due this section does not render at all, and first-of-type would then
+   paint the wrong one. */
 .gwrap section.gsec:has(.glist2){
-  background: var(--gsoft);
-  border-color: var(--gsoft-line);
-}
-.gwrap section.gsec:has(.glist2) .gsh .q{
   background: var(--amber, #F97316);
-  color: #fff;
+  border-color: var(--amber, #F97316);
+  color: #0F0F0E;
+}
+.gwrap section.gsec:has(.glist2) .gsh .t,
+.gwrap section.gsec:has(.glist2) .gsb,
+.gwrap section.gsec:has(.glist2) p,
+.gwrap section.gsec:has(.glist2) li,
+.gwrap section.gsec:has(.glist2) a{ color: #0F0F0E; }
+.gwrap section.gsec:has(.glist2) .sfine{ color: rgba(15,15,14,.74); }
+
+/* The qualifier inverts. On an amber ground an amber pill is invisible, and
+   an outline reads as a disabled control. */
+.gwrap section.gsec:has(.glist2) .gsh .q{
+  background: #0F0F0E;
+  color: #F4F2EE;
   font-size: 11.5px;
   font-weight: 600;
   padding: 4px 11px;
   border-radius: 999px;
 }
+
+/* The verb is the only thing to press on this screen, so it stops being a
+   text link and becomes solid ink. */
+.gwrap section.gsec:has(.glist2) .gsh button.v{
+  background: #0F0F0E;
+  color: #F4F2EE;
+  border: 1px solid #0F0F0E;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 500;
+}
+
+/* The business and its commitment date lift onto their own ground, so the
+   one named thing on the screen is not a bullet inside a paragraph. */
 .gwrap section.gsec:has(.glist2) .glist2{
   list-style: none; margin: 14px 0 12px; padding: 0;
 }
 .gwrap section.gsec:has(.glist2) .glist2 li{
-  background: rgba(255,255,255,.72);
-  border: 1px solid var(--gsoft-line);
+  background: #FFFFFF;
+  border: 1px solid rgba(15,15,14,.14);
   border-radius: 10px;
   padding: 13px 15px;
   font-size: 15px;
   font-weight: 500;
 }
+.gwrap section.gsec:has(.glist2) .glist2 li a{
+  color: #0F0F0E; text-decoration: underline; text-underline-offset: 3px;
+}
+
+/* Dark mode keeps the same amber. It is already light enough to carry ink,
+   and swapping it for a dimmer orange would make the one urgent block on
+   the screen the quietest thing on it. */
 [data-theme="dark"] .gwrap section.gsec:has(.glist2) .glist2 li{
-  background: rgba(255,255,255,.05);
+  background: #F4F2EE;
+  border-color: rgba(15,15,14,.18);
 }
 
 /* Rows get height and a hover target, so a list reads as a list rather
