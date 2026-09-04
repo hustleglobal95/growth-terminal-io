@@ -21,6 +21,7 @@ import { Teams } from './screens/Teams'
 import { Content } from './screens/Content'
 import { ContentSetup } from './screens/ContentSetup'
 import { AnalysisRoute } from './screens/LiveDetail'
+import { Guide } from './screens/Guide'
 import { Imports } from './screens/Imports'
 import { More } from './screens/More'
 import { Login, Signup } from './screens/Login'
@@ -78,6 +79,10 @@ const router = createBrowserRouter([
          ingestion is plumbing and the reporting screens should stay about
          what the data says rather than about where it came from. */
       { path: '/imports', element: <Imports /> },
+      /* The guide. Customer facing instructions for the parts of the portal
+         a customer can use, kept as a screen rather than a modal so it can be
+         linked to, opened in its own tab and left open beside the work. */
+      { path: '/guide', element: <Guide /> },
       /* The brand agent sits under agents because that is what it is: the
          first one a customer sets up, and the one every later assistant is
          briefed from. */
