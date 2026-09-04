@@ -6381,126 +6381,119 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
   .tttitlerow{flex-wrap:wrap}
 }
 
-
-/* ==================================================================== */
-/* BIOMORPHIC SHAPE LAYER                                               */
-/* Added 3 September 2026.                                              */
-/*                                                                      */
-/* Carried entirely by form. No colour moves, no typeface moves, and    */
-/* the one accent per view rule is untouched. That is deliberate and it */
-/* is what separates this from the two alternatives that were tried     */
-/* beside it: neumorphism needs the page to become a mid tone before a  */
-/* highlight has anything to sit against, and every soft edged palette  */
-/* costs contrast on a light theme whose tertiary ink is already at     */
-/* 3.24 to 1. Shape costs nothing on that budget.                       */
-/*                                                                      */
-/* It is three token redefinitions rather than three hundred selector   */
-/* overrides, because the radii were already tokenised. Delete this     */
-/* block and the portal is exactly as it was.                           */
-/* ==================================================================== */
+/* ====================================================================== */
+/* OVERVIEW PRESENCE                                                      */
+/* 4 September 2026.                                                      */
+/*                                                                        */
+/* Same sections, same order, same words. The screen read as empty        */
+/* because nothing on it had presence: the greeting was 23px, every       */
+/* section body was transparent with no edge, and a hairline was the only */
+/* thing separating one block from the next. Nine tenths of the screen    */
+/* was ground and the tenth that was not read at the same volume as the   */
+/* gaps.                                                                  */
+/*                                                                        */
+/* Scale, surface and rhythm. No new elements, nothing removed. It        */
+/* replaces the figure experiment that used to sit here, which was        */
+/* decoration and never belonged.                                         */
+/* ====================================================================== */
 
 :root{
-  /* A cell rather than a rectangle: one soft side and one tight side,
-     so a card has an orientation instead of four identical corners. */
-  --r-panel: 24px 9px 24px 9px;
-  /* Controls stay close to their old 8px. A button is pressed, not
-     admired, and a strongly organic control reads as a toy. */
-  --r-control: 14px 6px 14px 6px;
-  /* Chips were 7px and are read at a glance in rows. Full round is the
-     one place where more curve costs nothing. */
-  --r-chip: 999px;
-
-  /* The geometry behind the canvas. Hard edges throughout. A blurred wash
-     was tried here first: it read as a rendering fault rather than as a
-     decision, and it fought the signage language the advertising already
-     uses, which is flat fields and forty five degree cuts. */
-  /* Measured on the running app: --accent does not exist in this stylesheet.
-     The product accent is --amber. --brand is the darker mark colour the
-     lint rule keeps out of the product, so it is not the one to use here.
-     Pointing at a token that is not defined resolves to nothing, so these
-     figures rendered at the right size in the right place and completely
-     transparent, which looks exactly like nothing having shipped. */
-  --geo: var(--amber);
-  --geo-line: var(--amber);
+  --gsurface: var(--card, #FFFFFF);
+  --gline: rgba(15,15,14,.10);
+  --glift: 0 1px 2px rgba(15,15,14,.04), 0 8px 24px rgba(15,15,14,.05);
+  --gsoft: #FFF3EA;
+  --gsoft-line: rgba(249,115,22,.28);
+  --gr: 14px;
+}
+[data-theme="dark"]{
+  --gline: rgba(244,242,238,.14);
+  --glift: 0 1px 2px rgba(0,0,0,.34), 0 8px 24px rgba(0,0,0,.28);
+  --gsoft: rgba(249,115,22,.10);
+  --gsoft-line: rgba(249,115,22,.34);
 }
 
-/* THE FIGURES.
-   Full strength accent, and placed where the portal is actually empty.
-
-   The first attempt put them in the gutters either side of the canvas on
-   the assumption that the reading column caps below the canvas width. On
-   the live screen it does not: the column and the rail fill the width, so
-   there is no gutter and the figures would have rendered behind opaque
-   content and shown nothing at all.
-
-   The empty space is somewhere else, and it is obvious once the running
-   app is in front of you rather than the stylesheet. The rail runs out of
-   content under the last blog row and leaves a tall white column. The
-   sidebar runs out under the last nav item and leaves another. Those two
-   voids are where the figures go, anchored to the bottom of each so they
-   sit under the content rather than beside it, and they cannot collide
-   with a word because there is no word below that point.
-
-   Content in both columns is lifted above them anyway, so a rail that
-   grows long enough to reach a figure passes over it rather than through
-   it. */
-
-.canvas{ position: relative; }
-.canvas > .wrap{ background: var(--page); position: relative; z-index: 1; }
-
-/* The rail void. A triangle on the same forty five degree diagonal the
-   advertising cuts on, and the interference disc above it: two rules of
-   stripes at opposing angles with periods that do not divide into each
-   other, nine against eleven, so where they cross they beat against one
-   another and the disc reads as moving without anything moving. */
-.rail{ position: relative; }
-.rail > *{ position: relative; z-index: 1; }
-.rail::after,
-.rail::before{
-  content: "";
-  position: absolute;
-  pointer-events: none;
-  z-index: 0;
-  display: none;
+/* The greeting was the smallest thing that mattered. It is now the
+   largest, which is what stops the page opening on a gap. */
+.gwrap .ghead h1{
+  font-size: clamp(30px, 4.4vw, 46px);
+  line-height: 1.02;
+  letter-spacing: -.035em;
+  margin: 0 0 10px;
 }
-.rail::after{
-  width: 84px; height: 84px;
-  right: 22px; bottom: 64px;
-  background: var(--geo);
-  clip-path: polygon(100% 0, 100% 100%, 0 0);
-}
-.rail::before{
-  width: 92px; height: 92px;
-  left: 14px; bottom: 190px;
-  background:
-    repeating-linear-gradient(45deg,  var(--geo) 0 2px, transparent 2px 9px),
-    repeating-linear-gradient(-45deg, var(--geo) 0 2px, transparent 2px 11px);
-  clip-path: circle(50% at 50% 50%);
-}
+.gwrap .ghead p{ font-size: 15px; margin: 0; }
+.gwrap .ghead{ margin-bottom: 28px; }
 
-/* There is no sidebar figure. A square was placed in what looked like the
-   void under the last nav item and it landed on top of Connections, Setup,
-   Agents and Imports, because the nav runs the full height of the column
-   and the void is not there. Left as a note rather than as a smaller square:
-   the sidebar has no reliable empty region at any height, so nothing goes
-   in it. */
-
-/* Only where the voids exist. Below this the rail is stacked under the
-   column and the sidebar is a drawer, so neither has a tall empty tail and
-   a figure would land on something. */
-@media (min-width: 1100px){
-  .rail::after, .rail::before{ display: block; }
+/* Sections become objects rather than regions between two rules. */
+.gwrap section.gsec{
+  background: var(--gsurface);
+  border: 1px solid var(--gline);
+  border-radius: var(--gr);
+  box-shadow: var(--glift);
+  margin: 0 0 18px;
+  overflow: hidden;
 }
-@media (prefers-reduced-motion: reduce){
-  .rail::after, .rail::before{ display: none; }
+.gwrap section.gsec:last-of-type{ margin-bottom: 0; }
+.gwrap .gsh{ padding: 18px 22px 12px; }
+.gwrap .gsh .t{ font-size: 19px; letter-spacing: -.02em; }
+.gwrap .gsb.flush > .gsb{ padding: 0 22px 16px; }
+
+/* The due block is the only section asking for something, and the only one
+   holding a glist2. Selected on that rather than on position: when nothing
+   is due this section does not render, and first-of-type would then paint
+   the wrong one amber. */
+.gwrap section.gsec:has(.glist2){
+  background: var(--gsoft);
+  border-color: var(--gsoft-line);
+}
+.gwrap section.gsec:has(.glist2) .gsh .q{
+  background: var(--amber, #F97316);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 999px;
+}
+.gwrap section.gsec:has(.glist2) .glist2{
+  list-style: none; margin: 14px 0 12px; padding: 0;
+}
+.gwrap section.gsec:has(.glist2) .glist2 li{
+  background: rgba(255,255,255,.72);
+  border: 1px solid var(--gsoft-line);
+  border-radius: 10px;
+  padding: 13px 15px;
+  font-size: 15px;
+  font-weight: 500;
+}
+[data-theme="dark"] .gwrap section.gsec:has(.glist2) .glist2 li{
+  background: rgba(255,255,255,.05);
 }
 
-/* Tables keep their corners. Rows have to align to read as rows, and an
-   organic edge on tabular data trades legibility for decoration. This is
-   the one place the shape language is told to stop. */
-.tbl,
-.glist .grow,
-.bizrowi,
-.keyrowi,
-.costrow,
-.buyrow{ border-radius: 0; }
+/* Rows get height and a hover target, so a list reads as a list rather
+   than as text with a date after it. */
+.gwrap .glist .grow{
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--gline);
+  transition: background .18s cubic-bezier(.16,1,.3,1);
+}
+.gwrap .glist .grow:last-child{ border-bottom: 0; }
+.gwrap .glist .grow:hover{ background: rgba(15,15,14,.028); }
+[data-theme="dark"] .gwrap .glist .grow:hover{ background: rgba(244,242,238,.05); }
+.gwrap .glist .grow .n{ font-weight: 500; }
+
+/* A workspace counter is the one number on this screen that should be
+   readable from across a desk. It was set at body scale. */
+.gwrap .gstats{ border-top: 1px solid var(--gline); }
+.gwrap .gstat{ padding: 18px 22px 20px; }
+.gwrap .gstat .gfig{
+  font-size: 34px; font-weight: 600; letter-spacing: -.03em; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.gwrap .gstat .k{ margin-bottom: 7px; }
+.gwrap .gstat .c{ margin-top: 6px; }
+
+@media (max-width: 640px){
+  .gwrap .gsh{ padding: 16px 16px 10px; }
+  .gwrap .gsb.flush > .gsb{ padding: 0 16px 14px; }
+  .gwrap .glist .grow{ padding: 13px 16px; }
+  .gwrap .gstat{ padding: 16px; }
+}
