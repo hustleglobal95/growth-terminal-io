@@ -6464,45 +6464,35 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
   display: none;
 }
 .rail::after{
-  width: 132px; height: 132px;
-  right: 0; bottom: 40px;
+  width: 84px; height: 84px;
+  right: 22px; bottom: 64px;
   background: var(--geo);
   clip-path: polygon(100% 0, 100% 100%, 0 0);
 }
 .rail::before{
-  width: 108px; height: 108px;
-  left: 0; bottom: 210px;
+  width: 92px; height: 92px;
+  left: 14px; bottom: 190px;
   background:
     repeating-linear-gradient(45deg,  var(--geo) 0 2px, transparent 2px 9px),
     repeating-linear-gradient(-45deg, var(--geo) 0 2px, transparent 2px 11px);
   clip-path: circle(50% at 50% 50%);
 }
 
-/* The sidebar void, under the last nav item. Outlined rather than filled:
-   two solid marks and one drawn one reads as a set, three solid ones reads
-   as a pattern nobody asked for. */
-.side{ position: relative; }
-.side > *{ position: relative; z-index: 1; }
-.side::after{
-  content: "";
-  position: absolute;
-  pointer-events: none;
-  z-index: 0;
-  display: none;
-  width: 96px; height: 96px;
-  left: 26px; bottom: 130px;
-  border: 2px solid var(--geo);
-  transform: rotate(45deg);
-}
+/* There is no sidebar figure. A square was placed in what looked like the
+   void under the last nav item and it landed on top of Connections, Setup,
+   Agents and Imports, because the nav runs the full height of the column
+   and the void is not there. Left as a note rather than as a smaller square:
+   the sidebar has no reliable empty region at any height, so nothing goes
+   in it. */
 
 /* Only where the voids exist. Below this the rail is stacked under the
    column and the sidebar is a drawer, so neither has a tall empty tail and
    a figure would land on something. */
 @media (min-width: 1100px){
-  .rail::after, .rail::before, .side::after{ display: block; }
+  .rail::after, .rail::before{ display: block; }
 }
 @media (prefers-reduced-motion: reduce){
-  .rail::after, .rail::before, .side::after{ display: none; }
+  .rail::after, .rail::before{ display: none; }
 }
 
 /* Tables keep their corners. Rows have to align to read as rows, and an
