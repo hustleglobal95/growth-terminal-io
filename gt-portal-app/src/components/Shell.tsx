@@ -214,9 +214,14 @@ export function Shell() {
               sidebar mark and would render soft here. */}
           <Mark size={90} />Growth Terminal
         </span>
-        <button className="mbtn r" aria-label="Share">
-          <svg viewBox="0 0 20 20"><path d="M10 13V3M10 3L6.5 6.5M10 3l3.5 3.5" /><path d="M4 12v3.5A1.5 1.5 0 005.5 17h9a1.5 1.5 0 001.5-1.5V12" /></svg>
-        </button>
+        {/* A share button sat here on every screen of the phone app with no
+            handler behind it and no call to navigator.share anywhere in the
+            product, so tapping it did nothing at all. Same rule as the Find
+            leads button: the app does not offer what it cannot do. What stays
+            is a spacer of the same width, because the lockup is centred by the
+            flex row rather than by the bar, and removing the element outright
+            would push the wordmark off centre by half a button. */}
+        <span className="mbtn" aria-hidden="true" />
       </header>
 
       <nav className="tabbar">
