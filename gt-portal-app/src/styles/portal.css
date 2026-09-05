@@ -99,6 +99,10 @@
 
   --hdr:56px;
   --side:232px;
+  /* The inspector column. Reserved on every wide screen whether or not a rail
+     stands in it, so the text column lands in the same place on every screen.
+     A token because three rules have to agree about it, and they did not. */
+  --rail:296px;
   /* Radius scale.
      Every element in the app rendered at 4px: 148 hardcoded declarations plus
      a token trio of 4/3/2. One corner for a panel, a button and a chip alike,
@@ -785,7 +789,7 @@ body::before{opacity:.03}
 
 /* ---- canvas and inspector ------------------------------------------- */
 main{padding-top:var(--hdr)}
-.canvas{display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:0;align-items:start}
+.canvas{display:grid;grid-template-columns:minmax(0,1fr) var(--rail);gap:0;align-items:start}
 .wrap{max-width:none;margin:0;padding:0 26px 70px;min-width:0}
 .rail{position:sticky;top:var(--hdr);height:calc(100vh - var(--hdr));overflow-y:auto;
   border-left:2px solid var(--boxline);padding:20px 18px 30px;background:var(--card)}
@@ -4362,7 +4366,7 @@ p,.ssub,.sfine,.agentnote,.emptypage p{
    the application. Below 1240 the rail is gone for everybody and the earlier
    rule collapses the grid, so this only ever applies where a rail could fit. */
 @media(min-width:1241px){
-  .canvas{grid-template-columns:minmax(0,1fr) 296px !important}
+  .canvas{grid-template-columns:minmax(0,1fr) var(--rail) !important}
 }
 
 /* The canvas is the scrolling element, so it is the one that has to hold the
@@ -4653,6 +4657,18 @@ main{scrollbar-gutter:stable}
   border-top:1px solid var(--border);
   margin-top:44px;
   padding:20px 26px 30px;
+}
+/* The footer hangs below the canvas rather than inside it, so the reserved
+   inspector column never applied to it: measured at 1440, every screen ended
+   its content at 1097 and ran this to 1393. Two right edges 296px apart, which
+   is the one thing the reserved column exists to prevent. The hairline still
+   crosses the whole page, because a rule between the product and its small
+   print is page furniture; the words line up with the words above them. */
+@media(min-width:1241px){
+  /* The reserved column plus the gutter the content column already carries,
+     because the thing to line up with is the cards, not the grid track behind
+     them. Measured at 1440: cards end at 1071, and so now does this. */
+  .legalfoot{padding-right:calc(var(--rail) + 26px)}
 }
 .lfrow{
   display:flex;align-items:baseline;justify-content:space-between;

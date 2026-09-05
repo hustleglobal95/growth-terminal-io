@@ -519,7 +519,15 @@ export function Analyses() {
       : rows.length === all.length ? all.length + (all.length === 1 ? ' analysis' : ' analyses')
         : rows.length + ' of ' + all.length + (narrowed > 0 ? ', ' + narrowed + (narrowed === 1 ? ' filter' : ' filters') : '')
 
-  const cols = (showBiz ? '150px ' : '') + 'minmax(0,1fr) 78px ' + (showSrc ? '70px ' : '') + '96px 118px'
+  /* Column widths, measured against what the cells actually hold rather than
+     guessed. Severity holds "8 of 10" and needed 49 of its 78; Status holds
+     "Complete" and needed 69 of its 96; Source holds "Sheets add-on", needed
+     105 and had 70, so it wrapped to two lines on seven rows out of eight and
+     made the row heights ragged. The slack in the first two pays for it, with
+     four pixels left over for the constraint, which is the column carrying the
+     finding and the one that should get anything spare. The last column keeps
+     118 because it holds the date and, on hover, Open and Copy link. */
+  const cols = (showBiz ? '150px ' : '') + 'minmax(0,1fr) 58px ' + (showSrc ? '106px ' : '') + '76px 118px'
 
   return (
     <div className="scr on">
