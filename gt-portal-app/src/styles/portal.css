@@ -55,6 +55,13 @@
 
   --green:#37D67A;
 
+  /* The accent as text. The accent fill is #F97316 and it clears 2.80 to 1 on
+     white, under the 4.5 a word needs, so anything that says the accent in
+     letters rather than in a fill takes this instead. Measured on the three
+     grounds it lands on: 5.18 on the card, 4.79 on the page, 4.71 on a chip
+     already washed in --tint, which is the worst of them. */
+  --accent-ink:#C2410C;
+
   /* Channels rather than colours. Every ink tint and every frosted ground in
      this file is written as rgba(var(--ink-rgb),a) or rgba(var(--ground-rgb),a),
      so a theme flips roughly two hundred translucent values by changing two
@@ -76,6 +83,11 @@
   --vd-blue:#1F4E8C;
   --vd-pink:#9A2C55;
   --vd-yellow:#8A6A00;
+  /* The same marks as a solid fill under white text. These do NOT get a dark
+     theme variant: a saturated fill holds white in either theme, and lifting
+     them the way the text variants lift would put white on mint. */
+  --vd-green-fill:#1F6B45;
+  --vd-blue-fill:#1F4E8C;
 
 
   /* Depth is carried by one hairline plus a restrained lift. No glows. */
@@ -242,7 +254,6 @@ h1{font-size:35px;line-height:1.15;letter-spacing:-.022em;font-weight:600;max-wi
   font:13px/1 var(--sans);font-weight:600;letter-spacing:-.01em;cursor:pointer;text-decoration:none;
   transition:background .2s var(--ease)}
 .btn.p{background:var(--amber);color:var(--on-accent)}
-.btn.p:hover{background:#FF6512}
 .btn.g{background:transparent;color:var(--text);box-shadow:0 0 0 1px var(--border2) inset}
 .btn.g:hover{background:rgba(var(--ink-rgb),.04)}
 
@@ -1308,7 +1319,7 @@ section{padding:26px 0;border-bottom:1px solid var(--line)}
 .tmcode{color:var(--muted);font-size:11.5px;font-weight:600}
 .tmprio{width:8px;height:8px;border-radius:50%}
 .tmprio.lo{background:rgba(var(--ink-rgb),.25)}.tmprio.md{background:var(--muted)}
-.tmprio.hi{background:var(--text)}.tmprio.ur{background:#E5484D}
+.tmprio.hi{background:var(--text)}.tmprio.ur{background:var(--alert)}
 .tmtitle{color:var(--text);font-size:13.5px;font-weight:550;margin-top:6px;line-height:1.35}
 .tmbiz{color:var(--muted);font-size:12px;margin-top:3px}
 .tmprog{height:4px;border-radius:2px;background:rgba(var(--ink-rgb),.07);margin-top:9px;overflow:hidden}
@@ -3121,51 +3132,8 @@ h1{font-weight:700;letter-spacing:-.032em}
   transition:background .16s var(--ease), box-shadow .16s var(--ease), transform .06s var(--ease);
 }
 
-/* Primary. The fill carries a darker edge and a lift, so it sits on the page
-   rather than being printed onto it. */
-.btn.p{
-  background:var(--amber);color:var(--on-accent);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.22),
-    0 0 0 1px rgba(180,70,8,.55),
-    0 1px 2px rgba(var(--ink-rgb),.14),
-    0 2px 6px -2px rgba(180,70,8,.30);
-}
-.btn.p:hover{
-  background:#FB8232;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.26),
-    0 0 0 1px rgba(180,70,8,.6),
-    0 2px 4px rgba(var(--ink-rgb),.16),
-    0 5px 12px -4px rgba(180,70,8,.38);
-}
-
-/* Secondary. Quieter than primary, but still an object: a real surface and a
-   full strength border rather than a hairline that disappears at a glance. */
-.btn.g{
-  background:var(--s1);color:var(--text);
-  box-shadow:
-    0 0 0 1px var(--border2),
-    0 1px 2px rgba(var(--ink-rgb),.06);
-}
-.btn.g:hover{
-  background:var(--s2);
-  box-shadow:
-    0 0 0 1px rgba(var(--ink-rgb),.24),
-    0 1px 3px rgba(var(--ink-rgb),.10);
-}
-
-/* The press. Two pixels of travel is the whole difference between a control
-   that responds and one that only changes colour. */
-.btn:active:not(:disabled){transform:translateY(1px)}
-.btn.p:active:not(:disabled){
-  background:#E8620C;
-  box-shadow:inset 0 1px 3px rgba(120,45,4,.45), 0 0 0 1px rgba(180,70,8,.6);
-}
-.btn.g:active:not(:disabled){
-  background:var(--s3);
-  box-shadow:inset 0 1px 2px rgba(var(--ink-rgb),.10), 0 0 0 1px rgba(var(--ink-rgb),.24);
-}
+/* Fill and edge for both buttons, and every press state, are set once by the
+   flat pass further down. Nothing about colour or depth belongs here. */
 .btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 
 /* The header keeps its own scale so the bar does not grow, but it stops being
@@ -3174,26 +3142,20 @@ h1{font-weight:700;letter-spacing:-.032em}
 .warnrow .btn{min-height:32px;padding:7px 14px;font-size:12.5px}
 .btn.p.mini{min-height:30px;padding:7px 13px;font-size:12.5px}
 
-/* Row actions were 11.5px on a hairline and vanished against the row. */
+/* Row actions were 11.5px on a hairline and vanished against the row. Size
+   only: the surface comes from the flat pass with every other control. */
 .ract{
   font-size:12px;font-weight:600;min-height:28px;padding:5px 11px;
-  border:0;background:var(--s1);
-  box-shadow:0 0 0 1px var(--border2), 0 1px 2px rgba(var(--ink-rgb),.06);
+  border:0;
   transition:background .15s var(--ease), box-shadow .15s var(--ease);
 }
-.ract:hover{background:var(--s2);box-shadow:0 0 0 1px rgba(var(--ink-rgb),.24), 0 1px 3px rgba(var(--ink-rgb),.10)}
-.ract:active{background:var(--s3);box-shadow:inset 0 1px 2px rgba(var(--ink-rgb),.10), 0 0 0 1px rgba(var(--ink-rgb),.24)}
 
-/* Icon buttons were an invisible target until hover. They get the same
-   surface treatment so a toolbar reads as a toolbar. */
+/* Icon buttons were an invisible target until hover. They take the shared
+   control surface, so a toolbar reads as a toolbar. */
 .iconbtn{
   width:34px;height:34px;
-  background:var(--s1);
-  box-shadow:0 0 0 1px var(--border), 0 1px 2px rgba(var(--ink-rgb),.05);
-  transition:background .15s var(--ease), box-shadow .15s var(--ease), transform .06s var(--ease);
+  transition:background .15s var(--ease), box-shadow .15s var(--ease);
 }
-.iconbtn:hover{background:var(--s2);box-shadow:0 0 0 1px var(--border2), 0 1px 3px rgba(var(--ink-rgb),.09)}
-.iconbtn:active{transform:translateY(1px)}
 
 /* Filter chips are controls too, and sat two weights below everything else. */
 .fchip{min-height:32px;font-weight:500}
@@ -3220,190 +3182,34 @@ h1{font-weight:700;letter-spacing:-.032em}
 }
 
 /* ===========================================================================
-   DEPTH, ON EVERY CONTROL
+   DEPTH, ON EVERY CONTROL: REMOVED.
    ---------------------------------------------------------------------------
-   The previous pass gave the buttons an edge. An edge is not depth: it says
-   where the object stops, not that the object stands off the page.
+   A pass here built every control the way a physical key is built: two
+   gradient stops, an inset highlight, a bevel line, a contact shadow and an
+   ambient shadow, six layers on every button, chip, segment and search pill.
+   The flat pass below ("FLAT, LIKE THE INSTRUMENTS") reversed that decision
+   and redeclared fill, edge and press for all of them.
 
-   Depth here is built the way a physical key is: a light source above, so the
-   fill runs slightly lighter at the top than the bottom, a darker line along
-   the bottom edge doing the work a real bevel would, a contact shadow tight
-   under the object, and a wider ambient shadow further out. The press inverts
-   all four at once, which is the part that makes it read as travel rather
-   than as a colour change.
+   Both passes were left in the file. Roughly a hundred and eighty declarations
+   were being parsed and then thrown away, and every property the flat pass did
+   not happen to name kept leaking through: the segmented thumb still carried a
+   four layer shadow, the primary button lost its edge on hover, and controls
+   still travelled a pixel on press under a rule that says nothing moves.
 
-   Applied to every control the app has: primary, secondary, row actions,
-   icon buttons, filter chips, segmented controls and the search pill. A
-   toolbar where one control has depth and its neighbour does not looks
-   broken, and that inconsistency was most of what was left.
+   The dead pass is gone. What survived it, because the flat pass never set it,
+   is below. Depth for controls lives in exactly one place now.
    =========================================================================== */
-
-/* ---- primary -------------------------------------------------------------
-   Two amber stops rather than a flat fill. The range is deliberately narrow:
-   wide enough to place the light, not so wide it reads as a gradient. */
-.btn.p{
-  background:linear-gradient(180deg,#FB8433 0%,var(--amber) 52%,#EE690D 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.34),
-    inset 0 -1px 0 rgba(150,58,6,.55),
-    0 0 0 1px rgba(168,66,7,.60),
-    0 1px 1px rgba(var(--ink-rgb),.10),
-    0 2px 3px rgba(var(--ink-rgb),.10),
-    0 6px 14px -4px rgba(168,66,7,.38);
-}
-.btn.p:hover{
-  background:linear-gradient(180deg,#FC9247 0%,#FA7C22 52%,#F1710F 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.40),
-    inset 0 -1px 0 rgba(150,58,6,.50),
-    0 0 0 1px rgba(168,66,7,.62),
-    0 2px 3px rgba(var(--ink-rgb),.12),
-    0 4px 8px rgba(var(--ink-rgb),.10),
-    0 10px 22px -6px rgba(168,66,7,.46);
-}
-.btn.p:active:not(:disabled){
-  background:linear-gradient(180deg,#DE5F09 0%,#E8680C 100%);
-  box-shadow:
-    inset 0 2px 5px rgba(110,40,3,.50),
-    inset 0 -1px 0 rgba(255,255,255,.08),
-    0 0 0 1px rgba(168,66,7,.62),
-    0 1px 1px rgba(var(--ink-rgb),.10);
-}
-
-/* ---- secondary ---------------------------------------------------------- */
-.btn.g{
-  background:linear-gradient(180deg,var(--card) 0%,var(--page) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,1),
-    inset 0 -1px 0 rgba(var(--ink-rgb),.07),
-    0 0 0 1px var(--border2),
-    0 1px 1px rgba(var(--ink-rgb),.05),
-    0 2px 4px rgba(var(--ink-rgb),.06),
-    0 5px 12px -6px rgba(var(--ink-rgb),.10);
-}
-.btn.g:hover{
-  background:linear-gradient(180deg,var(--card) 0%,var(--s2) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,1),
-    inset 0 -1px 0 rgba(var(--ink-rgb),.09),
-    0 0 0 1px rgba(var(--ink-rgb),.22),
-    0 2px 3px rgba(var(--ink-rgb),.07),
-    0 6px 14px -6px rgba(var(--ink-rgb),.14);
-}
-.btn.g:active:not(:disabled){
-  background:var(--s3);
-  box-shadow:
-    inset 0 2px 4px rgba(var(--ink-rgb),.13),
-    0 0 0 1px rgba(var(--ink-rgb),.22);
-}
-
-/* Travel. Everything that can be pressed moves the same distance. */
-.btn:active:not(:disabled),
-.ract:active,.iconbtn:active,.fchip:active,.searchpill:active{transform:translateY(1px)}
-
-/* ---- row actions -------------------------------------------------------- */
-.ract{
-  background:linear-gradient(180deg,var(--card) 0%,var(--page) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,1),
-    inset 0 -1px 0 rgba(var(--ink-rgb),.06),
-    0 0 0 1px var(--border2),
-    0 1px 2px rgba(var(--ink-rgb),.07),
-    0 3px 6px -3px rgba(var(--ink-rgb),.10);
-  transition:background .15s var(--ease), box-shadow .15s var(--ease), transform .06s var(--ease);
-}
-.ract:hover{
-  background:linear-gradient(180deg,var(--card) 0%,var(--s2) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,1),
-    0 0 0 1px rgba(var(--ink-rgb),.22),
-    0 2px 4px rgba(var(--ink-rgb),.09),
-    0 5px 10px -4px rgba(var(--ink-rgb),.12);
-}
-.ract:active{box-shadow:inset 0 2px 4px rgba(var(--ink-rgb),.13), 0 0 0 1px rgba(var(--ink-rgb),.22)}
-
-/* ---- icon buttons ------------------------------------------------------- */
-.iconbtn{
-  background:linear-gradient(180deg,var(--card) 0%,var(--page) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,1),
-    inset 0 -1px 0 rgba(var(--ink-rgb),.06),
-    0 0 0 1px var(--border),
-    0 1px 2px rgba(var(--ink-rgb),.06),
-    0 3px 6px -3px rgba(var(--ink-rgb),.09);
-}
-.iconbtn:hover{
-  background:linear-gradient(180deg,var(--card) 0%,var(--s2) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,1),
-    0 0 0 1px var(--border2),
-    0 2px 4px rgba(var(--ink-rgb),.09),
-    0 5px 10px -4px rgba(var(--ink-rgb),.12);
-}
-.iconbtn:active{box-shadow:inset 0 2px 4px rgba(var(--ink-rgb),.13), 0 0 0 1px var(--border2)}
-
-/* ---- filter chips ------------------------------------------------------- */
-.fchip{
-  background:linear-gradient(180deg,var(--card) 0%,var(--page) 100%);
-  border:0;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,1),
-    inset 0 -1px 0 rgba(var(--ink-rgb),.06),
-    0 0 0 1px var(--border),
-    0 1px 2px rgba(var(--ink-rgb),.05),
-    0 3px 6px -3px rgba(var(--ink-rgb),.08);
-  transition:background .15s var(--ease), box-shadow .15s var(--ease), transform .06s var(--ease);
-}
-.fchip:hover{
-  background:linear-gradient(180deg,var(--card) 0%,var(--s2) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,1),
-    0 0 0 1px var(--border2),
-    0 2px 4px rgba(var(--ink-rgb),.08),
-    0 5px 10px -4px rgba(var(--ink-rgb),.11);
-}
-/* Selected is pressed in, not raised. A filter that is on is a switch that
-   has been thrown, and recessing it says so without a second colour. */
-.fchip.on{
-  background:var(--tint);color:var(--amber);
-  box-shadow:
-    inset 0 1px 3px rgba(168,66,7,.20),
-    0 0 0 1px var(--aborder);
-}
-
-/* ---- segmented control -------------------------------------------------- */
-.seg{
-  box-shadow:inset 0 1px 3px rgba(var(--ink-rgb),.09), 0 0 0 1px var(--border);
-}
-.seg button.on,.seg .thumb{
-  background:linear-gradient(180deg,var(--card) 0%,var(--page) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,1),
-    0 0 0 1px var(--border2),
-    0 1px 2px rgba(var(--ink-rgb),.10),
-    0 2px 5px -2px rgba(var(--ink-rgb),.12);
+.fchip,.searchpill{
+  transition:background .15s var(--ease), box-shadow .15s var(--ease);
 }
 .seg button.on{color:var(--text)}
 
-/* ---- search pill -------------------------------------------------------- */
-.searchpill{
-  background:linear-gradient(180deg,var(--card) 0%,var(--page) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,1),
-    inset 0 -1px 0 rgba(var(--ink-rgb),.05),
-    0 0 0 1px var(--border),
-    0 1px 2px rgba(var(--ink-rgb),.05);
-  transition:background .15s var(--ease), box-shadow .15s var(--ease), transform .06s var(--ease);
-}
-.searchpill:hover{
-  background:linear-gradient(180deg,var(--card) 0%,var(--s2) 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,1), 0 0 0 1px var(--border2), 0 2px 5px rgba(var(--ink-rgb),.08);
-}
-
 /* A disabled control is flat on the page. It cannot be pressed, so it must
-   not look like it is standing up waiting to be. */
+   not look like it is standing up waiting to be. The hairline is inset like
+   every other control's, so a disabled button is not a pixel wider than the
+   enabled one beside it. */
 .btn:disabled{
-  box-shadow:0 0 0 1px var(--border) !important;
+  box-shadow:inset 0 0 0 1px var(--border) !important;
   transform:none !important;
 }
 
@@ -3688,7 +3494,7 @@ h1{font-weight:700;letter-spacing:-.032em}
 .pill,.chip,.badge,.side .chip{box-shadow:none}
 .side .chip{padding:3px 2px;font-size:11.5px;color:var(--muted);border:0;background:none}
 .side .chip.warn{color:var(--text)}
-.fchip{color:var(--muted);padding:4px 9px;border-radius:var(--r-control);box-shadow:none;min-height:0}
+.fchip{color:var(--muted);padding:5px 11px;border-radius:var(--r-chip);box-shadow:none;min-height:28px}
 .fchip:hover{background:rgba(var(--ink-rgb),.05);color:var(--text);box-shadow:none}
 .fchip.on{background:none;color:var(--text);font-weight:600;box-shadow:inset 0 -1.5px 0 var(--amber)}
 .fchip:active{transform:none}
@@ -5150,8 +4956,8 @@ main{scrollbar-gutter:stable}
 .edmk.vd::after{
   content:attr(data-verdict);
   display:inline-block;margin-left:5px;
-  font-size:9.5px;font-weight:600;letter-spacing:.02em;
-  text-transform:uppercase;vertical-align:2px;opacity:.75;
+  font-size:10px;font-weight:600;letter-spacing:0;
+  text-transform:none;vertical-align:2px;opacity:.75;
 }
 .edmk.vd.agree{color:var(--vd-green)}
 .edmk.vd.doubt{color:var(--amber)}
@@ -5164,9 +4970,9 @@ main{scrollbar-gutter:stable}
 .edtool.vd.ask{color:var(--vd-blue)}
 .edtool.vd.on{background:currentColor}
 .edtool.vd.agree.on,.edtool.vd.doubt.on,.edtool.vd.ask.on{color:var(--on-accent)}
-.edtool.vd.agree.on{background:#1F6B45}
+.edtool.vd.agree.on{background:var(--vd-green-fill)}
 .edtool.vd.doubt.on{background:var(--amber)}
-.edtool.vd.ask.on{background:#1F4E8C}
+.edtool.vd.ask.on{background:var(--vd-blue-fill)}
 
 .edseg.edverd{margin-left:2px}
 
@@ -5294,9 +5100,9 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
 }
 .edverdgo:hover{opacity:.86}
 .edverdgo:focus-visible{outline:2px solid var(--pane);outline-offset:1px}
-.edverdgo.agree{background:#1F6B45}
+.edverdgo.agree{background:var(--vd-green-fill)}
 .edverdgo.doubt{background:var(--amber)}
-.edverdgo.ask{background:#1F4E8C}
+.edverdgo.ask{background:var(--vd-blue-fill)}
 
 /* ------------------------------------------------------------------ */
 /* Whether it worked                                                   */
@@ -5650,8 +5456,8 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
 .noteraw:focus{outline:none;border-color:var(--border2)}
 
 .noteshaped{display:flex;flex-direction:column;gap:14px}
-.notesec h4{margin:0 0 6px;font-size:11px;font-weight:500;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--faint)}
+.notesec h4{margin:0 0 6px;font-size:11px;font-weight:500;letter-spacing:.005em;
+  text-transform:none;color:var(--faint)}
 .notesec ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
 .notesec li{font-size:13.5px;line-height:1.55;padding-left:12px;position:relative}
 .notesec li::before{content:'';position:absolute;left:0;top:.62em;width:4px;height:4px;
@@ -5660,7 +5466,7 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
 /* A label rather than a colour alone, because a colour is not a category to
    anybody who cannot see it. */
 .notek{display:inline-block;margin-right:7px;padding:1px 7px;border-radius:999px;
-  font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  font-size:10.5px;font-weight:500;letter-spacing:0;text-transform:none;
   background:var(--s2);color:var(--muted);border:1px solid var(--line);vertical-align:1px}
 .notesec li.k-action .notek{background:var(--tint);color:var(--amber);border-color:var(--aborder)}
 
@@ -5836,6 +5642,11 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
   --aborder:rgba(249,115,22,.34);
   --signal:#F97316;
   --alert:#F97316;
+  /* The direction inverts here. The accent itself already clears 6.41 on a
+     dark card, and #C2410C would be the failure the other way round, so the
+     text variant is lighter rather than darker: 10.65 on the card, 11.45 on
+     the page. */
+  --accent-ink:#FDBA74;
   --wash:rgba(249,115,22,.11);
   --bwash:rgba(252,88,2,.11);
 
@@ -6397,15 +6208,21 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
 /* decoration and never belonged.                                         */
 /* ====================================================================== */
 
+/* This screen arrived with a sixth :root block of its own, carrying literal
+   hexes, a radius off the scale and a card shadow, three months after the file
+   settled on one token block, a radius scale of 11/8/7 and no lifts. The names
+   are kept because the rules below reference them; what they point at is now
+   the same system every other screen draws from, so this screen follows a
+   theme change and a token change like the rest of the product.
+
+   A card here is a hairline on a fill, as it is everywhere else. The shadow is
+   gone rather than tuned: the flat pass turned every lift in the app into the
+   hairline it was standing in for, and this was the one card that missed it. */
 :root{
-  --gsurface: var(--card, #FFFFFF);
-  --gline: rgba(15,15,14,.10);
-  --glift: 0 1px 2px rgba(15,15,14,.04), 0 8px 24px rgba(15,15,14,.05);
-  --gr: 14px;
-}
-[data-theme="dark"]{
-  --gline: rgba(244,242,238,.14);
-  --glift: 0 1px 2px rgba(0,0,0,.34), 0 8px 24px rgba(0,0,0,.28);
+  --gsurface: var(--card);
+  --gline: var(--border);
+  --glift: none;
+  --gr: var(--r-panel);
 }
 
 /* The greeting was the smallest thing that mattered. It is now the
@@ -6456,27 +6273,23 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
 /* Soft tint behind, accent on the text. The reference uses exactly this for
    its active tab and never a solid fill at this size. */
 .gwrap section.gsec:has(.glist2) .gsh .q{
-  background: rgba(249,115,22,.12);
-  color: #C2410C;
+  background: var(--tint);
+  color: var(--accent-ink);
   font-size: 11.5px;
   font-weight: 600;
   padding: 4px 11px;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   letter-spacing: 0;
-}
-[data-theme="dark"] .gwrap section.gsec:has(.glist2) .gsh .q{
-  background: rgba(249,115,22,.18);
-  color: #FDBA74;
 }
 
 /* The one thing to press. Solid accent, same as the New analysis button
    already in the header, so the screen has one button style rather than
    two. */
 .gwrap section.gsec:has(.glist2) .gsh button.v{
-  background: var(--amber, #F97316);
-  color: #FFFFFF;
-  border: 1px solid var(--amber, #F97316);
-  border-radius: 8px;
+  background: var(--amber);
+  color: var(--on-accent);
+  border: 1px solid var(--amber);
+  border-radius: var(--r-control);
   padding: 8px 15px;
   font-weight: 600;
 }
@@ -6488,20 +6301,16 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
   list-style: none; margin: 14px 0 12px; padding: 0;
 }
 .gwrap section.gsec:has(.glist2) .glist2 li{
-  background: rgba(15,15,14,.028);
+  background: var(--hi);
   border: 1px solid var(--gline);
-  border-radius: 10px;
+  border-radius: var(--r-control);
   padding: 13px 15px;
   font-size: 15px;
   font-weight: 500;
 }
-[data-theme="dark"] .gwrap section.gsec:has(.glist2) .glist2 li{
-  background: rgba(244,242,238,.05);
-}
 .gwrap section.gsec:has(.glist2) .glist2 li a{
-  color: #C2410C; font-weight: 600; text-decoration: none;
+  color: var(--accent-ink); font-weight: 600; text-decoration: none;
 }
-[data-theme="dark"] .gwrap section.gsec:has(.glist2) .glist2 li a{ color: #FDBA74; }
 .gwrap section.gsec:has(.glist2) .glist2 li a:hover{ text-decoration: underline; text-underline-offset: 3px; }
 
 /* Counters read the way the reference reads them: a small grey label, a

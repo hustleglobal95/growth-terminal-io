@@ -3,10 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { DEMO, CREDIT_BUNDLES, SHEET_PRODUCTS } from '../config'
 import { api, data, AnalysisRow, ApiKeyRow, ADDON_SCOPES, SCOPE_HELP, secretOf, startCheckout, checkoutConfigured, Purchase } from '../lib/api'
 import { rememberCheckout } from './Billing'
-import { useMe, useAnalyses, useOverview, useBusinesses, useAccounts, useCredits, useBilling, accountName, businessLabel, firstName } from '../lib/liveData'
+import { useMe, useAnalyses, useOverview, useBusinesses, useAccounts, useCredits, accountName, businessLabel, firstName } from '../lib/liveData'
 import { findDue, MAX_CHECKED, NOTHING_DUE, type DueSummary } from '../lib/dueNow'
 import { monthName } from '../lib/verified'
-import { leadsLive } from '../lib/leads'
 import { toast, noCredits } from '../lib/bus'
 import { recents, lastSeen, stampSeen, ago, RecentItem } from '../lib/memory'
 import { BLOG_POSTS, BLOG_URL } from '../lib/blogPosts'
@@ -681,7 +680,6 @@ export function Businesses() {
   const rows = useBusinesses()
   const an = useAnalyses()
   const accs = useAccounts()
-  const billing = useBilling()
 
   if (DEMO) return (
     <div className="scr on">
@@ -715,22 +713,13 @@ export function Businesses() {
   return (
     <div className="scr on">
       <Header title="Businesses">
-        {/* The only way a company enters this workspace is by being analysed,
-            so the header offers the thing you actually can do here: go find
-            companies that are not in it yet. */}
-        {/* The door stands whenever there is something behind it: real rows
-            once the engine serves them, and the sample on an internal
-            workspace so the screen can be opened and worked on. A customer
-            with neither never sees a button that leads to a dead end. */}
-        {(leadsLive() || billing?.bypassed === true) && (
-          {/* The Find leads button is removed rather than relabelled. It opened a
-    screen of invented companies that carried a notice saying so, and a
-    second screen of drafts that could not be sent. Neither the notice nor
-    the screen belongs in front of a customer: the honest fix is that the
-    app does not offer what the engine cannot do yet. The routes and both
-    screens are untouched, so this is one line to put back the day lead
-    search answers. */}
-        )}
+        {/* The Find leads button is removed rather than relabelled. It opened a
+            screen of invented companies that carried a notice saying so, and a
+            second screen of drafts that could not be sent. Neither the notice
+            nor the screen belongs in front of a customer: the honest fix is
+            that the app does not offer what the engine cannot do yet. The
+            routes and both screens are untouched, so this is one button to put
+            back the day lead search answers. */}
         <button className="btn g" onClick={() => toast('Businesses are created when their first analysis runs.')}>Add business</button>
       </Header>
       <Canvas>
