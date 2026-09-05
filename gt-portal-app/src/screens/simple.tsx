@@ -723,7 +723,13 @@ export function Businesses() {
             workspace so the screen can be opened and worked on. A customer
             with neither never sees a button that leads to a dead end. */}
         {(leadsLive() || billing?.bypassed === true) && (
-          <button className="btn g" onClick={() => nav('/businesses/leads')}>Find leads</button>
+          {/* The Find leads button is removed rather than relabelled. It opened a
+    screen of invented companies that carried a notice saying so, and a
+    second screen of drafts that could not be sent. Neither the notice nor
+    the screen belongs in front of a customer: the honest fix is that the
+    app does not offer what the engine cannot do yet. The routes and both
+    screens are untouched, so this is one line to put back the day lead
+    search answers. */}
         )}
         <button className="btn g" onClick={() => toast('Businesses are created when their first analysis runs.')}>Add business</button>
       </Header>
