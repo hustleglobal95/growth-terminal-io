@@ -459,7 +459,7 @@ ol.steps li::before{content:counter(s) ".";position:absolute;left:0;top:6px;
   }
   .mbar .lockup{display:flex;align-items:center;gap:7px;margin:0 auto;font-size:13.5px;font-weight:700;color:var(--text)}
   .mbar .marklogo{width:22px;height:22px;border-radius:var(--r-control);flex:0 0 auto;object-fit:cover}
-  .mbtn{width:40px;height:40px;flex:0 0 auto;background:none;border:0;cursor:pointer;
+  .mbtn{width:44px;height:44px;flex:0 0 auto;background:none;border:0;cursor:pointer;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
   .mbtn span{display:block;width:17px;height:1.5px;border-radius:1px;background:var(--text)}
   .mbtn svg{width:19px;height:19px;stroke:var(--text);fill:none;stroke-width:1.5;
@@ -3162,12 +3162,37 @@ h1{font-weight:700;letter-spacing:-.032em}
 .fchip.on{font-weight:600}
 
 @media(max-width:760px){
-  /* 44px minimum touch target. */
+  /* THE DRAWER IS THE PHONE'S NAVIGATION, so it answers to the same floor as
+     everything else. Measured on the running app at 390px, every control in it
+     was under the number: the nav links at 39, the theme buttons at 38, sign
+     out and the rail toggle at 26 square. A drawer is the one surface on a
+     phone that exists only to be tapped.
+
+     The rail toggle goes rather than grows. It collapses the desktop sidebar
+     into a 62px rail, and every rule that reads .shell.railed lives inside
+     @media(min-width:761px), so on a phone it is a 26px control wired to a
+     layout that cannot happen. */
+  .side .nav a{min-height:44px}
+  .usercard .signout{width:44px;height:44px;margin-left:auto}
+  .railtoggle{display:none}
+
+  /* Selects and checkboxes are tapped as often as buttons and were sized as
+     though they were text. */
+  .tmsel,select{min-height:44px}
+  input[type=checkbox]{width:22px;height:22px}
+  .setupstep,.orchip{min-height:44px}
+
+  /* 44px minimum touch target, and this time every value below it clears the
+     number in the comment. The previous version of this block wrote 44 at the
+     top and then set 40, 40, 36 and 38 underneath, so nothing a thumb actually
+     lands on met it except the plain button. Height is the axis a thumb misses
+     on; where a control has to get smaller on a phone it gives up width. */
   .btn{min-height:44px;padding:12px 18px;font-size:14px}
-  .apphdr .btn{min-height:40px;padding:10px 16px}
-  .iconbtn{width:40px;height:40px}
-  .ract{min-height:36px;padding:8px 13px;font-size:13px}
-  .fchip{min-height:38px}
+  .apphdr .btn{min-height:44px;padding:10px 16px}
+  .iconbtn{width:44px;height:44px}
+  .ract{min-height:44px;padding:8px 13px;font-size:13px}
+  .fchip{min-height:44px}
+  .searchpill{min-height:44px}
 }
 
 /* A page header can carry three actions. A phone header cannot carry three
@@ -3882,7 +3907,11 @@ svg{vector-effect:non-scaling-stroke}
   .apphdr .ttl{display:block;flex:0 1 auto;min-width:0;max-width:none;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
   .apphdr{gap:8px;padding-left:12px;padding-right:12px}
-  .apphdr .btn{padding:6px 11px;font-size:12px;min-height:0}
+  /* The room this bar needs is horizontal, so the button gives up padding and
+     type size and keeps its height. It previously gave up height as well, with
+     an explicit min-height:0 that beat the touch target floor set above and
+     rendered the one action on the screen 24px tall. */
+  .apphdr .btn{padding:6px 11px;font-size:12px}
 }
 
 /* A jump target has to clear the fixed header even when something other than
@@ -4380,6 +4409,15 @@ main{scrollbar-gutter:stable}
   clip-path:polygon(14% 46%,0 60%,36% 96%,100% 22%,86% 10%,35% 68%);
 }
 .keyscope input:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+/* A 14px box is the right size for the mark and the wrong size for a thumb, so
+   on phones the control keeps the drawn tick and grows the thing being tapped.
+   The whole row is a label, but a checkbox people miss is a checkbox people
+   stop trusting. */
+@media(max-width:760px){
+  .keyscope input{width:24px;height:24px;margin-top:0;padding:11px}
+  .keyscope input:checked::before{width:12px;height:12px}
+  .keyscope{align-items:center}
+}
 
 /* ===========================================================================
    THE SUBJECT OF A ROW IS THE HEAVIEST THING IN IT
@@ -5382,7 +5420,10 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
    the switch is the thing that should not move. */
 @media(max-width:760px){
   .apphdr .seg{flex:0 0 auto;width:auto;min-width:max-content}
-  .apphdr .seg button{flex:0 0 auto;padding:7px 11px;font-size:12px;white-space:nowrap}
+  /* Width is what this switch had to give up, not height: at 26px tall it was
+     the smallest target in the header it shares with a 44px button. */
+  .apphdr .seg button{flex:0 0 auto;padding:0 11px;min-height:38px;font-size:12px;white-space:nowrap}
+  .apphdr .seg{min-height:44px;align-items:center}
 }
 
 /* ---------- the notepad ---------------------------------------------------
@@ -5707,8 +5748,9 @@ body.edfocus .edmk.vd.ask{color:var(--vd-blue)}
 
 @media(max-width:760px){
   /* The sidebar is a drawer on a phone, so the control gets a real touch
-     target rather than the compact one the desk version uses. */
-  .themepick button{width:38px;height:38px}
+     target rather than the compact one the desk version uses. 38 was not one:
+     it is the number this rule already reached for and stopped short of. */
+  .themepick button{width:44px;height:44px}
 }
 
 /* ===========================================================================
