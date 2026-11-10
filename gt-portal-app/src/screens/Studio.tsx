@@ -1,13 +1,21 @@
 import React, { useMemo, useState } from 'react'
 import './Studio.css'
+import { getWorkspaceId, workspaceOwner } from '../lib/api'
+import { leadsLive, listSearches, getSearch } from '../lib/leads'
 
 type Stage = 'Prospect' | 'Contacted' | 'Discovery' | 'Proposal' | 'Won' | 'Production' | 'Delivered' | 'Lost'
 type RecordItem = { id: string; company: string; contact: string; email: string; website: string; stage: Stage; value: number; nextAction: string; followUp: string; notes: string; updatedAt: string }
 const stages: Stage[] = ['Prospect', 'Contacted', 'Discovery', 'Proposal', 'Won', 'Production', 'Delivered', 'Lost']
-const key = 'gt.studio.pipeline.v1'
+const key = () => {
+  const owner = workspaceOwner()
+  const workspace = getWorkspaceId()
+  return owner && workspace ? 'gt.studio.pipeline.v2.' + encodeURIComponent(owner) + '.' + encodeURIComponent(workspace) : null
+}
 function read(): RecordItem[] {
   try {
-    const json = localStorage.getItem(key)
+    const storageKey = key()
+    if (!storageKey) return []
+    const json = localStorage.getItem(storageKey)
     const parsed: unknown = json ? JSON.parse(json) : []
     if (!Array.isArray(parsed)) return []
     return parsed.filter((v): v is RecordItem => Boolean(v && typeof v.id === 'string' && typeof v.company === 'string' && stages.includes(v.stage)))
@@ -32,7 +40,39 @@ export function Studio() {
   const [editing, setEditing] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [confirmClear, setConfirmClear] = useState(false)
-  const save = (next: RecordItem[]) => { setRows(next); try { localStorage.setItem(key, JSON.stringify(next)) } catch { /* Browser storage may be unavailable. */ } }
+  const [importing, setImporting] = useState(false)
+  const [importMessage, setImportMessage] = useState('')
+  const save = (next: RecordItem[]) => {
+    const storageKey = key()
+    if (!storageKey) { setImportMessage('No authenticated workspace available. Changes cannot be saved.'); return }
+    try { localStorage.setItem(storageKey, JSON.stringify(next)); setRows(next) }
+    catch { setImportMessage('Browser storage is unavailable or full. Export your records and free storage before continuing.') }
+  }
+  const importSavedLeads = async () => {
+    if (importing || !key()) return
+    setImporting(true); setImportMessage('')
+    try {
+      const list = await listSearches()
+      if (!Array.isArray(list.searches)) throw new Error('The lead search response is not in the expected format.')
+      // A bounded import avoids flooding the authenticated API with historical requests.
+      const recent = list.searches.filter(s => s.status === 'complete' || s.status === 'partial').slice(0, 10)
+      const details = await Promise.all(recent.map(s => getSearch(s.id)))
+      const candidates = details.flatMap(d => Array.isArray(d.leads) ? d.leads.filter(l => l.status === 'saved') : [])
+      const existingIds = new Set(rows.map(r => r.id))
+      const existingSites = new Set(rows.map(r => r.website.toLowerCase().replace(/^https?:\\/\\//, '').replace(/\\/$/, '')).filter(Boolean))
+      const incoming: RecordItem[] = []
+      for (const lead of candidates) {
+        const id = 'lead-' + lead.id
+        const site = (lead.website || '').toLowerCase().replace(/^https?:\\/\\//, '').replace(/\\/$/, '')
+        if (!lead.company || existingIds.has(id) || incoming.some(i => i.id === id) || (site && existingSites.has(site))) continue
+        incoming.push({ id, company: lead.company, contact: '', email: lead.emails?.[0] || '', website: lead.website || '', stage: 'Prospect', value: 5000, nextAction: 'Review website and write tailored introduction', followUp: '', notes: 'Imported from a saved Growth Terminal lead. Source lead ID: ' + lead.id, updatedAt: new Date().toISOString() })
+        if (site) existingSites.add(site)
+      }
+      if (incoming.length) save([...incoming, ...rows])
+      setImportMessage(incoming.length + ' saved lead' + (incoming.length === 1 ? '' : 's') + ' added from the 10 most recent completed searches. Existing records were kept.')
+    } catch (error) { setImportMessage(error instanceof Error ? error.message : 'Unable to import saved leads.') }
+    finally { setImporting(false) }
+  }
   const current = useMemo(() => rows.filter(r => r.stage !== 'Lost' && r.stage !== 'Delivered'), [rows])
   const pipeline = current.reduce((total, r) => total + r.value, 0)
   const won = rows.filter(r => r.stage === 'Won' || r.stage === 'Production' || r.stage === 'Delivered')
@@ -54,9 +94,10 @@ export function Studio() {
     <header className="studio-hero">
       <div><p className="studio-eyebrow">GROWTH TERMINAL / STUDIO OPERATIONS</p><h1>Build the pipeline.<br/><em>Ship the work.</em></h1>
         <p className="studio-lead">One workspace for selling and delivering immersive websites. Track the next action on every opportunity, from first contact to launch.</p></div>
-      <div className="studio-hero-actions"><button type="button" className="studio-primary" onClick={() => { reset(); setShowForm(true) }}>Add prospect +</button><button type="button" className="studio-secondary" onClick={() => download(rows)} disabled={!rows.length}>Export CSV</button></div>
+      <div className="studio-hero-actions"><button type="button" className="studio-primary" onClick={() => { reset(); setShowForm(true) }}>Add prospect +</button>{leadsLive() && <button type="button" className="studio-secondary" disabled={importing} onClick={importSavedLeads}>{importing ? "Importing..." : "Import saved leads"}</button>}<button type="button" className="studio-secondary" onClick={() => download(rows)} disabled={!rows.length}>Export CSV</button></div>
     </header>
-    <div className="studio-disclosure" role="status">Private browser workspace. Records stay on this device, are not synced to other users, and are not connected to the existing lead-search engine. Export CSV regularly.</div>
+    <div className="studio-disclosure" role="status">Private browser workspace. Records stay in this browser, partitioned by signed-in user and workspace, but are not encrypted or synced. Saved leads can be imported on demand. Export CSV regularly. Do not use shared devices for confidential records.</div>
+    {importMessage && <div className="studio-disclosure" role="status">{importMessage}</div>}
     <section className="studio-metrics" aria-label="Studio metrics">
       <div><span>Active opportunities</span><strong>{current.length}</strong></div>
       <div><span>Open pipeline</span><strong>{money(pipeline)}</strong></div>
