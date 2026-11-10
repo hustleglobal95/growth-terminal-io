@@ -59,11 +59,11 @@ export function Studio() {
       const details = await Promise.all(recent.map(s => getSearch(s.id)))
       const candidates = details.flatMap(d => Array.isArray(d.leads) ? d.leads.filter(l => l.status === 'saved') : [])
       const existingIds = new Set(rows.map(r => r.id))
-      const existingSites = new Set(rows.map(r => r.website.toLowerCase().replace(/^https?:\\/\\//, '').replace(/\\/$/, '')).filter(Boolean))
+      const existingSites = new Set(rows.map(r => r.website.toLowerCase().replace(/^https?:[/][/]/, '').replace(/[/]$/, '')).filter(Boolean))
       const incoming: RecordItem[] = []
       for (const lead of candidates) {
         const id = 'lead-' + lead.id
-        const site = (lead.website || '').toLowerCase().replace(/^https?:\\/\\//, '').replace(/\\/$/, '')
+        const site = (lead.website || '').toLowerCase().replace(/^https?:[/][/]/, '').replace(/[/]$/, '')
         if (!lead.company || existingIds.has(id) || incoming.some(i => i.id === id) || (site && existingSites.has(site))) continue
         incoming.push({ id, company: lead.company, contact: '', email: lead.emails?.[0] || '', website: lead.website || '', stage: 'Prospect', value: 5000, nextAction: 'Review website and write tailored introduction', followUp: '', notes: 'Imported from a saved Growth Terminal lead. Source lead ID: ' + lead.id, updatedAt: new Date().toISOString() })
         if (site) existingSites.add(site)
@@ -76,7 +76,8 @@ export function Studio() {
   const current = useMemo(() => rows.filter(r => r.stage !== 'Lost' && r.stage !== 'Delivered'), [rows])
   const pipeline = current.reduce((total, r) => total + r.value, 0)
   const won = rows.filter(r => r.stage === 'Won' || r.stage === 'Production' || r.stage === 'Delivered')
-  const today = new Date().toLocaleDateString('en-CA')
+  const now = new Date()
+  const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-')
   const due = current.filter(r => r.followUp && r.followUp <= today).sort((a,b) => a.followUp.localeCompare(b.followUp))
   const shown = rows.filter(r => filter === 'All' || r.stage === filter).sort((a,b) => b.updatedAt.localeCompare(a.updatedAt))
   const startEdit = (r: RecordItem) => { setDraft({ company:r.company, contact:r.contact, email:r.email, website:r.website, value:r.value, nextAction:r.nextAction, followUp:r.followUp, notes:r.notes }); setEditing(r.id); setShowForm(true) }
@@ -94,7 +95,7 @@ export function Studio() {
     <header className="studio-hero">
       <div><p className="studio-eyebrow">GROWTH TERMINAL / STUDIO OPERATIONS</p><h1>Build the pipeline.<br/><em>Ship the work.</em></h1>
         <p className="studio-lead">One workspace for selling and delivering immersive websites. Track the next action on every opportunity, from first contact to launch.</p></div>
-      <div className="studio-hero-actions"><button type="button" className="studio-primary" onClick={() => { reset(); setShowForm(true) }}>Add prospect +</button>{leadsLive() && <button type="button" className="studio-secondary" disabled={importing} onClick={importSavedLeads}>{importing ? "Importing..." : "Import saved leads"}</button>}<button type="button" className="studio-secondary" onClick={() => download(rows)} disabled={!rows.length}>Export CSV</button></div>
+      <div className="studio-hero-actions"><button type="button" className="studio-primary" onClick={() => { reset(); setShowForm(true) }}>Add prospect +</button>{leadsLive() && <button type="button" className="studio-secondary" disabled={importing} onClick={importSavedLeads}>{importing ? "Importing..." : "Import saved leads"}</button>}<a className="studio-secondary" href="/businesses/leads/outreach">Open outreach</a><button type="button" className="studio-secondary" onClick={() => download(rows)} disabled={!rows.length}>Export CSV</button></div>
     </header>
     <div className="studio-disclosure" role="status">Private browser workspace. Records stay in this browser, partitioned by signed-in user and workspace, but are not encrypted or synced. Saved leads can be imported on demand. Export CSV regularly. Do not use shared devices for confidential records.</div>
     {importMessage && <div className="studio-disclosure" role="status">{importMessage}</div>}
