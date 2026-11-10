@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { Shell } from './components/Shell'
+import { Studio } from './screens/Studio'
 import { WorkspaceGate } from './components/WorkspaceGate'
 import { Overview, Analyses, Businesses, ApiKeys, Stub } from './screens/simple'
 import { Leads } from './screens/Leads'
@@ -55,7 +56,9 @@ const router = createBrowserRouter([
        product, not into a stack trace. */
     errorElement: <WorkspaceGate><Shell /></WorkspaceGate>,
     children: [
-      { path: '/', element: <Overview /> },
+      { path: '/', element: <Studio /> },
+      { path: '/studio', element: <Studio /> },
+      { path: '/intelligence', element: <Overview /> },
       { path: '/analyses', element: <Analyses /> },
       /* Where a workbook becomes an analysis without the Sheets add-on. The
          add-on remains the fast path for people already living in a
