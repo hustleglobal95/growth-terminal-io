@@ -9,6 +9,7 @@ import { useMe, useCalibration, useCredits, useBilling, calibrationLabel, credit
 import { clearWorkspace } from '../lib/api'
 
 const ICONS: Record<string, string> = {
+  Studio: '<rect x="2" y="4" width="14" height="11" rx="1.5"/><path d="M5 4V2h8v2M2 8h14M8 8v2h2V8"/>',
   Overview: '<rect x="2" y="2" width="5.5" height="5.5" rx="1.2"/><rect x="10.5" y="2" width="5.5" height="5.5" rx="1.2"/><rect x="2" y="10.5" width="5.5" height="5.5" rx="1.2"/><rect x="10.5" y="10.5" width="5.5" height="5.5" rx="1.2"/>',
   Analyses: '<path d="M1.5 9.5h3l2-6 3 11 2.5-7h4"/>',
   Guide: '<path d="M2.5 3.5h5a2 2 0 0 1 2 2v9a1.6 1.6 0 0 0-1.6-1.6H2.5z"/><path d="M15.5 3.5h-5a2 2 0 0 0-2 2v9a1.6 1.6 0 0 1 1.6-1.6h5.4z"/>',
@@ -44,7 +45,7 @@ const ICONS: Record<string, string> = {
    already knew. The screen states its own status honestly, which is the right
    place for that information. */
 export const NAV: [string, string][] = [
-  ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'], ['Feed', '/feed'],
+  ['Studio', '/'], ['Overview', '/intelligence'], ['Analyses', '/analyses'], ['Content', '/content'], ['Feed', '/feed'],
   ['Businesses', '/businesses'], ['Agents', '/agents'], ['Connections', '/connections'],
   ['API', '/api-keys'], ['Teams', '/teams'], ['Imports', '/imports'],
   ['Guide', '/guide']
@@ -57,7 +58,8 @@ export const NAV: [string, string][] = [
    Derived from NAV rather than written out again, so a tab added to NAV
    cannot silently fail to appear here. */
 const GROUPING: [string, string[]][] = [
-  ['Workspace', ['Overview', 'Analyses', 'Businesses']],
+  ['Studio operations', ['Studio']],
+  ['Legacy intelligence', ['Overview', 'Analyses', 'Businesses']],
   ['Content engine', ['Content', 'Feed', 'Connections']],
   /* Imports sits in Setup, not beside the reporting screens. Raw ingestion is
      plumbing: it is done rarely, by whoever wires the data up, and putting it
@@ -74,7 +76,7 @@ export const NAV_GROUPS: [string, [string, string][]][] = GROUPING.map(
 )
 
 export const TABS: [string, string][] = [
-  ['Overview', '/'], ['Analyses', '/analyses'], ['Content', '/content'], ['Businesses', '/businesses']
+  ['Studio', '/'], ['Analyses', '/analyses'], ['Content', '/content'], ['Businesses', '/businesses']
 ]
 
 export function Icon({ name }: { name: string }) {
